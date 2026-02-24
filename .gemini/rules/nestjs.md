@@ -70,3 +70,20 @@ Testing:
 - Name variables: inputX, mockX, actualX, expectedX
 - Write unit tests per service method
 - Write e2e tests per module
+
+Folder structure:
+users/
+├── users.module.ts
+├── users.controller.ts
+├── users.service.ts
+├── users.repository.ts
+├── dto/
+
+src/
+├── common/ # Shared filters, pipes, utils
+├── config/ # App configuration (env files, settings)
+├── decorators/ # Custom decorators
+├── guards/ # Route guards (e.g., auth)
+├── interceptors/ # Logging / transformation
+├── middlewares/ # Custom middleware logic
+├── modules/ # Grouped feature modules

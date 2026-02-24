@@ -138,7 +138,7 @@ model Business {
   phone     String?
   email     String?
   currency  String   @default("NGN")
-  taxRate   Float    @default(0)
+  taxRate   Decimal  @default(0) @db.Decimal(10, 2)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -172,6 +172,7 @@ model Category {
   @@unique([name, businessId])
   @@index([businessId])
   @@index([parentId])
+  @@index([name])
   @@map("category")
 }
 
@@ -186,8 +187,8 @@ model Product {
   businessId        String
   categoryId        String?
   unit              String   @default("piece")
-  buyingPrice       Float    @default(0)
-  sellingPrice      Float    @default(0)
+  buyingPrice       Decimal  @default(0) @db.Decimal(10, 2)
+  sellingPrice      Decimal  @default(0) @db.Decimal(10, 2)
   images            String[] @default([])
   lowStockThreshold Int      @default(10)
   isActive          Boolean  @default(true)
@@ -205,6 +206,8 @@ model Product {
   @@unique([sku, businessId])
   @@index([businessId])
   @@index([categoryId])
+  @@index([sku])
+  @@index([name])
   @@map("product")
 }
 
@@ -213,7 +216,7 @@ model ProductVariant {
   productId String
   name      String
   sku       String?
-  price     Float?
+  price     Decimal? @db.Decimal(10, 2)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -248,7 +251,7 @@ model StockMovement {
   type       StockMovementType
   quantity   Int
   reason     String?
-  cost       Float?
+  cost       Decimal?          @db.Decimal(10, 2)
   userId     String
   supplierId String?
   createdAt  DateTime          @default(now())
@@ -292,7 +295,7 @@ model PurchaseOrder {
   status           PurchaseOrderStatus @default(PENDING)
   expectedDelivery DateTime?
   notes            String?
-  total            Float               @default(0)
+  total            Decimal             @default(0) @db.Decimal(10, 2)
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 
@@ -309,7 +312,7 @@ model PurchaseOrderItem {
   productId String
   quantity  Int
   received  Int      @default(0)
-  cost      Float
+  cost      Decimal  @db.Decimal(10, 2)
   createdAt DateTime @default(now())
 
   order   PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -323,7 +326,7 @@ model PurchaseOrderItem {
 model SupplierPayment {
   id         String   @id @default(cuid())
   supplierId String
-  amount     Float
+  amount     Decimal  @db.Decimal(10, 2)
   notes      String?
   createdAt  DateTime @default(now())
 
@@ -360,10 +363,10 @@ model Sale {
   businessId   String
   cashierId    String
   customerId   String?
-  subtotal     Float
-  discount     Float      @default(0)
+  subtotal     Decimal    @db.Decimal(10, 2)
+  discount     Decimal    @default(0) @db.Decimal(10, 2)
   discountType String?
-  total        Float
+  total        Decimal    @db.Decimal(10, 2)
   status       SaleStatus @default(PENDING)
   notes        String?
   createdAt    DateTime   @default(now())
@@ -389,8 +392,8 @@ model SaleItem {
   productId String
   variantId String?
   quantity  Int
-  unitPrice Float
-  total     Float
+  unitPrice Decimal  @db.Decimal(10, 2)
+  total     Decimal  @db.Decimal(10, 2)
   returned  Int      @default(0)
   createdAt DateTime @default(now())
 
@@ -407,7 +410,7 @@ model Payment {
   id        String        @id @default(cuid())
   saleId    String
   method    PaymentMethod
-  amount    Float
+  amount    Decimal       @db.Decimal(10, 2)
   reference String?
   confirmed Boolean       @default(false)
   createdAt DateTime      @default(now())
@@ -422,9 +425,9 @@ model CreditSale {
   id          String    @id @default(cuid())
   saleId      String    @unique
   customerId  String
-  totalAmount Float
-  amountPaid  Float     @default(0)
-  balance     Float
+  totalAmount Decimal   @db.Decimal(10, 2)
+  amountPaid  Decimal   @default(0) @db.Decimal(10, 2)
+  balance     Decimal   @db.Decimal(10, 2)
   dueDate     DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -440,7 +443,7 @@ model CreditSale {
 model CreditRepayment {
   id           String   @id @default(cuid())
   creditSaleId String
-  amount       Float
+  amount       Decimal  @db.Decimal(10, 2)
   notes        String?
   createdAt    DateTime @default(now())
 

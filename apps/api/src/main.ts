@@ -3,9 +3,9 @@ import 'dotenv/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { AllExceptionsFilter } from './common/all-exceptions.filter';
 
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -18,6 +18,16 @@ async function bootstrap() {
   });
 
   app.use(helmet());
+  app.disable('x-powered-by');
+
+  // Production hardening: API Versioning
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
+
+  // Production hardening: Graceful Shutdown
+  app.enableShutdownHooks();
 
   app.useGlobalPipes(
     new ValidationPipe({

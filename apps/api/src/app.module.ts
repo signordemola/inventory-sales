@@ -1,12 +1,19 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from './prisma/prisma.module';
+import { PrismaModule } from './modules/prisma/prisma.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard, AuthModule } from '@thallesp/nestjs-better-auth';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { auth } from './auth';
+import { auth } from './config/auth';
+import { UsersModule } from './modules/users/users.module';
+import { BusinessModule } from './modules/business/business.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { ProductsModule } from './modules/products/products.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
 
 @Module({
   imports: [
@@ -32,6 +39,13 @@ import { auth } from './auth';
       },
     }),
     PrismaModule,
+    UsersModule,
+    BusinessModule,
+    CategoriesModule,
+    ProductsModule,
+    InventoryModule,
+    SalesModule,
+    SuppliersModule,
   ],
   controllers: [AppController],
   providers: [
