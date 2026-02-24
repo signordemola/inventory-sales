@@ -7,18 +7,479 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+// Enum
+
+enum Role {
+  OWNER
+  MANAGER
+  CASHIER
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean? @default(false)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  PARTIAL
+  RECEIVED
+  CANCELLED
+}
+
+enum SaleStatus {
+  PENDING
+  COMPLETED
+  PARTIALLY_RETURNED
+  RETURNED
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  PAYSTACK
+  CREDIT
+}
+
+enum NotificationType {
+  LOW_STOCK
+  OUT_OF_STOCK
+  PAYMENT_CONFIRMED
+  PURCHASE_ORDER_RECEIVED
+  CREDIT_DUE
+}
+
+// Better-Auth Models
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  role       Role    @default(CASHIER)
+  isActive   Boolean @default(true)
+  businessId String?
+
+  business       Business?       @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  sessions       Session[]
+  accounts       Account[]
+  stockMovements StockMovement[]
+  sales          Sale[]
+  notifications  Notification[]
+
+  @@index([businessId])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// Business
+
+model Business {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String?
+  address   String?
+  phone     String?
+  email     String?
+  currency  String   @default("NGN")
+  taxRate   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  categories    Category[]
+  products      Product[]
+  suppliers     Supplier[]
+  customers     Customer[]
+  sales         Sale[]
+  notifications Notification[]
+
+  @@map("business")
+}
+
+// Category
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  businessId  String
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  parent   Category?  @relation("subcategories", fields: [parentId], references: [id])
+  children Category[] @relation("subcategories")
+  products Product[]
+
+  @@unique([name, businessId])
+  @@index([businessId])
+  @@index([parentId])
+  @@map("category")
+}
+
+// Product
+
+model Product {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  sku               String
+  barcode           String?  @unique
+  businessId        String
+  categoryId        String?
+  unit              String   @default("piece")
+  buyingPrice       Float    @default(0)
+  sellingPrice      Float    @default(0)
+  images            String[] @default([])
+  lowStockThreshold Int      @default(10)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  business       Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  variants       ProductVariant[]
+  stockRecord    StockRecord?
+  stockMovements StockMovement[]
+  saleItems      SaleItem[]
+  purchaseItems  PurchaseOrderItem[]
+
+  @@unique([sku, businessId])
+  @@index([businessId])
+  @@index([categoryId])
+  @@map("product")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  sku       String?
+  price     Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stockRecord    StockRecord?
+  stockMovements StockMovement[]
+  saleItems      SaleItem[]
+
+  @@index([productId])
+  @@map("product_variant")
+}
+
+// Inventory
+
+model StockRecord {
+  id        String   @id @default(cuid())
+  productId String   @unique
+  variantId String?  @unique
+  quantity  Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@map("stock_record")
+}
+
+model StockMovement {
+  id         String            @id @default(cuid())
+  productId  String
+  variantId  String?
+  type       StockMovementType
+  quantity   Int
+  reason     String?
+  cost       Float?
+  userId     String
+  supplierId String?
+  createdAt  DateTime          @default(now())
+
+  product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant  ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  user     User            @relation(fields: [userId], references: [id])
+  supplier Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("stock_movement")
+}
+
+// Supplier
+
+model Supplier {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  email      String?
+  address    String?
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business       Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  purchaseOrders PurchaseOrder[]
+  stockMovements StockMovement[]
+  payments       SupplierPayment[]
+
+  @@index([businessId])
+  @@map("supplier")
+}
+
+model PurchaseOrder {
+  id               String              @id @default(cuid())
+  reference        String              @unique
+  supplierId       String
+  status           PurchaseOrderStatus @default(PENDING)
+  expectedDelivery DateTime?
+  notes            String?
+  total            Float               @default(0)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  supplier Supplier            @relation(fields: [supplierId], references: [id])
+  items    PurchaseOrderItem[]
+
+  @@index([supplierId])
+  @@map("purchase_order")
+}
+
+model PurchaseOrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  received  Int      @default(0)
+  cost      Float
+  createdAt DateTime @default(now())
+
+  order   PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product       @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("purchase_order_item")
+}
+
+model SupplierPayment {
+  id         String   @id @default(cuid())
+  supplierId String
+  amount     Float
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+  @@map("supplier_payment")
+}
+
+// Customer
+
+model Customer {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  email      String?
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales       Sale[]
+  creditSales CreditSale[]
+
+  @@index([businessId])
+  @@map("customer")
+}
+
+// Sale
+
+model Sale {
+  id           String     @id @default(cuid())
+  reference    String     @unique
+  businessId   String
+  cashierId    String
+  customerId   String?
+  subtotal     Float
+  discount     Float      @default(0)
+  discountType String?
+  total        Float
+  status       SaleStatus @default(PENDING)
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  business   Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cashier    User        @relation(fields: [cashierId], references: [id])
+  customer   Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items      SaleItem[]
+  payments   Payment[]
+  receipt    Receipt?
+  creditSale CreditSale?
+
+  @@index([businessId, createdAt])
+  @@index([cashierId])
+  @@index([customerId])
+  @@map("sale")
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  saleId    String
+  productId String
+  variantId String?
+  quantity  Int
+  unitPrice Float
+  total     Float
+  returned  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  sale    Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([saleId])
+  @@index([productId])
+  @@map("sale_item")
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  saleId    String
+  method    PaymentMethod
+  amount    Float
+  reference String?
+  confirmed Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+  @@map("payment")
+}
+
+model CreditSale {
+  id          String    @id @default(cuid())
+  saleId      String    @unique
+  customerId  String
+  totalAmount Float
+  amountPaid  Float     @default(0)
+  balance     Float
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  sale       Sale              @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  customer   Customer          @relation(fields: [customerId], references: [id])
+  repayments CreditRepayment[]
+
+  @@index([customerId])
+  @@map("credit_sale")
+}
+
+model CreditRepayment {
+  id           String   @id @default(cuid())
+  creditSaleId String
+  amount       Float
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  creditSale CreditSale @relation(fields: [creditSaleId], references: [id], onDelete: Cascade)
+
+  @@index([creditSaleId])
+  @@map("credit_repayment")
+}
+
+// Receipt
+
+model Receipt {
+  id        String    @id @default(cuid())
+  saleId    String    @unique
+  pdfUrl    String?
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@map("receipt")
+}
+
+// Notification
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  businessId String
+  type       NotificationType
+  message    String
+  read       Boolean          @default(false)
+  metadata   Json?
+  createdAt  DateTime         @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([businessId])
+  @@map("notification")
 }
