@@ -1,13 +1,13 @@
-import { cookies } from 'next/headers'
+import { cookies } from "next/headers";
 
 export async function getSession() {
-  const cookieStore = await cookies()
+  const cookieStore = await cookies();
   const sessionCookie =
-    cookieStore.get('__Secure-order_pilot_token') ||
-    cookieStore.get('order_pilot_token')
+    cookieStore.get("__Secure-inventory_sales_token") ||
+    cookieStore.get("inventory_sales_token");
 
   if (!sessionCookie) {
-    return null
+    return null;
   }
 
   try {
@@ -18,15 +18,15 @@ export async function getSession() {
           Cookie: cookieStore.toString(),
         },
       },
-    )
+    );
 
     if (!response.ok) {
-      return null
+      return null;
     }
 
-    return await response.json()
+    return await response.json();
   } catch (error) {
-    console.error('Session fetch failed:', error)
-    return null
+    console.error("Session fetch failed:", error);
+    return null;
   }
 }

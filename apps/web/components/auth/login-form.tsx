@@ -18,6 +18,7 @@ import { PasswordInput } from "./password-input";
 import SubmitButton from "./submit-btn";
 import { LoginInput, LoginSchema } from "@/schemas/auth";
 import { authClient } from "@/lib/auth-client";
+import { UserRole } from "@/types";
 
 const LoginForm = () => {
   const router = useRouter();
@@ -44,7 +45,20 @@ const LoginForm = () => {
           },
           {
             onSuccess: (ctx) => {
-              alert("Success");
+              switch (ctx.data.user.role) {
+                case UserRole.OWNER:
+                  router.push("/owner/dashboard");
+                  break;
+                case UserRole.MANAGER:
+                  router.push("/manager/dashboard");
+                  break;
+                case UserRole.CASHIER:
+                  router.push("/cashier/dashboard");
+                  break;
+                default:
+                  router.push("/");
+                  setError("Access denied.");
+              }
             },
             onError: (ctx) => {
               setError(ctx.error.message || "Failed to log in.");

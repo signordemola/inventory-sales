@@ -25,7 +25,7 @@ export default function Error({
         </p>
       </div>
       <div className="flex gap-2">
-        <Button onClick={() => reset()}>Try Again</Button>
+        <Button variant={`destructive`} onClick={() => reset()}>Try Again</Button>
         <Button variant="outline" onClick={() => window.location.reload()}>
           Reload Page
         </Button>

@@ -67,7 +67,7 @@ export const auth = betterAuth({
   advanced: {
     cookies: {
       session_token: {
-        name: 'inventory_sales',
+        name: 'inventory_sales_token',
         attributes: {
           sameSite: 'lax',
           secure: isSecure,
