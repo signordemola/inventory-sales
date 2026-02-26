@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { SaleStatus } from 'generated/prisma/enums';
+import { SaleStatus, PaymentMethod } from 'generated/prisma/enums';
 
 export class SaleQueryDto {
   @IsString()
@@ -18,6 +18,18 @@ export class SaleQueryDto {
   @IsString()
   @IsOptional()
   cashierId?: string;
+
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsString()
+  @IsOptional()
+  endDate?: string;
+
+  @IsEnum(PaymentMethod)
+  @IsOptional()
+  paymentMethod?: PaymentMethod;
 
   @IsInt()
   @Min(1)

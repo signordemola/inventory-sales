@@ -49,7 +49,7 @@ export const CartPanel = ({
   onCheckout,
 }: CartPanelProps) => {
   const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.product.salePrice) * item.quantity,
+    (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
     0,
   );
   const vatRate = 0.075;
@@ -125,12 +125,12 @@ export const CartPanel = ({
                     <span className="font-bold text-sm text-slate-900 dark:text-white shrink-0">
                       ₦
                       {(
-                        Number(item.product.salePrice) * item.quantity
+                        Number(item.product.sellingPrice) * item.quantity
                       ).toLocaleString()}
                     </span>
                   </div>
                   <p className="text-[11px] font-medium text-slate-400">
-                    ₦{Number(item.product.salePrice).toLocaleString()} / unit
+                    ₦{Number(item.product.sellingPrice).toLocaleString()} / unit
                   </p>
                   <div className="flex items-center gap-2 mt-2">
                     <Button

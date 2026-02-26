@@ -64,7 +64,7 @@ export default function POSPage() {
 
   const totals = useMemo(() => {
     const subtotal = cartItems.reduce(
-      (sum, item) => sum + Number(item.product.salePrice) * item.quantity,
+      (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
       0,
     );
     const vatRate = 0.075;

@@ -1,178 +1,111 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useProducts } from "@/hooks/use-products";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useCategories } from "@/hooks/use-categories";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Package, Plus, Search, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Package, Plus, Search, Link2 } from "lucide-react";
+import Link from "next/link";
+import { ProductsTable } from "@/components/products/products-table";
 
-const ProductsPage = () => {
-  const { data: products, isLoading } = useProducts();
+export default function ProductsPage() {
+  const router = useRouter();
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+
+  const { data, isLoading, isFetching } = useProducts({
+    page,
+    limit: 20,
+    search: search.length >= 3 ? search : undefined,
+    categoryId,
+  });
+
+  const { data: categories } = useCategories();
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="flex-1 space-y-8 p-10 h-full overflow-y-auto bg-slate-50/30">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight text-center sm:text-left">
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 font-display text-center sm:text-left">
             Products Management
           </h1>
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1 text-center sm:text-left">
+          <p className="text-sm font-semibold text-slate-500 mt-1 text-center sm:text-left">
             Manage your inventory, categories, and stock levels.
           </p>
         </div>
-        <button className="bg-primary text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
-          <Plus className="size-5" />
-          Add Product
-        </button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Link href="/owner/products/categories">
+            <Button
+              variant="outline"
+              className="h-11 px-5 rounded-xl font-bold bg-white text-slate-700 border-slate-200 shadow-sm w-full sm:w-auto hover:bg-slate-50"
+            >
+              <Link2 className="w-4 h-4 mr-2 text-slate-400" /> Manage
+              Categories
+            </Button>
+          </Link>
+          <Button
+            className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm w-full sm:w-auto transition-all active:scale-95"
+            onClick={() => router.push("/owner/products/new")}
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Add Product
+          </Button>
+        </div>
       </div>
 
-      <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <CardHeader className="border-b border-gray-50 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-4 space-y-0 py-4">
-          <CardTitle className="text-sm font-bold text-foreground tracking-tight uppercase flex items-center gap-2">
-            <Package className="size-4 text-primary" />
+      <Card className="bg-white rounded-2xl border-none shadow-xl shadow-slate-200/50 overflow-hidden relative">
+        <CardHeader className="border-b border-slate-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 space-y-0 py-5 px-6">
+          <CardTitle className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Package className="size-5 text-primary" />
             Product Catalog
           </CardTitle>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search products..."
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-slate-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 h-11 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-700"
               />
             </div>
-            <button className="p-2 rounded-lg border border-border bg-slate-50 hover:bg-slate-100 transition-colors">
-              <Filter className="size-4 text-slate-600" />
-            </button>
+            <select
+              className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20"
+              value={categoryId}
+              onChange={(e) => {
+                setCategoryId(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All Categories</option>
+              {categories?.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
         </CardHeader>
+
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-b border-border bg-slate-50/50">
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider">
-                    Product
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider">
-                    SKU
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider">
-                    Category
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider text-right">
-                    Price
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider text-center">
-                    Stock
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider text-center">
-                    Status
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array(5)
-                    .fill(0)
-                    .map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <Skeleton className="h-4 w-32" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-20" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-24" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="h-4 w-16 ml-auto" />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Skeleton className="h-4 w-12 mx-auto" />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Skeleton className="h-4 w-20 mx-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : products?.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="h-32 text-center text-sm font-bold text-muted-foreground uppercase tracking-widest italic pt-12"
-                    >
-                      No products found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  products?.map((product) => (
-                    <TableRow
-                      key={product.id}
-                      className="cursor-pointer hover:bg-slate-50/50 border-b border-border/50 group transition-colors"
-                    >
-                      <TableCell className="font-bold text-slate-900">
-                        {product.name}
-                      </TableCell>
-                      <TableCell className="font-mono text-[10px] font-bold text-slate-500">
-                        {product.sku}
-                      </TableCell>
-                      <TableCell className="font-semibold text-slate-500 italic text-sm">
-                        {product.category?.name || "Uncategorized"}
-                      </TableCell>
-                      <TableCell className="text-right font-black text-slate-900">
-                        {formatCurrency(product.salePrice)}
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-slate-900">
-                        {product.stockLevel}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          className={`rounded-full px-2 py-0 text-[10px] font-black border-0 shadow-none h-5 ${
-                            product.stockLevel <= 0
-                              ? "bg-red-100 text-red-700"
-                              : product.stockLevel <=
-                                  (product.lowStockThreshold || 5)
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {product.stockLevel <= 0
-                            ? "OUT OF STOCK"
-                            : product.stockLevel <=
-                                (product.lowStockThreshold || 5)
-                              ? "LOW STOCK"
-                              : "IN STOCK"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <ProductsTable
+            products={data?.items || []}
+            isLoading={isLoading}
+            isFetching={isFetching}
+            page={page}
+            totalItems={data?.meta.total || 0}
+            totalPages={data?.meta.totalPages || 0}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default ProductsPage;
+}

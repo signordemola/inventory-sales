@@ -61,7 +61,7 @@ export const ProductCard = ({ product, onSelect }: ProductCardProps) => {
           {product.name}
         </h3>
         <p className="text-primary font-black text-base">
-          ₦{Number(product.salePrice).toLocaleString()}
+          ₦{Number(product.sellingPrice).toLocaleString()}
         </p>
         <p
           className={`text-xs font-semibold ${

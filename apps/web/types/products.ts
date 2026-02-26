@@ -14,9 +14,9 @@ export interface Product {
   description?: string;
   sku: string;
   barcode?: string;
-  costPrice: number;
-  salePrice: number;
-  stockEnabled: boolean;
+  buyingPrice: number;
+  sellingPrice: number;
+  isActive: boolean;
   stockLevel: number;
   lowStockThreshold: number;
   businessId: string;

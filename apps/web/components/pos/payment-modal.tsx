@@ -56,7 +56,7 @@ export const PaymentModal = ({
       items: items.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
-        unitPrice: Number(item.product.salePrice),
+        unitPrice: Number(item.product.sellingPrice),
       })),
       payments: [
         {

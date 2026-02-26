@@ -19,7 +19,7 @@ const HomePage = () => {
         }}
       />
 
-      <Card className="w-full max-w-lg">
+      <Card className="w-full max-w-lg mb-12">
         <CardHeader className="flex flex-col items-center">
           <CardTitle className="py-6">
             <Logo />

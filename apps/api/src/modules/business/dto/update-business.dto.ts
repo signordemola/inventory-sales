@@ -11,7 +11,7 @@ export class UpdateBusinessDto {
 
   @IsString()
   @IsOptional()
-  phoneNumber?: string;
+  phone?: string;
 
   @IsString()
   @IsOptional()
@@ -20,4 +20,11 @@ export class UpdateBusinessDto {
   @IsEmail({}, { message: 'Invalid business email' })
   @IsOptional()
   email?: string;
+
+  @IsString()
+  @IsOptional()
+  logo?: string;
+
+  @IsOptional()
+  taxRate?: number;
 }

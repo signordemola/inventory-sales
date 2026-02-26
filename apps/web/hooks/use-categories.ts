@@ -1,15 +1,86 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/axios";
-import { Category } from "@/types/products";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  parentId: string | null;
+  businessId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoryPayload {
+  name: string;
+  slug: string;
+  description?: string;
+  parentId?: string;
+}
+
+export interface UpdateCategoryPayload {
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  parentId?: string | null;
+}
+
+// ─── Hooks ────────────────────────────────────────────────────────────────────
 
 export function useCategories() {
-  return useQuery({
+  return useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
       const { data } = await apiClient.get<Category[]>("/categories");
       return data;
+    },
+  });
+}
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateCategoryPayload) => {
+      const { data } = await apiClient.post<Category>("/categories", payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+}
+
+export function useUpdateCategory(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: UpdateCategoryPayload) => {
+      const { data } = await apiClient.patch<Category>(
+        `/categories/${id}`,
+        payload,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete(`/categories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }

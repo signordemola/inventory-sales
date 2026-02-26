@@ -1,171 +1,110 @@
 "use client";
 
-import React from "react";
-import { useStaff } from "@/hooks/use-staff";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Search, ShieldCheck, Mail } from "lucide-react";
+import React, { useState } from "react";
+import { useStaff, useDeactivateStaff } from "@/hooks/use-staff";
+import { User } from "@/types/staff";
+import { Search, UserPlus, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { StaffTable } from "@/components/staff/staff-table";
+import { StaffEditor } from "@/components/staff/staff-editor";
 
-const StaffPage = () => {
+export default function StaffPage() {
   const { data: staff, isLoading } = useStaff();
+  const deactivateMutation = useDeactivateStaff();
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "OWNER":
-        return "bg-purple-100 text-purple-700 border-purple-200";
-      case "MANAGER":
-        return "bg-blue-100 text-blue-700 border-blue-200";
-      case "CASHIER":
-        return "bg-orange-100 text-orange-700 border-orange-200";
-      default:
-        return "bg-slate-100 text-slate-700 border-slate-200";
+  const [search, setSearch] = useState("");
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<User | null>(null);
+
+  const filteredStaff = staff?.filter(
+    (u) =>
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const handleAddStaff = () => {
+    setSelectedMember(null);
+    setIsEditorOpen(true);
+  };
+
+  const handleEditStaff = (user: User) => {
+    setSelectedMember(user);
+    setIsEditorOpen(true);
+  };
+
+  const handleDeactivate = async (user: User) => {
+    if (confirm(`Are you sure you want to deactivate ${user.name}?`)) {
+      try {
+        await deactivateMutation.mutateAsync(user.id);
+        toast.success("Staff member deactivated");
+      } catch {
+        toast.error("Failed to deactivate staff member");
+      }
     }
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight text-center sm:text-left">
-            Staff & Access Control
-          </h1>
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1 text-center sm:text-left">
-            Manage team members and their relative permissions.
-          </p>
-        </div>
-        <button className="bg-primary text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
-          <UserPlus className="size-5" />
-          Add Staff Member
-        </button>
-      </div>
+    <div className="w-full h-full overflow-y-auto bg-slate-50/30 p-6 md:p-10">
+      {/* Header Section */}
+      <div className="max-w-6xl mx-auto space-y-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 bg-primary/10 rounded-2xl">
+                <Users className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">
+                Human Resources
+              </span>
+            </div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+              Staff & Access
+            </h1>
+            <p className="text-slate-500 font-semibold text-lg max-w-md">
+              Manage your business team, set roles, and control system
+              permissions.
+            </p>
+          </div>
 
-      <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <CardHeader className="border-b border-gray-50 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-4 space-y-0 py-4">
-          <CardTitle className="text-sm font-bold text-foreground tracking-tight uppercase flex items-center gap-2">
-            <Users className="size-4 text-primary" />
-            Active Team
-          </CardTitle>
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search team members..."
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-slate-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+          <Button
+            onClick={handleAddStaff}
+            className="h-14 px-8 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 gap-3"
+          >
+            <UserPlus className="w-5 h-5" />
+            Add Staff Member
+          </Button>
+        </div>
+
+        {/* Toolbar Section */}
+        <div className="bg-white/50 backdrop-blur-md p-2 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row items-center gap-2">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Input
+              placeholder="Search by name or email..."
+              className="w-full pl-14 h-14 bg-white border-none rounded-2xl text-lg font-medium shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all placeholder:text-slate-300"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-b border-border bg-slate-50/50">
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider">
-                    Member
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider">
-                    Role
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider text-center">
-                    Status
-                  </TableHead>
-                  <TableHead className="font-bold text-slate-900 text-[11px] uppercase tracking-wider text-right">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array(3)
-                    .fill(0)
-                    .map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <Skeleton className="h-4 w-40" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-24" />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Skeleton className="h-4 w-20 mx-auto" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="h-4 w-24 ml-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : staff?.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="h-32 text-center text-sm font-bold text-muted-foreground uppercase tracking-widest italic pt-12"
-                    >
-                      No staff members found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  staff?.map((member) => (
-                    <TableRow
-                      key={member.id}
-                      className="cursor-pointer hover:bg-slate-50/50 border-b border-border/50 group transition-colors"
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs ring-2 ring-white overflow-hidden shadow-sm">
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-bold text-slate-900 text-sm leading-tight">
-                              {member.name}
-                            </p>
-                            <div className="flex items-center gap-1 text-[10px] text-slate-500 font-semibold mt-0.5">
-                              <Mail className="size-2.5" />
-                              {member.email.toLowerCase()}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`rounded-xl px-2 py-0.5 text-[10px] font-black border uppercase ${getRoleColor(member.role)} shadow-none`}
-                        >
-                          <ShieldCheck className="size-3 mr-1 inline" />
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <div
-                            className={`size-1.5 rounded-full ${member.isActive ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`}
-                          />
-                          <span
-                            className={`text-[10px] font-black uppercase ${member.isActive ? "text-emerald-600" : "text-slate-400"}`}
-                          >
-                            {member.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-black text-primary text-[10px] hover:underline cursor-pointer tracking-widest">
-                        MANAGE ACCESS
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Table Section */}
+        <StaffTable
+          staff={filteredStaff}
+          isLoading={isLoading}
+          onEdit={handleEditStaff}
+          onDeactivate={handleDeactivate}
+        />
+      </div>
+
+      {/* Editor Slide-over */}
+      <StaffEditor
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        member={selectedMember}
+      />
     </div>
   );
-};
-
-export default StaffPage;
+}

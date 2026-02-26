@@ -88,7 +88,7 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
               </div>
             ))}
           </div>
-        ) : products?.length === 0 ? (
+        ) : products?.items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[400px] text-center">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
               <Search className="w-7 h-7 text-slate-300" />
@@ -100,7 +100,7 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-12">
-            {products?.map((product) => (
+            {products?.items.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}

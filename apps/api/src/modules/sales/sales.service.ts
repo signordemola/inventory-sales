@@ -9,7 +9,17 @@ export class SalesService {
   constructor(private readonly salesRepository: SalesRepository) {}
 
   async findAll(businessId: string, query: SaleQueryDto) {
-    const { search, status, customerId, cashierId, page, limit } = query;
+    const {
+      search,
+      status,
+      customerId,
+      cashierId,
+      startDate,
+      endDate,
+      paymentMethod,
+      page,
+      limit,
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.SaleWhereInput = {
@@ -19,6 +29,15 @@ export class SalesService {
       ...(cashierId && { cashierId }),
       ...(search && {
         reference: { contains: search, mode: 'insensitive' },
+      }),
+      ...((startDate || endDate) && {
+        createdAt: {
+          ...(startDate && { gte: new Date(startDate) }),
+          ...(endDate && { lte: new Date(endDate) }),
+        },
+      }),
+      ...(paymentMethod && {
+        payments: { some: { method: paymentMethod } },
       }),
     };
 
