@@ -1,36 +1,93 @@
 import {
   LayoutDashboard,
-  Inbox,
   ShoppingCart,
   Package,
-  CreditCard,
+  Users,
+  History,
+  ClipboardList,
+  ShieldCheck,
   Settings,
   HelpCircle,
-  Users,
+  Truck,
 } from "lucide-react";
-
-interface MenuItem {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}
-
-export const menuItems: MenuItem[] = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/leads", icon: Users, label: "Leads" },
-  { href: "/inbox", icon: Inbox, label: "Inbox" },
-  { href: "/orders", icon: ShoppingCart, label: "Orders" },
-  { href: "/products", icon: Package, label: "Products" },
-  { href: "/payments", icon: CreditCard, label: "Payments" },
-];
-
-export const footerItems: MenuItem[] = [
-  { href: "/settings", icon: Settings, label: "Settings" },
-  { href: "/help", icon: HelpCircle, label: "Help Center" },
-];
 
 export const UserRole = {
   OWNER: "OWNER",
   MANAGER: "MANAGER",
   CASHIER: "CASHIER",
 } as const;
+
+export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];
+
+interface MenuItem {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  roles?: UserRoleType[];
+}
+
+export const menuItems: MenuItem[] = [
+  {
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    roles: ["OWNER", "MANAGER", "CASHIER"],
+  },
+  {
+    href: "/pos",
+    icon: ShoppingCart,
+    label: "POS Terminal",
+    roles: ["OWNER", "MANAGER", "CASHIER"],
+  },
+  {
+    href: "/products",
+    icon: Package,
+    label: "Products",
+    roles: ["OWNER", "MANAGER"],
+  },
+  {
+    href: "/inventory",
+    icon: ClipboardList,
+    label: "Inventory",
+    roles: ["OWNER", "MANAGER"],
+  },
+  {
+    href: "/suppliers",
+    icon: Truck,
+    label: "Suppliers",
+    roles: ["OWNER", "MANAGER"],
+  },
+  {
+    href: "/customers",
+    icon: Users,
+    label: "Customers",
+    roles: ["OWNER", "MANAGER", "CASHIER"],
+  },
+  {
+    href: "/transactions",
+    icon: History,
+    label: "Transactions",
+    roles: ["OWNER", "MANAGER", "CASHIER"],
+  },
+  {
+    href: "/staff",
+    icon: ShieldCheck,
+    label: "Staff / Access",
+    roles: ["OWNER"],
+  },
+];
+
+export const footerItems: MenuItem[] = [
+  {
+    href: "/settings",
+    icon: Settings,
+    label: "Settings",
+    roles: ["OWNER", "MANAGER", "CASHIER"],
+  },
+  {
+    href: "/support",
+    icon: HelpCircle,
+    label: "Support",
+    roles: ["OWNER", "MANAGER", "CASHIER"],
+  },
+];

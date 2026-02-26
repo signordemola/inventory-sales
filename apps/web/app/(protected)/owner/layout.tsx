@@ -13,9 +13,5 @@ export default async function OwnerLayout({
   if (!session || session.user.role !== UserRole.OWNER) {
     redirect("/");
   }
-  return (
-    <div>
-      <h1>Owner Layout</h1> {children}
-    </div>
-  );
+  return <>{children}</>;
 }

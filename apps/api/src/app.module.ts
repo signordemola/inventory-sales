@@ -14,6 +14,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
     InventoryModule,
     SalesModule,
     SuppliersModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [

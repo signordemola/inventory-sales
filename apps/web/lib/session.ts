@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 
-export async function getSession() {
+export const getSession = cache(async () => {
   const cookieStore = await cookies();
   const sessionCookie =
     cookieStore.get("__Secure-inventory_sales_token") ||
@@ -29,4 +30,4 @@ export async function getSession() {
     console.error("Session fetch failed:", error);
     return null;
   }
-}
+});

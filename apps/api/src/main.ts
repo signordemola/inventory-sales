@@ -19,6 +19,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.disable('x-powered-by');
+  app.setGlobalPrefix('api');
 
   // Production hardening: API Versioning
   app.enableVersioning({
