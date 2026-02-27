@@ -45,19 +45,10 @@ const LoginForm = () => {
           },
           {
             onSuccess: (ctx) => {
-              switch (ctx.data.user.role) {
-                case UserRole.OWNER:
-                  router.push("/owner/dashboard");
-                  break;
-                case UserRole.MANAGER:
-                  router.push("/manager/dashboard");
-                  break;
-                case UserRole.CASHIER:
-                  router.push("/cashier/dashboard");
-                  break;
-                default:
-                  router.push("/");
-                  setError("Access denied.");
+              if (ctx.data.user.role === UserRole.CASHIER) {
+                router.push("/pos");
+              } else {
+                router.push("/dashboard");
               }
             },
             onError: (ctx) => {

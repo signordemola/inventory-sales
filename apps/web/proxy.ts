@@ -4,8 +4,23 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-
-  const protectedRoutes = ["/owner", "/cashier", "/manager"];
+  const protectedRoutes = [
+    "/dashboard",
+    "/pos",
+    "/sales",
+    "/products",
+    "/categories",
+    "/inventory",
+    "/suppliers",
+    "/purchase-orders",
+    "/customers",
+    "/credits",
+    "/reports",
+    "/notifications",
+    "/settings",
+    "/staff",
+    "/transactions",
+  ];
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route),

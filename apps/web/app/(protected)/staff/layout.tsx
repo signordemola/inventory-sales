@@ -1,0 +1,11 @@
+import { requireOwner } from "@/lib/dal";
+import { ReactNode } from "react";
+
+export default async function StaffLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  await requireOwner();
+  return <>{children}</>;
+}

@@ -25,7 +25,6 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
 
   const role: keyof typeof UserRole =
     (user.role as keyof typeof UserRole) ?? "CASHIER";
-  const rolePrefix = `/${role.toLowerCase()}`;
 
   const filteredMenuItems = menuItems.filter(
     (item) => !item.roles || item.roles.includes(role),
@@ -41,7 +40,7 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
       {...props}
     >
       <SidebarHeader className="flex items-center py-3 border-b border-slate-100 dark:border-slate-800">
-        <Link href={`${rolePrefix}/dashboard`}>
+        <Link href="/dashboard">
           <Logo />
         </Link>
       </SidebarHeader>
@@ -57,15 +56,14 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
             <SidebarMenu className="px-2 flex flex-col gap-1">
               {filteredMenuItems.map((item) => {
                 const Icon = item.icon;
-                const fullHref = `${rolePrefix}${item.href}`;
                 const isActive =
-                  pathname === fullHref ||
-                  (item.href === "/dashboard" && pathname === rolePrefix);
+                  pathname === item.href ||
+                  (item.href === "/dashboard" && pathname === "/");
 
                 return (
                   <Link
                     key={item.href}
-                    href={fullHref}
+                    href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                       isActive
                         ? "bg-primary text-white shadow-md shadow-primary/20"
@@ -97,13 +95,12 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
             <SidebarMenu className="px-2 flex flex-col gap-1">
               {filteredFooterItems.map((item) => {
                 const Icon = item.icon;
-                const fullHref = `${rolePrefix}${item.href}`;
-                const isActive = pathname === fullHref;
+                const isActive = pathname === item.href;
 
                 return (
                   <Link
                     key={item.href}
-                    href={fullHref}
+                    href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                       isActive
                         ? "bg-primary text-white shadow-md shadow-primary/20"
