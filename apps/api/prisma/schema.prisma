@@ -15,6 +15,12 @@ enum UserRole {
   CASHIER
 }
 
+enum StaffInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
 enum StockMovementType {
   IN
   OUT
@@ -149,6 +155,7 @@ model Business {
   customers     Customer[]
   sales         Sale[]
   notifications Notification[]
+  staffInvites  StaffInvite[]
 
   @@map("business")
 }
@@ -485,4 +492,25 @@ model Notification {
   @@index([userId, read])
   @@index([businessId])
   @@map("notification")
+}
+
+// Staff Invites
+
+model StaffInvite {
+  id         String            @id @default(cuid())
+  email      String
+  role       UserRole          @default(CASHIER)
+  token      String            @unique
+  businessId String
+  status     StaffInviteStatus @default(PENDING)
+  expiresAt  DateTime
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([token])
+  @@index([email])
+  @@map("staff_invite")
 }

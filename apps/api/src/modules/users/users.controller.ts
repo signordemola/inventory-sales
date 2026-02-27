@@ -18,6 +18,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from 'generated/prisma/enums';
 import { Request } from 'express';
 import { User } from 'generated/prisma/client';
+import { CreateInviteDto } from './dto/create-invite.dto';
 
 @Controller('users')
 @UseGuards(RolesGuard)
@@ -82,5 +83,14 @@ export class UsersController {
       businessId,
       requestingUserId,
     );
+  }
+
+  // Invite Endpoints
+
+  @Post('invite')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async createInvite(@Body() dto: CreateInviteDto, @Req() req: Request) {
+    const businessId = req.user?.businessId!;
+    return this.usersService.createInvite(dto, businessId);
   }
 }

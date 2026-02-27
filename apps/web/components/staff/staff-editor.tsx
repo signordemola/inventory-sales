@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { User, UserRole } from "@/types/staff";
-import { useCreateStaff, useUpdateStaffRole } from "@/hooks/use-staff";
+import { useInviteStaff, useUpdateStaffRole } from "@/hooks/use-staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ShieldCheck, UserPlus, X } from "lucide-react";
+import { Copy, ShieldCheck, UserPlus, X, CheckCircle2 } from "lucide-react";
 import { AxiosError } from "axios";
 
 interface StaffEditorProps {
@@ -28,8 +28,9 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("CASHIER");
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
-  const createMutation = useCreateStaff();
+  const inviteMutation = useInviteStaff();
   const updateRoleMutation = useUpdateStaffRole();
 
   useEffect(() => {
@@ -38,10 +39,12 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
         setName(member.name);
         setEmail(member.email);
         setRole(member.role);
+        setInviteUrl(null);
       } else {
         setName("");
         setEmail("");
         setRole("CASHIER");
+        setInviteUrl(null);
       }
     });
   }, [member, isOpen]);
@@ -51,29 +54,37 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email) {
-      return toast.error("Name and Email are required");
+    if (!email) {
+      return toast.error("Email is required");
     }
 
     try {
       if (isEditing) {
         await updateRoleMutation.mutateAsync({ id: member.id, role });
         toast.success("Staff role updated successfully");
+        onClose();
       } else {
-        await createMutation.mutateAsync({ name, email, role });
-        toast.success("Staff member added successfully");
+        const result = await inviteMutation.mutateAsync({ email, role });
+        setInviteUrl(result.inviteUrl);
+        toast.success("Invite link generated successfully");
       }
-      onClose();
     } catch (error) {
       const e = error as AxiosError<{ message: string }>;
       toast.error(
         e?.response?.data?.message ||
-          `Failed to ${isEditing ? "update" : "add"} staff member`,
+          `Failed to ${isEditing ? "update" : "invite"} staff member`,
       );
     }
   };
 
-  const isLoading = createMutation.isPending || updateRoleMutation.isPending;
+  const handleCopyLink = () => {
+    if (inviteUrl) {
+      navigator.clipboard.writeText(inviteUrl);
+      toast.success("Invite link copied to clipboard!");
+    }
+  };
+
+  const isLoading = inviteMutation.isPending || updateRoleMutation.isPending;
 
   return (
     <>
@@ -95,7 +106,7 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                {isEditing ? "Manage Access" : "Add Staff Member"}
+                {isEditing ? "Manage Access" : "Invite Staff Member"}
               </h2>
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                 {isEditing ? member.name : "Team Expansion"}
@@ -112,102 +123,142 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
           </Button>
         </div>
 
-        <form
-          onSubmit={handleSave}
-          className="flex-1 p-6 space-y-6 overflow-y-auto"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-slate-500 mb-1.5 block">
-                Full Name
-              </label>
-              <Input
-                placeholder="e.g. John Doe"
-                className="h-11 rounded-xl bg-slate-50 border-slate-100 font-medium focus:bg-white transition-all"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isEditing || isLoading}
-              />
-              {isEditing && (
-                <p className="text-[10px] text-slate-400 mt-1 font-semibold italic">
-                  * Name cannot be changed here
-                </p>
-              )}
+        {inviteUrl ? (
+          <div className="flex-1 p-8 flex flex-col items-center justify-center text-center space-y-6">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-500 mb-1.5 block">
-                Email Address
-              </label>
-              <Input
-                type="email"
-                placeholder="name@business.com"
-                className="h-11 rounded-xl bg-slate-50 border-slate-100 font-medium focus:bg-white transition-all"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isEditing || isLoading}
-              />
-              {isEditing && (
-                <p className="text-[10px] text-slate-400 mt-1 font-semibold italic">
-                  * Email cannot be changed here
-                </p>
-              )}
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-slate-900">
+                Invite Ready!
+              </h3>
+              <p className="text-sm font-medium text-slate-500 max-w-[260px] mx-auto">
+                Share this secure link with your new team member to complete
+                their registration.
+              </p>
             </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-500 mb-1.5 block">
-                System Role
-              </label>
-              <Select
-                value={role}
-                onValueChange={(val) => setRole(val as UserRole)}
-                disabled={isLoading}
-                
+            <div className="w-full space-y-3 pt-4">
+              <div className="relative">
+                <Input
+                  value={inviteUrl}
+                  readOnly
+                  className="pr-12 bg-slate-50/50 border-slate-200 text-slate-600 font-mono text-xs h-12 rounded-xl"
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleCopyLink}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <Button
+                type="button"
+                className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all"
+                onClick={onClose}
               >
-                <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100 font-medium">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-100 shadow-xl w-full">
-                  <SelectItem
-                    value="CASHIER"
-                    className="rounded-lg m-1 font-semibold"
-                  >
-                    Cashier (POS Only)
-                  </SelectItem>
-                  <SelectItem
-                    value="MANAGER"
-                    className="rounded-lg m-1 font-semibold"
-                  >
-                    Manager (Inventory & Staff)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                Done
+              </Button>
             </div>
           </div>
+        ) : (
+          <form
+            onSubmit={handleSave}
+            className="flex-1 p-6 space-y-6 overflow-y-auto"
+          >
+            <div className="space-y-4">
+              {isEditing && (
+                <div>
+                  <label className="text-xs font-bold text-slate-500 mb-1.5 block">
+                    Full Name
+                  </label>
+                  <Input
+                    placeholder="e.g. John Doe"
+                    className="h-11 rounded-xl bg-slate-50 border-slate-100 font-medium focus:bg-white transition-all"
+                    value={name}
+                    readOnly
+                    disabled
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1 font-semibold italic">
+                    * Name cannot be changed here
+                  </p>
+                </div>
+              )}
 
-          <div className="pt-6 space-y-3">
-            <Button
-              type="submit"
-              className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all"
-              disabled={isLoading}
-            >
-              {isLoading
-                ? "Saving..."
-                : isEditing
-                  ? "Save Changes"
-                  : "Add Member"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full h-12 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
+              <div>
+                <label className="text-xs font-bold text-slate-500 mb-1.5 block">
+                  Email Address
+                </label>
+                <Input
+                  type="email"
+                  placeholder="name@business.com"
+                  className="h-11 rounded-xl bg-slate-50 border-slate-100 font-medium focus:bg-white transition-all"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isEditing || isLoading}
+                />
+                {isEditing && (
+                  <p className="text-[10px] text-slate-400 mt-1 font-semibold italic">
+                    * Email cannot be changed here
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 mb-1.5 block">
+                  System Role
+                </label>
+                <Select
+                  value={role}
+                  onValueChange={(val) => setRole(val as UserRole)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100 font-medium">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-100 shadow-xl w-full">
+                    <SelectItem
+                      value="CASHIER"
+                      className="rounded-lg m-1 font-semibold"
+                    >
+                      Cashier (POS Only)
+                    </SelectItem>
+                    <SelectItem
+                      value="MANAGER"
+                      className="rounded-lg m-1 font-semibold"
+                    >
+                      Manager (Inventory & Staff)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="pt-6 space-y-3">
+              <Button
+                type="submit"
+                className="w-full h-12 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all"
+                disabled={isLoading}
+              >
+                {isLoading
+                  ? "Saving..."
+                  : isEditing
+                    ? "Save Changes"
+                    : "Generate Invite Link"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full h-12 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
+                onClick={onClose}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </>
   );

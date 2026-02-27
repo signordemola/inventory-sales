@@ -14,20 +14,23 @@ export function useStaff() {
   });
 }
 
-export interface CreateStaffPayload {
+export interface InviteStaffPayload {
   email: string;
-  name: string;
   role: UserRole;
 }
 
-export function useCreateStaff() {
+export function useInviteStaff() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: CreateStaffPayload) => {
-      const { data } = await apiClient.post<User>("/users", payload);
+    mutationFn: async (payload: InviteStaffPayload) => {
+      const { data } = await apiClient.post<{ inviteUrl: string }>(
+        "/users/invite",
+        payload,
+      );
       return data;
     },
     onSuccess: () => {
+      // we can still invalidate to show 'Pending' invites in the near future if we add them to the query
       queryClient.invalidateQueries({ queryKey: ["staff"] });
     },
   });
