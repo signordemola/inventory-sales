@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import {
+  businessProfileSchema,
+  BusinessProfileValues,
+} from "@/schemas/settings";
 import { useBusiness, useUpdateBusiness } from "@/hooks/use-business";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
@@ -24,16 +27,7 @@ import {
   FieldError,
   FieldContent,
 } from "@/components/ui/field";
-
-const businessProfileSchema = z.object({
-  name: z.string().min(1, "Business name is required"),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string().optional().or(z.literal("")),
-  address: z.string().optional().or(z.literal("")),
-  logo: z.string().optional().or(z.literal("")),
-});
-
-type BusinessProfileValues = z.infer<typeof businessProfileSchema>;
+import Image from "next/image";
 
 export function BusinessProfileForm() {
   const { data: business, isLoading: isFetching } = useBusiness();
@@ -61,6 +55,7 @@ export function BusinessProfileForm() {
       });
     }
   }, [business, form]);
+  const logo = useWatch({ control: form.control, name: "logo" });
 
   const onSubmit = async (data: BusinessProfileValues) => {
     try {
@@ -174,9 +169,9 @@ export function BusinessProfileForm() {
               </FieldLabel>
               <div className="mt-2 flex items-center gap-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm overflow-hidden">
-                  {form.watch("logo") ? (
-                    <img
-                      src={form.watch("logo")}
+                  {logo ? (
+                    <Image
+                      src={logo || ""}
                       alt="Logo"
                       className="w-full h-full object-cover"
                     />

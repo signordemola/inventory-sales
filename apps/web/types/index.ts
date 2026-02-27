@@ -31,7 +31,7 @@ export const menuItems: MenuItem[] = [
     href: "/dashboard",
     icon: LayoutDashboard,
     label: "Dashboard",
-    roles: ["OWNER", "MANAGER", "CASHIER"],
+    roles: ["OWNER", "MANAGER"],
   },
   {
     href: "/pos",
@@ -61,7 +61,7 @@ export const menuItems: MenuItem[] = [
     href: "/customers",
     icon: Users,
     label: "Customers",
-    roles: ["OWNER", "MANAGER", "CASHIER"],
+    roles: ["OWNER", "MANAGER"],
   },
   {
     href: "/transactions",

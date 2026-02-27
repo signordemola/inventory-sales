@@ -6,8 +6,18 @@ import { Users, Plus, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CustomersTable } from "@/components/customers/customers-table";
-import { CustomerEditor } from "@/components/customers/customer-editor";
-import { CustomerLedger } from "@/components/customers/customer-ledger";
+import dynamic from "next/dynamic";
+
+const CustomerEditor = dynamic(() =>
+  import("@/components/customers/customer-editor").then(
+    (mod) => mod.CustomerEditor,
+  ),
+);
+const CustomerLedger = dynamic(() =>
+  import("@/components/customers/customer-ledger").then(
+    (mod) => mod.CustomerLedger,
+  ),
+);
 
 export default function CustomersPage() {
   const { data: customers, isLoading, isFetching } = useCustomers();

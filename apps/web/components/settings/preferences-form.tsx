@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { preferencesSchema, PreferencesValues } from "@/schemas/settings";
 import { useBusiness, useUpdateBusiness } from "@/hooks/use-business";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,6 @@ import {
   FieldError,
   FieldContent,
 } from "@/components/ui/field";
-
-const preferencesSchema = z.object({
-  currency: z.string().min(1, "Currency is required"),
-  taxRate: z.coerce.number().min(0, "Tax rate cannot be negative"),
-});
-
-type PreferencesValues = z.infer<typeof preferencesSchema>;
 
 export function PreferencesForm() {
   const { data: business, isLoading: isFetching } = useBusiness();

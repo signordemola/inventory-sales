@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { customerSchema, CustomerInput } from "@/schemas/customers";
 import {
   Field,
   FieldContent,
@@ -21,14 +21,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-
-const customerSchema = z.object({
-  name: z.string().min(1, "Customer name is required."),
-  phone: z.string().optional().or(z.literal("")),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
-});
-
-type CustomerInput = z.infer<typeof customerSchema>;
 
 interface CustomerEditorProps {
   isOpen: boolean;

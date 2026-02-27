@@ -16,6 +16,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Product } from "@/types/products";
 import Image from "next/image";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export interface CartItem {
   product: Product;
@@ -70,15 +81,38 @@ export const CartPanel = ({
             {ref} • Today, {time}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
-          onClick={onClearCart}
-          disabled={items.length === 0}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                disabled={items.length === 0}
+              />
+            }
+          >
+            <Trash2 className="w-4 h-4" />
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear Current Order?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to remove all items from the cart? This
+                action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onClearCart}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                Clear Cart
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Cart Items */}

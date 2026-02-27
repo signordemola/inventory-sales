@@ -31,6 +31,7 @@ interface PaymentModalProps {
   vat: number;
   total: number;
   onSuccess: () => void;
+  userRole?: string;
 }
 
 export const PaymentModal = ({
@@ -39,6 +40,7 @@ export const PaymentModal = ({
   items,
   total,
   onSuccess,
+  userRole,
 }: PaymentModalProps) => {
   const [selectedMethod, setSelectedMethod] =
     useState<CreatePayment["method"]>("CASH");
@@ -165,41 +167,45 @@ export const PaymentModal = ({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {methods.map((method) => (
-              <button
-                key={method.id}
-                className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all group relative overflow-hidden ${
-                  selectedMethod === method.id
-                    ? "border-primary bg-primary/5 shadow-inner"
-                    : "border-slate-100 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-900/50"
-                }`}
-                onClick={() =>
-                  setSelectedMethod(method.id as CreatePayment["method"])
-                }
-              >
-                {method.admin && (
-                  <div className="absolute top-0 right-0 bg-amber-400 text-[8px] font-black px-2 py-0.5 rounded-bl-lg text-slate-900">
-                    ADMIN
-                  </div>
-                )}
-                <method.icon
-                  className={`w-8 h-8 transition-transform group-hover:scale-110 ${
+            {methods.map((method) => {
+              if (method.admin && userRole === "CASHIER") return null;
+
+              return (
+                <button
+                  key={method.id}
+                  className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all group relative overflow-hidden ${
                     selectedMethod === method.id
-                      ? "text-primary"
-                      : "text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
+                      ? "border-primary bg-primary/5 shadow-inner"
+                      : "border-slate-100 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-900/50"
                   }`}
-                />
-                <span
-                  className={`font-bold text-sm ${
-                    selectedMethod === method.id
-                      ? "text-slate-900 dark:text-white"
-                      : "text-slate-500"
-                  }`}
+                  onClick={() =>
+                    setSelectedMethod(method.id as CreatePayment["method"])
+                  }
                 >
-                  {method.label}
-                </span>
-              </button>
-            ))}
+                  {method.admin && (
+                    <div className="absolute top-0 right-0 bg-amber-400 text-[8px] font-black px-2 py-0.5 rounded-bl-lg text-slate-900">
+                      ADMIN
+                    </div>
+                  )}
+                  <method.icon
+                    className={`w-8 h-8 transition-transform group-hover:scale-110 ${
+                      selectedMethod === method.id
+                        ? "text-primary"
+                        : "text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
+                    }`}
+                  />
+                  <span
+                    className={`font-bold text-sm ${
+                      selectedMethod === method.id
+                        ? "text-slate-900 dark:text-white"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {method.label}
+                  </span>
+                </button>
+              );
+            })}
 
             <button
               className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all group text-slate-400 hover:text-red-500"

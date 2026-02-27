@@ -13,6 +13,7 @@ import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SupplierIdDto } from './dto/supplier-id.dto';
+import { CreateSupplierPaymentDto } from './dto/create-supplier-payment.dto';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from 'generated/prisma/enums';
@@ -66,5 +67,25 @@ export class SuppliersController {
     @Req() req: Request,
   ): Promise<Supplier> {
     return this.suppliersService.delete(params.id, req.user?.businessId!);
+  }
+
+  @Get(':id/balance')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async getBalance(@Param() params: SupplierIdDto, @Req() req: Request) {
+    return this.suppliersService.getBalance(params.id, req.user?.businessId!);
+  }
+
+  @Post(':id/payments')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async createPayment(
+    @Param() params: SupplierIdDto,
+    @Body() dto: CreateSupplierPaymentDto,
+    @Req() req: Request,
+  ) {
+    return this.suppliersService.createPayment(
+      params.id,
+      dto,
+      req.user?.businessId!,
+    );
   }
 }

@@ -3,8 +3,18 @@
 import React from "react";
 import { Building, Cog, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BusinessProfileForm } from "@/components/settings/business-profile-form";
-import { PreferencesForm } from "@/components/settings/preferences-form";
+import dynamic from "next/dynamic";
+
+const BusinessProfileForm = dynamic(() =>
+  import("@/components/settings/business-profile-form").then(
+    (mod) => mod.BusinessProfileForm,
+  ),
+);
+const PreferencesForm = dynamic(() =>
+  import("@/components/settings/preferences-form").then(
+    (mod) => mod.PreferencesForm,
+  ),
+);
 
 export default function SettingsPage() {
   return (
