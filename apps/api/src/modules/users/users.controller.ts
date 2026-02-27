@@ -45,7 +45,8 @@ export class UsersController {
   @Roles(UserRole.OWNER, UserRole.MANAGER)
   async createInvite(@Body() dto: CreateInviteDto, @Req() req: Request) {
     const businessId = req.user?.businessId!;
-    return this.usersService.createInvite(dto, businessId);
+    const requestingUserId = req.user?.id!;
+    return this.usersService.createInvite(dto, businessId, requestingUserId);
   }
 
   @Get('invites')

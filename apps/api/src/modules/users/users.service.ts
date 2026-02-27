@@ -55,10 +55,26 @@ export class UsersService {
       throw new ForbiddenException('You cannot change your own role');
     }
 
-    return this.usersRepository.update({
+    const updatedUser = await this.usersRepository.update({
       where: { id },
       data: { role: dto.role },
     });
+
+    // Instantly revoke all active sessions if their security role changes
+    await this.prisma.session.deleteMany({ where: { userId: id } });
+
+    // Log the action
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'UPDATE_ROLE',
+        entityId: id,
+        actorId: requestingUserId,
+        businessId,
+        metadata: { newRole: dto.role },
+      },
+    });
+
+    return updatedUser;
   }
 
   async deactivate(id: string, businessId: string, requestingUserId: string) {
@@ -79,12 +95,32 @@ export class UsersService {
       }
     }
 
-    return this.usersRepository.delete({ id });
+    const deletedUser = await this.usersRepository.delete({ id });
+
+    // Instantly revoke all active sessions to kick the user out
+    await this.prisma.session.deleteMany({ where: { userId: id } });
+
+    // Log the action
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'DEACTIVATE_USER',
+        entityId: id,
+        actorId: requestingUserId,
+        businessId,
+        metadata: { role: user.role, email: user.email },
+      },
+    });
+
+    return deletedUser;
   }
 
   // Invite Logic
 
-  async createInvite(dto: CreateInviteDto, businessId: string) {
+  async createInvite(
+    dto: CreateInviteDto,
+    businessId: string,
+    requestingUserId: string,
+  ) {
     // Check if the user is already active in this business
     const existingMembers = await this.usersRepository.findMany({
       where: { email: dto.email, businessId },
@@ -127,6 +163,17 @@ export class UsersService {
         businessId,
         token,
         expiresAt,
+      },
+    });
+
+    // Log the action
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'INVITE_STAFF',
+        entityId: invite.id,
+        actorId: requestingUserId,
+        businessId,
+        metadata: { email: dto.email, role: dto.role },
       },
     });
 

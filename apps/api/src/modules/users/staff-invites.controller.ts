@@ -2,9 +2,11 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('public-invites')
 @AllowAnonymous()
+@Throttle({ default: { limit: 3, ttl: 60000 } })
 export class StaffInvitesController {
   constructor(private readonly usersService: UsersService) {}
 

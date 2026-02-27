@@ -18,12 +18,9 @@ import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
 import { authClient } from "@/lib/auth-client";
 
-const inviteSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
+import { RegisterSchema, RegisterInput } from "@/schemas/auth";
 
-type InviteFormValues = z.infer<typeof inviteSchema>;
+type InviteFormValues = RegisterInput;
 
 export function InviteForm({
   invite,
@@ -36,8 +33,8 @@ export function InviteForm({
   const router = useRouter();
 
   const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteSchema),
-    defaultValues: { name: "", password: "" },
+    resolver: zodResolver(RegisterSchema),
+    defaultValues: { name: "", password: "", confirmPassword: "" },
   });
 
   const onSubmit = async (data: InviteFormValues) => {
@@ -112,6 +109,25 @@ export function InviteForm({
                 <PasswordInput
                   {...field}
                   placeholder="At least 8 characters"
+                  className="h-12 rounded-xl"
+                  disabled={acceptMutation.isPending}
+                />
+              </FieldContent>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={form.control}
+          name="confirmPassword"
+          render={({ field, fieldState }) => (
+            <Field>
+              <FieldLabel>Confirm Password</FieldLabel>
+              <FieldContent>
+                <PasswordInput
+                  {...field}
+                  placeholder="Re-type your password"
                   className="h-12 rounded-xl"
                   disabled={acceptMutation.isPending}
                 />

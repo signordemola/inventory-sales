@@ -156,6 +156,7 @@ model Business {
   sales         Sale[]
   notifications Notification[]
   staffInvites  StaffInvite[]
+  auditLogs     AuditLog[]
 
   @@map("business")
 }
@@ -513,4 +514,23 @@ model StaffInvite {
   @@index([token])
   @@index([email])
   @@map("staff_invite")
+}
+
+// Audit Logs
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String   // e.g "DEACTIVATE_USER", "UPDATE_ROLE", "INVITE_STAFF"
+  entityId   String   // The ID of the item affected
+  actorId    String   // The ID of the user performing the action
+  businessId String
+  metadata   Json?    // Any extra contextual data
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([actorId])
+  @@index([action])
+  @@map("audit_log")
 }
