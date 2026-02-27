@@ -1,41 +1,70 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useBusiness, useUpdateBusiness } from "@/hooks/use-business";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Building2, Mail, Phone, MapPin, Save, Loader2 } from "lucide-react";
+import {
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  Save,
+  Loader2,
+  Image as ImageIcon,
+} from "lucide-react";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldContent,
+} from "@/components/ui/field";
+
+const businessProfileSchema = z.object({
+  name: z.string().min(1, "Business name is required"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  address: z.string().optional().or(z.literal("")),
+  logo: z.string().optional().or(z.literal("")),
+});
+
+type BusinessProfileValues = z.infer<typeof businessProfileSchema>;
 
 export function BusinessProfileForm() {
   const { data: business, isLoading: isFetching } = useBusiness();
   const updateMutation = useUpdateBusiness();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const form = useForm<BusinessProfileValues>({
+    resolver: zodResolver(businessProfileSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      logo: "",
+    },
+  });
 
   useEffect(() => {
     if (business) {
-      setName(business.name || "");
-      setEmail(business.email || "");
-      setPhone(business.phone || "");
-      setAddress(business.address || "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [business]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await updateMutation.mutateAsync({
-        name,
-        email,
-        phone,
-        address,
+      form.reset({
+        name: business.name || "",
+        email: business.email || "",
+        phone: business.phone || "",
+        address: business.address || "",
+        logo: business.logo || "",
       });
+    }
+  }, [business, form]);
+
+  const onSubmit = async (data: BusinessProfileValues) => {
+    try {
+      await updateMutation.mutateAsync(data);
       toast.success("Business profile updated successfully");
     } catch {
       toast.error("Failed to update business profile");
@@ -53,78 +82,134 @@ export function BusinessProfileForm() {
   const isSaving = updateMutation.isPending;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-slate-400" />
+          <Field>
+            <FieldLabel htmlFor="name" className="text-slate-900 font-bold">
+              <Building2 className="w-4 h-4 text-primary/60" />
               Business Name
-            </label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Acme Corp"
-              className="h-12 rounded-xl bg-slate-50 border-slate-100 focus:bg-white transition-all font-medium"
-            />
-          </div>
+            </FieldLabel>
+            <FieldContent>
+              <InputGroup className="h-12 bg-slate-50 border-slate-200 focus-within:border-primary/50 focus-within:ring-primary/10 rounded-xl">
+                <InputGroupInput
+                  id="name"
+                  {...form.register("name")}
+                  placeholder="e.g. Acme Corp"
+                  className="font-semibold text-slate-700"
+                />
+              </InputGroup>
+              <FieldError
+                errors={[{ message: form.formState.errors.name?.message }]}
+              />
+            </FieldContent>
+          </Field>
 
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <Mail className="w-4 h-4 text-slate-400" />
+          <Field>
+            <FieldLabel htmlFor="email" className="text-slate-900 font-bold">
+              <Mail className="w-4 h-4 text-primary/60" />
               Business Email
-            </label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="contact@business.com"
-              className="h-12 rounded-xl bg-slate-50 border-slate-100 focus:bg-white transition-all font-medium"
-            />
-          </div>
+            </FieldLabel>
+            <FieldContent>
+              <InputGroup className="h-12 bg-slate-50 border-slate-200 focus-within:border-primary/50 focus-within:ring-primary/10 rounded-xl">
+                <InputGroupInput
+                  id="email"
+                  type="email"
+                  {...form.register("email")}
+                  placeholder="contact@business.com"
+                  className="font-semibold text-slate-700"
+                />
+              </InputGroup>
+              <FieldError
+                errors={[{ message: form.formState.errors.email?.message }]}
+              />
+            </FieldContent>
+          </Field>
 
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <Phone className="w-4 h-4 text-slate-400" />
+          <Field>
+            <FieldLabel htmlFor="phone" className="text-slate-900 font-bold">
+              <Phone className="w-4 h-4 text-primary/60" />
               Phone Number
-            </label>
-            <Input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+234 ..."
-              className="h-12 rounded-xl bg-slate-50 border-slate-100 focus:bg-white transition-all font-medium"
-            />
-          </div>
+            </FieldLabel>
+            <FieldContent>
+              <InputGroup className="h-12 bg-slate-50 border-slate-200 focus-within:border-primary/50 focus-within:ring-primary/10 rounded-xl">
+                <InputGroupInput
+                  id="phone"
+                  {...form.register("phone")}
+                  placeholder="+234 ..."
+                  className="font-semibold text-slate-700"
+                />
+              </InputGroup>
+              <FieldError
+                errors={[{ message: form.formState.errors.phone?.message }]}
+              />
+            </FieldContent>
+          </Field>
         </div>
 
         <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-slate-400" />
+          <Field className="h-full">
+            <FieldLabel htmlFor="address" className="text-slate-900 font-bold">
+              <MapPin className="w-4 h-4 text-primary/60" />
               Business Address
-            </label>
-            <Textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Full physical address..."
-              className="min-h-[148px] rounded-xl bg-slate-50 border-slate-100 focus:bg-white transition-all font-medium resize-none"
-            />
+            </FieldLabel>
+            <FieldContent className="h-full">
+              <Textarea
+                id="address"
+                {...form.register("address")}
+                placeholder="Full physical address..."
+                className="min-h-[148px] rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:border-primary/50 focus:ring-primary/10 transition-all font-semibold text-slate-700 resize-none"
+              />
+              <FieldError
+                errors={[{ message: form.formState.errors.address?.message }]}
+              />
+            </FieldContent>
+          </Field>
+
+          <div className="pt-2">
+            <Field>
+              <FieldLabel className="text-slate-900 font-bold">
+                <ImageIcon className="w-4 h-4 text-primary/60" />
+                Business Logo
+              </FieldLabel>
+              <div className="mt-2 flex items-center gap-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer group">
+                <div className="w-16 h-16 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm overflow-hidden">
+                  {form.watch("logo") ? (
+                    <img
+                      src={form.watch("logo")}
+                      alt="Logo"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon className="w-6 h-6 text-slate-300" />
+                  )}
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-bold text-slate-600 group-hover:text-primary transition-colors">
+                    Click to upload logo
+                  </p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    PNG, JPG up to 5MB
+                  </p>
+                </div>
+              </div>
+            </Field>
           </div>
         </div>
       </div>
 
-      <div className="pt-6 border-t border-slate-100 flex justify-end">
+      <div className="pt-8 border-t border-slate-100 flex justify-end">
         <Button
           type="submit"
-          disabled={isSaving}
-          className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 transition-all gap-2"
+          disabled={isSaving || !form.formState.isDirty}
+          className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 transition-all gap-2 disabled:opacity-50 disabled:shadow-none"
         >
           {isSaving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Save className="w-4 h-4" />
           )}
-          Save Changes
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </form>

@@ -25,6 +25,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 
 interface StaffTableProps {
@@ -145,16 +146,18 @@ export function StaffTable({
                     align="end"
                     className="w-48 rounded-xl border-slate-100 shadow-xl"
                   >
-                    <DropdownMenuLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3">
-                      Management
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                      className="gap-2 text-sm font-semibold rounded-lg m-1 cursor-pointer"
-                      onClick={() => onEdit(member)}
-                    >
-                      <UserCog className="w-4 h-4 text-slate-400" /> Manage
-                      Access
-                    </DropdownMenuItem>
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3">
+                        Management
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem
+                        className="gap-2 text-sm font-semibold rounded-lg m-1 cursor-pointer"
+                        onClick={() => onEdit(member)}
+                      >
+                        <UserCog className="w-4 h-4 text-slate-400" /> Manage
+                        Access
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
                     <DropdownMenuSeparator className="bg-slate-50" />
                     <DropdownMenuItem
                       className="gap-2 text-sm font-semibold rounded-lg m-1 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"

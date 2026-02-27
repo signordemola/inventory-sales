@@ -105,8 +105,17 @@ export default function ProductEditorPage() {
         await updateMutation.mutateAsync(payload);
         toast.success("Product updated successfully");
       }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to save product");
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "response" in error) {
+        const responseError = error as {
+          response?: { data?: { message?: string } };
+        };
+        toast.error(
+          responseError.response?.data?.message || "Failed to save product",
+        );
+      } else {
+        toast.error("Failed to save product");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -122,7 +131,7 @@ export default function ProductEditorPage() {
         await deleteMutation.mutateAsync(productId);
         toast.success("Product deleted");
         router.push("/owner/products");
-      } catch (e: any) {
+      } catch {
         toast.error("Failed to delete product");
       }
     }

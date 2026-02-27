@@ -33,16 +33,17 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
   const updateRoleMutation = useUpdateStaffRole();
 
   useEffect(() => {
-    if (member) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      setName(member.name);
-      setEmail(member.email);
-      setRole(member.role);
-    } else {
-      setName("");
-      setEmail("");
-      setRole("CASHIER");
-    }
+    queueMicrotask(() => {
+      if (member) {
+        setName(member.name);
+        setEmail(member.email);
+        setRole(member.role);
+      } else {
+        setName("");
+        setEmail("");
+        setRole("CASHIER");
+      }
+    });
   }, [member, isOpen]);
 
   if (!isOpen) return null;
@@ -161,11 +162,12 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
                 value={role}
                 onValueChange={(val) => setRole(val as UserRole)}
                 disabled={isLoading}
+                
               >
                 <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100 font-medium">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                <SelectContent className="rounded-xl border-slate-100 shadow-xl w-full">
                   <SelectItem
                     value="CASHIER"
                     className="rounded-lg m-1 font-semibold"
@@ -177,12 +179,6 @@ export function StaffEditor({ isOpen, onClose, member }: StaffEditorProps) {
                     className="rounded-lg m-1 font-semibold"
                   >
                     Manager (Inventory & Staff)
-                  </SelectItem>
-                  <SelectItem
-                    value="OWNER"
-                    className="rounded-lg m-1 font-semibold"
-                  >
-                    Owner (Full Permissions)
                   </SelectItem>
                 </SelectContent>
               </Select>

@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, IsPhoneNumber } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsNumber } from 'class-validator';
 
 export class UpdateBusinessDto {
   @IsString()
@@ -25,6 +25,7 @@ export class UpdateBusinessDto {
   @IsOptional()
   logo?: string;
 
+  @IsNumber()
   @IsOptional()
   taxRate?: number;
 }

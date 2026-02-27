@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   Customer,
   useCreateCustomer,
@@ -11,7 +11,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { cn } from "@/lib/utils";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+
+const customerSchema = z.object({
+  name: z.string().min(1, "Customer name is required."),
+  phone: z.string().optional().or(z.literal("")),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+});
+
+type CustomerInput = z.infer<typeof customerSchema>;
 
 interface CustomerEditorProps {
   isOpen: boolean;
@@ -28,25 +45,32 @@ export const CustomerEditor = ({
   const createMutation = useCreateCustomer();
   const updateMutation = useUpdateCustomer(customer?.id);
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const form = useForm<CustomerInput>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+    },
+  });
 
   useEffect(() => {
-    if (isOpen) {
-      setName(customer?.name || "");
-      setPhone(customer?.phone || "");
-      setEmail(customer?.email || "");
-    }
-  }, [isOpen, customer]);
+    queueMicrotask(() => {
+      if (isOpen) {
+        form.reset({
+          name: customer?.name || "",
+          phone: customer?.phone || "",
+          email: customer?.email || "",
+        });
+      }
+    });
+  }, [isOpen, customer, form]);
 
-  const handleSave = async () => {
-    if (!name.trim()) return toast.error("Customer name is required.");
-
+  const onSubmit = async (data: CustomerInput) => {
     const payload = {
-      name,
-      phone: phone.trim() || undefined,
-      email: email.trim() || undefined,
+      name: data.name,
+      phone: data.phone?.trim() || undefined,
+      email: data.email?.trim() || undefined,
     };
 
     try {
@@ -99,62 +123,116 @@ export const CustomerEditor = ({
           </Button>
         </div>
 
-        <div className="flex-1 p-6 overflow-y-auto space-y-6">
-          <div>
-            <label className="text-sm font-bold text-slate-700 mb-2 block">
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <Input
-              placeholder="e.g. Jane Doe"
-              className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex-1 flex flex-col overflow-hidden"
+        >
+          <div className="flex-1 p-6 overflow-y-auto space-y-6">
+            <FieldGroup>
+              <Controller
+                name="name"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldContent>
+                      <FieldLabel
+                        className="text-sm font-bold text-slate-700"
+                        htmlFor={field.name}
+                      >
+                        Full Name <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="e.g. Jane Doe"
+                        aria-invalid={fieldState.invalid}
+                        className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium transition-all focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="phone"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldContent>
+                      <FieldLabel
+                        className="text-sm font-bold text-slate-700"
+                        htmlFor={field.name}
+                      >
+                        Phone Number
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder="e.g. 08012345678"
+                        aria-invalid={fieldState.invalid}
+                        className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium transition-all focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="email"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldContent>
+                      <FieldLabel
+                        className="text-sm font-bold text-slate-700"
+                        htmlFor={field.name}
+                      >
+                        Email Address
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        type="email"
+                        placeholder="e.g. jane@example.com"
+                        aria-invalid={fieldState.invalid}
+                        className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium transition-all focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+            </FieldGroup>
           </div>
 
-          <div>
-            <label className="text-sm font-bold text-slate-700 mb-2 block">
-              Phone Number
-            </label>
-            <Input
-              placeholder="e.g. 08012345678"
-              className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+          <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 px-6 rounded-xl font-bold bg-white"
+              onClick={onClose}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm"
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isPending ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
-
-          <div>
-            <label className="text-sm font-bold text-slate-700 mb-2 block">
-              Email Address
-            </label>
-            <Input
-              type="email"
-              placeholder="e.g. jane@example.com"
-              className="h-11 rounded-xl bg-slate-50 border-slate-200 font-medium"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3">
-          <Button
-            variant="outline"
-            className="h-11 px-6 rounded-xl font-bold bg-white"
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm"
-            onClick={handleSave}
-            disabled={isPending}
-          >
-            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {isPending ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
+        </form>
       </div>
     </>
   );
