@@ -18,7 +18,7 @@ const SuppliersPage = () => {
   const { data: suppliers, isLoading } = useSuppliers();
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight text-center sm:text-left">
@@ -28,7 +28,7 @@ const SuppliersPage = () => {
             Manage vendor relations and purchase history.
           </p>
         </div>
-        <button className="bg-primary text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
+        <button className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto">
           <Plus className="size-5" />
           Add Supplier
         </button>
@@ -45,7 +45,7 @@ const SuppliersPage = () => {
             <input
               type="text"
               placeholder="Search suppliers..."
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-slate-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="w-full pl-9 pr-4 py-2 h-11 rounded-xl border border-border bg-slate-50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
         </CardHeader>

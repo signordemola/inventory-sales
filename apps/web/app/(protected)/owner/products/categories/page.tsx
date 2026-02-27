@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import { useCategories, useDeleteCategory } from "@/hooks/use-categories";
-import { Plus, Search } from "lucide-react";
+import { ArrowLeft, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import Link from "next/link";
 import { CategoryTree } from "@/components/categories/category-tree";
 import { CategoryEditor } from "@/components/categories/category-editor";
 
@@ -66,9 +67,17 @@ export default function CategoryManagementPage() {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 mb-4">
+            <Link
+              href="/owner/products"
+              className="flex items-center gap-1 hover:text-primary transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Products
+            </Link>
+          </div>
           <h1 className="text-4xl font-black tracking-tight text-slate-900 font-display">
             Category Management
           </h1>

@@ -8,7 +8,7 @@ import { PreferencesForm } from "@/components/settings/preferences-form";
 
 export default function SettingsPage() {
   return (
-    <div className="flex-1 space-y-8 p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -23,7 +23,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Settings Interface */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
         <Tabs defaultValue="profile" className="w-full">
           <div className="border-b border-slate-50 bg-slate-50/30 px-8 pt-6">
             <TabsList className="bg-transparent p-0 gap-8 h-12">

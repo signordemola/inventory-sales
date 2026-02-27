@@ -8,7 +8,7 @@ import {
   StockLevel,
   StockMovementType,
 } from "@/hooks/use-inventory";
-import { useProducts } from "@/hooks/use-products";
+
 import {
   Package,
   ArrowUpCircle,
@@ -119,7 +119,7 @@ function MovementBadge({ type }: { type: StockMovementType }) {
 export default function InventoryPage() {
   const { data: levels, isLoading: loadingLevels } = useInventoryLevels();
   const { data: history, isLoading: loadingHistory } = useInventoryHistory();
-  const { data: products } = useProducts({ limit: 500 } as never);
+
   const adjustStock = useAdjustStock();
 
   // Adjustment form state
@@ -168,7 +168,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">

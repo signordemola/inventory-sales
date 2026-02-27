@@ -2,7 +2,6 @@
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import SubmitButton from "@/components/auth/submit-btn";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/auth/password-input";

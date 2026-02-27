@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRecentSales } from "@/hooks/use-recent-sales";
 import { formatDistanceToNow } from "date-fns";
 import { Sale } from "@/types/sales";
+import Link from "next/link";
 
 export function RecentTransactions() {
   const { data: transactions, isLoading, isError } = useRecentSales(5);
@@ -78,9 +79,12 @@ export function RecentTransactions() {
         <CardTitle className="text-sm font-bold text-foreground tracking-tight uppercase">
           Recent Transactions
         </CardTitle>
-        <button className="text-[10px] font-bold text-primary hover:underline transition-all">
+        <Link
+          href={`owner/transactions`}
+          className="text-[10px] font-bold text-primary hover:underline transition-all cursor-pointer"
+        >
           VIEW ALL
-        </button>
+        </Link>
       </CardHeader>
       <CardContent className="pt-4">
         <div className="space-y-6">

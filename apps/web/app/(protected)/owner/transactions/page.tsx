@@ -37,7 +37,7 @@ export default function TransactionsPage() {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -53,7 +53,7 @@ export default function TransactionsPage() {
             variant="outline"
             className="h-11 px-5 rounded-xl font-bold bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50"
           >
-            <Download className="w-4 h-4 mr-2" /> Export CSV
+            <Download className="w-4 h-4 mr-2 text-slate-400" /> Export CSV
           </Button>
           <Button className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all active:scale-95">
             + New Sale
@@ -62,7 +62,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border-none shadow-xl shadow-slate-200/50 p-5 flex flex-wrap items-center gap-3">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 p-5 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-400 mr-2">
           <Filter className="w-4 h-4" /> Filters:
         </div>

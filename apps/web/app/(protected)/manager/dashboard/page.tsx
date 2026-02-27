@@ -5,7 +5,7 @@ import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 
 const StaffDashboardPage = () => {
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       <div>
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
           Manager Dashboard

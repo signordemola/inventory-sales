@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { CustomersTable } from "@/components/customers/customers-table";
 import { CustomerEditor } from "@/components/customers/customer-editor";
 import { CustomerLedger } from "@/components/customers/customer-ledger";
-import { toast } from "sonner";
 
 export default function CustomersPage() {
   const { data: customers, isLoading, isFetching } = useCustomers();
@@ -48,7 +47,7 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -81,7 +80,7 @@ export default function CustomersPage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
             placeholder="Search customers by name, phone, or email..."
-            className="pl-10 h-12 rounded-xl bg-white border-slate-200 shadow-sm focus-visible:ring-primary/20 text-sm font-medium"
+            className="pl-10 h-11 rounded-xl bg-white border-slate-200 shadow-sm focus-visible:ring-primary/20 text-sm font-medium"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
