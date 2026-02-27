@@ -1,8 +1,10 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 
 @Controller('public-invites')
+@AllowAnonymous()
 export class StaffInvitesController {
   constructor(private readonly usersService: UsersService) {}
 

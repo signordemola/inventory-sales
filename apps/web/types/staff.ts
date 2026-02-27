@@ -10,3 +10,13 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface StaffInvite {
+  id: string;
+  email: string;
+  role: UserRole;
+  token: string;
+  status: "PENDING" | "ACCEPTED" | "REVOKED";
+  expiresAt: string;
+  createdAt: string;
+}

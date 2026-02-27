@@ -1,27 +1,53 @@
 "use client";
 
 import React, { useState } from "react";
-import { useStaff, useDeactivateStaff } from "@/hooks/use-staff";
-import { User } from "@/types/staff";
+import {
+  useStaff,
+  useDeactivateStaff,
+  usePendingInvites,
+  useRevokeInvite,
+} from "@/hooks/use-staff";
+import { User, StaffInvite } from "@/types/staff";
 import { Search, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { StaffTable } from "@/components/staff/staff-table";
 import { StaffEditor } from "@/components/staff/staff-editor";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function StaffPage() {
   const { data: staff, isLoading } = useStaff();
+  const { data: pendingInvites, isLoading: isInvitesLoading } =
+    usePendingInvites();
   const deactivateMutation = useDeactivateStaff();
+  const revokeMutation = useRevokeInvite();
 
   const [search, setSearch] = useState("");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
+  const [inviteToRevoke, setInviteToRevoke] = useState<StaffInvite | null>(
+    null,
+  );
+  const [memberToDeactivate, setMemberToDeactivate] = useState<User | null>(
+    null,
+  );
 
   const filteredStaff = staff?.filter(
     (u) =>
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const filteredInvites = pendingInvites?.filter((i) =>
+    i.email.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleAddStaff = () => {
@@ -34,15 +60,40 @@ export default function StaffPage() {
     setIsEditorOpen(true);
   };
 
-  const handleDeactivate = async (user: User) => {
-    if (confirm(`Are you sure you want to deactivate ${user.name}?`)) {
-      try {
-        await deactivateMutation.mutateAsync(user.id);
-        toast.success("Staff member deactivated");
-      } catch {
-        toast.error("Failed to deactivate staff member");
-      }
+  const handleDeactivate = (user: User) => {
+    setMemberToDeactivate(user);
+  };
+
+  const confirmDeactivate = async () => {
+    if (!memberToDeactivate) return;
+    try {
+      await deactivateMutation.mutateAsync(memberToDeactivate.id);
+      toast.success("Staff member deactivated");
+      setMemberToDeactivate(null);
+    } catch {
+      toast.error("Failed to deactivate staff member");
     }
+  };
+
+  const handleRevokeInvite = (invite: StaffInvite) => {
+    setInviteToRevoke(invite);
+  };
+
+  const confirmRevokeInvite = async () => {
+    if (!inviteToRevoke) return;
+    try {
+      await revokeMutation.mutateAsync(inviteToRevoke.token);
+      toast.success("Invite revoked successfully");
+      setInviteToRevoke(null);
+    } catch {
+      toast.error("Failed to revoke invite");
+    }
+  };
+
+  const handleCopyInviteUrl = (invite: StaffInvite) => {
+    const url = `${window.location.origin}/invite/${invite.token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Invite link copied to clipboard");
   };
 
   return (
@@ -81,16 +132,19 @@ export default function StaffPage() {
         </div>
         <div className="ml-auto text-sm font-bold text-slate-500 bg-white px-4 py-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-2">
           <Users className="w-4 h-4 text-primary" />
-          {filteredStaff?.length || 0} Total Staff
+          {(filteredStaff?.length || 0) + (filteredInvites?.length || 0)} Total
         </div>
       </div>
 
       {/* Table Section */}
       <StaffTable
         staff={filteredStaff}
-        isLoading={isLoading}
+        pendingInvites={filteredInvites}
+        isLoading={isLoading || isInvitesLoading}
         onEdit={handleEditStaff}
         onDeactivate={handleDeactivate}
+        onRevokeInvite={handleRevokeInvite}
+        onCopyInviteUrl={handleCopyInviteUrl}
       />
 
       {/* Editor Slide-over */}
@@ -99,6 +153,76 @@ export default function StaffPage() {
         onClose={() => setIsEditorOpen(false)}
         member={selectedMember}
       />
+
+      {/* Revoke Invite Dialog */}
+      <Dialog
+        open={!!inviteToRevoke}
+        onOpenChange={(open) => !open && setInviteToRevoke(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revoke Invite</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to revoke the invite for{" "}
+              <span className="font-bold text-slate-900">
+                {inviteToRevoke?.email}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setInviteToRevoke(null)}
+              disabled={revokeMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmRevokeInvite}
+              disabled={revokeMutation.isPending}
+            >
+              {revokeMutation.isPending ? "Revoking..." : "Revoke Invite"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deactivate Member Dialog */}
+      <Dialog
+        open={!!memberToDeactivate}
+        onOpenChange={(open) => !open && setMemberToDeactivate(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deactivate Staff Member</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to deactivate{" "}
+              <span className="font-bold text-slate-900">
+                {memberToDeactivate?.name}
+              </span>
+              ? They will no longer be able to access the system.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setMemberToDeactivate(null)}
+              disabled={deactivateMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeactivate}
+              disabled={deactivateMutation.isPending}
+            >
+              {deactivateMutation.isPending ? "Deactivating..." : "Deactivate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

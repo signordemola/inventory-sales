@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { UsersRepository } from './users.repository';
@@ -84,6 +85,37 @@ export class UsersService {
   // Invite Logic
 
   async createInvite(dto: CreateInviteDto, businessId: string) {
+    // Check if the user is already active in this business
+    const existingMembers = await this.usersRepository.findMany({
+      where: { email: dto.email, businessId },
+    });
+    if (existingMembers.length > 0) {
+      throw new ConflictException(
+        'This user is already a member of the business',
+      );
+    }
+
+    // Check if there is already a pending invite
+    const existingInvite = await this.prisma.staffInvite.findFirst({
+      where: {
+        email: dto.email,
+        businessId,
+        status: StaffInviteStatus.PENDING,
+      },
+    });
+    if (existingInvite) {
+      if (existingInvite.expiresAt < new Date()) {
+        await this.prisma.staffInvite.update({
+          where: { id: existingInvite.id },
+          data: { status: StaffInviteStatus.REVOKED },
+        });
+      } else {
+        throw new ConflictException(
+          'A pending invite already exists for this email',
+        );
+      }
+    }
+
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // Valid for 7 days
@@ -100,6 +132,26 @@ export class UsersService {
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     return { inviteUrl: `${frontendUrl}/invite/${token}` };
+  }
+
+  async getPendingInvites(businessId: string) {
+    return this.prisma.staffInvite.findMany({
+      where: { businessId, status: StaffInviteStatus.PENDING },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async revokeInvite(token: string, businessId: string) {
+    const invite = await this.prisma.staffInvite.findUnique({
+      where: { token },
+    });
+    if (!invite || invite.businessId !== businessId) {
+      throw new NotFoundException('Invite not found');
+    }
+    return this.prisma.staffInvite.update({
+      where: { token },
+      data: { status: StaffInviteStatus.REVOKED },
+    });
   }
 
   async getInvite(token: string) {

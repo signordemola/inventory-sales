@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/axios";
-import { User, UserRole } from "@/types/staff";
+import { User, UserRole, StaffInvite } from "@/types/staff";
 
 export function useStaff() {
   return useQuery({
@@ -59,6 +59,28 @@ export function useDeactivateStaff() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] });
+    },
+  });
+}
+
+export function usePendingInvites() {
+  return useQuery({
+    queryKey: ["staff-invites"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<StaffInvite[]>("/users/invites");
+      return data;
+    },
+  });
+}
+
+export function useRevokeInvite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (token: string) => {
+      await apiClient.delete(`/users/invites/${token}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff-invites"] });
     },
   });
 }

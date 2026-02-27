@@ -39,6 +39,29 @@ export class UsersController {
     return req.user;
   }
 
+  // Invite Endpoints
+
+  @Post('invite')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async createInvite(@Body() dto: CreateInviteDto, @Req() req: Request) {
+    const businessId = req.user?.businessId!;
+    return this.usersService.createInvite(dto, businessId);
+  }
+
+  @Get('invites')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async getPendingInvites(@Req() req: Request) {
+    const businessId = req.user?.businessId!;
+    return this.usersService.getPendingInvites(businessId);
+  }
+
+  @Delete('invites/:token')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async revokeInvite(@Param('token') token: string, @Req() req: Request) {
+    const businessId = req.user?.businessId!;
+    return this.usersService.revokeInvite(token, businessId);
+  }
+
   @Get(':id')
   @Roles(UserRole.OWNER, UserRole.MANAGER)
   async findOne(
@@ -83,14 +106,5 @@ export class UsersController {
       businessId,
       requestingUserId,
     );
-  }
-
-  // Invite Endpoints
-
-  @Post('invite')
-  @Roles(UserRole.OWNER, UserRole.MANAGER)
-  async createInvite(@Body() dto: CreateInviteDto, @Req() req: Request) {
-    const businessId = req.user?.businessId!;
-    return this.usersService.createInvite(dto, businessId);
   }
 }
