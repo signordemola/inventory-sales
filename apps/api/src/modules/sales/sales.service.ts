@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { SalesRepository } from './sales.repository';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { SaleQueryDto } from './dto/sale-query.dto';
+import { ReturnSaleDto } from './dto/return-sale.dto';
 import { Sale, Prisma } from 'generated/prisma/client';
 
 @Injectable()
@@ -130,5 +131,55 @@ export class SalesService {
         quantity: item.quantity,
       })),
     });
+  }
+
+  async returnSale(
+    saleId: string,
+    businessId: string,
+    dto: ReturnSaleDto,
+    userId: string,
+  ): Promise<Sale> {
+    const sale = await this.findOne(saleId, businessId);
+
+    // Validate that the request doesn't return more items than were originally sold
+    for (const returnItem of dto.items) {
+      // Find the corresponding sale item, making sure to include variants where necessary
+      // Assuming sale.items is included in findOne (which it should be via the repository)
+      const saleItem = (sale as any).items?.find(
+        (i: any) => i.id === returnItem.saleItemId,
+      );
+
+      if (!saleItem) {
+        throw new NotFoundException(
+          `SaleItem ${returnItem.saleItemId} not found on this sale`,
+        );
+      }
+
+      if (saleItem.quantity - saleItem.returned < returnItem.quantity) {
+        throw new NotFoundException(
+          `Cannot return more items than were originally sold.`,
+        );
+      }
+    }
+
+    return this.salesRepository.processReturn(saleId, dto.items, userId);
+  }
+
+  async getDailySummary(businessId: string, customDate?: string) {
+    const date = customDate ? new Date(customDate) : new Date();
+    // Normalize to midnight UTC
+    const startOfDay = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    );
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    return this.salesRepository.getDailySummary(
+      businessId,
+      startOfDay,
+      endOfDay,
+    );
   }
 }
