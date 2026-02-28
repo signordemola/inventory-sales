@@ -128,4 +128,80 @@ export class DashboardService {
       activeStaffCount,
     };
   }
+
+  async getCashierShift(businessId: string, cashierId: string) {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+
+    const salesWhere = {
+      businessId,
+      cashierId,
+      createdAt: { gte: todayStart, lte: todayEnd },
+      status: 'COMPLETED' as const,
+    };
+
+    // 1. Gross Sales & Transaction Count
+    const todaySales = await this.prisma.sale.aggregate({
+      where: salesWhere,
+      _sum: { total: true },
+      _count: { id: true },
+    });
+
+    // 2. Cash Expected in Drawer
+    // Sum of all payments linked to completed sales TODAY where method is CASH
+    const cashPayments = await this.prisma.payment.aggregate({
+      where: {
+        method: 'CASH',
+        sale: salesWhere,
+      },
+      _sum: { amount: true },
+    });
+
+    // 3. Recent Transactions (Last 5)
+    const recentSales = await this.prisma.sale.findMany({
+      where: { businessId, cashierId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        reference: true,
+        total: true,
+        status: true,
+        createdAt: true,
+        items: {
+          select: { quantity: true, product: { select: { name: true } } },
+        },
+      },
+    });
+
+    // 4. Low Stock / Out of Stock List (Limit to 10 to keep payload small)
+    // Gets active products whose stock is <= lowStockThreshold
+    const allProducts = await this.prisma.product.findMany({
+      where: { businessId, isActive: true },
+      include: { stockRecord: true },
+    });
+
+    const lowStockItems = allProducts
+      .filter((p) => {
+        const qty = Number(p.stockRecord?.quantity || 0);
+        return qty <= (p.lowStockThreshold || 0);
+      })
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        quantity: Number(p.stockRecord?.quantity || 0),
+        threshold: p.lowStockThreshold,
+      }))
+      .slice(0, 15);
+
+    return {
+      grossSales: Number(todaySales._sum.total || 0),
+      transactionCount: todaySales._count.id,
+      cashDrawerExpected: Number(cashPayments._sum.amount || 0),
+      recentSales,
+      lowStockItems,
+    };
+  }
 }

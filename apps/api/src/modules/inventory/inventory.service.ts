@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InventoryRepository } from './inventory.repository';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
 import { StockMovementQueryDto } from './dto/stock-movement-query.dto';
@@ -44,14 +48,23 @@ export class InventoryService {
     const quantityChange =
       dto.type === StockMovementType.IN ? dto.quantity : -dto.quantity;
 
-    if (dto.type === StockMovementType.OUT) {
+    if (quantityChange < 0) {
       const stock = await this.inventoryRepository.findStockRecord(
         dto.variantId
           ? { variantId: dto.variantId }
           : { productId: dto.productId },
       );
-      if (!stock || stock.quantity < dto.quantity) {
-        throw new NotFoundException('Insufficient stock for this movement');
+
+      if (!stock) {
+        throw new BadRequestException(
+          'Cannot reduce stock for an item with no initial stock record.',
+        );
+      }
+
+      if (stock.quantity + quantityChange < 0) {
+        throw new BadRequestException(
+          `Insufficient stock. Action would reduce stock to ${stock.quantity + quantityChange}.`,
+        );
       }
     }
 

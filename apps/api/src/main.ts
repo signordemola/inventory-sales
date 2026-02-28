@@ -6,14 +6,32 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import {
+  WinstonModule,
+  utilities as nestWinstonModuleUtilities,
+} from 'nest-winston';
+import * as winston from 'winston';
 
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
 
+  const loggerInstance = WinstonModule.createLogger({
+    transports: [
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.ms(),
+          nestWinstonModuleUtilities.format.nestLike('InventoryAPI', {
+            colors: true,
+            prettyPrint: true,
+          }),
+        ),
+      }),
+    ],
+  });
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: isProduction
-      ? ['error', 'warn', 'log']
-      : ['error', 'warn', 'log', 'debug', 'verbose'],
+    logger: loggerInstance,
     bodyParser: false,
   });
 

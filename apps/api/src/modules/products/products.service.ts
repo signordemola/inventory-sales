@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ProductsRepository } from './products.repository';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -52,6 +56,12 @@ export class ProductsService {
   }
 
   async create(dto: CreateProductDto, businessId: string): Promise<Product> {
+    if (Number(dto.sellingPrice) < Number(dto.buyingPrice)) {
+      throw new BadRequestException(
+        'Selling price cannot be lower than buying price.',
+      );
+    }
+
     const { categoryId, ...data } = dto;
     return this.productsRepository.create({
       ...data,
@@ -65,7 +75,23 @@ export class ProductsService {
     dto: UpdateProductDto,
     businessId: string,
   ): Promise<Product> {
-    await this.findOne(id, businessId);
+    const product = await this.findOne(id, businessId);
+
+    const buyingPrice =
+      dto.buyingPrice !== undefined
+        ? Number(dto.buyingPrice)
+        : Number(product.buyingPrice);
+    const sellingPrice =
+      dto.sellingPrice !== undefined
+        ? Number(dto.sellingPrice)
+        : Number(product.sellingPrice);
+
+    if (sellingPrice < buyingPrice) {
+      throw new BadRequestException(
+        'Selling price cannot be lower than buying price.',
+      );
+    }
+
     const { categoryId, ...data } = dto;
 
     return this.productsRepository.update({

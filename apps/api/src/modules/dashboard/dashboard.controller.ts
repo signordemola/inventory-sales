@@ -18,4 +18,12 @@ export class DashboardController {
     const { businessId, id, role } = req.user;
     return this.dashboardService.getStats(businessId, { id, role });
   }
+
+  @Version('1')
+  @Get('cashier-shift')
+  @Roles(UserRole.CASHIER, UserRole.MANAGER, UserRole.OWNER)
+  async getCashierShiftStats(@Request() req: any) {
+    const { businessId, id } = req.user;
+    return this.dashboardService.getCashierShift(businessId, id);
+  }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './modules/prisma/prisma.module';
@@ -16,6 +16,10 @@ import { SalesModule } from './modules/sales/sales.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AlertsModule } from './modules/alerts/alerts.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 
 @Module({
   imports: [
@@ -50,6 +54,9 @@ import { CustomersModule } from './modules/customers/customers.module';
     SuppliersModule,
     DashboardModule,
     CustomersModule,
+    ScheduleModule.forRoot(),
+    AlertsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -58,4 +65,8 @@ import { CustomersModule } from './modules/customers/customers.module';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+  }
+}

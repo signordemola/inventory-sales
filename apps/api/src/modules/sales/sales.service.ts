@@ -1,13 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SalesRepository } from './sales.repository';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { SaleQueryDto } from './dto/sale-query.dto';
 import { ReturnSaleDto } from './dto/return-sale.dto';
 import { Sale, Prisma } from 'generated/prisma/client';
+import { AlertsService } from 'src/modules/alerts/alerts.service';
 
 @Injectable()
 export class SalesService {
-  constructor(private readonly salesRepository: SalesRepository) {}
+  constructor(
+    private readonly salesRepository: SalesRepository,
+    private readonly alertsService: AlertsService,
+  ) {}
 
   async findAll(businessId: string, query: SaleQueryDto) {
     const {
@@ -73,12 +81,30 @@ export class SalesService {
     businessId: string,
     cashierId: string,
   ): Promise<Sale> {
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException(
+        'Cannot process a sale with an empty cart.',
+      );
+    }
+
     const reference = `SALE-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
     const subtotal = dto.items.reduce(
       (acc, item) => acc + item.quantity * item.unitPrice,
       0,
     );
     const total = subtotal - dto.discount;
+
+    if (dto.discount > subtotal) {
+      throw new BadRequestException('Discount cannot exceed the subtotal.');
+    }
+
+    const amountTendered =
+      dto.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
+    if (amountTendered < total) {
+      throw new BadRequestException(
+        `Payment amount (${amountTendered}) does not cover the grand total (${total}).`,
+      );
+    }
 
     // 1. Check stock availability for all items
     for (const item of dto.items) {
@@ -93,7 +119,7 @@ export class SalesService {
       }
     }
 
-    return this.salesRepository.create({
+    const sale = await this.salesRepository.create({
       data: {
         reference,
         subtotal,
@@ -131,6 +157,13 @@ export class SalesService {
         quantity: item.quantity,
       })),
     });
+
+    // Fire-and-forget low stock check after sale completes
+    this.alertsService.checkLowStockForBusiness(businessId).catch((err) => {
+      console.error('Failed to run low stock check after sale:', err);
+    });
+
+    return sale;
   }
 
   async returnSale(

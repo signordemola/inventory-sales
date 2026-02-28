@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useSessionContext } from "@/lib/session-context";
 import { SidebarTrigger } from "../ui/sidebar";
 import {
   Breadcrumb,
@@ -17,10 +18,11 @@ import { formattedDate } from "@/lib/date";
 
 const Header = () => {
   const pathname = usePathname();
+  const { user } = useSessionContext();
 
   const segments = pathname.split("/").filter(Boolean);
-  const role = segments[0] || "staff";
-  const page = segments[1] || "dashboard";
+  const userRole = user?.role || "cashier";
+  const page = segments[0] || "dashboard";
 
   const getLabel = (s: string) => {
     const labels: Record<string, string> = {
@@ -48,10 +50,10 @@ const Header = () => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                href={`/${role}/dashboard`}
+                href={`/dashboard`}
                 className="text-xs font-medium text-slate-500 uppercase tracking-wider"
               >
-                {getLabel(role)}
+                {getLabel(userRole)}
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

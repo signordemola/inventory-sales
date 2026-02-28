@@ -18,7 +18,6 @@ import { PasswordInput } from "./password-input";
 import SubmitButton from "./submit-btn";
 import { LoginInput, LoginSchema } from "@/schemas/auth";
 import { authClient } from "@/lib/auth-client";
-import { UserRole } from "@/types";
 
 const LoginForm = () => {
   const router = useRouter();
@@ -44,12 +43,8 @@ const LoginForm = () => {
             password: values.password,
           },
           {
-            onSuccess: (ctx) => {
-              if (ctx.data.user.role === UserRole.CASHIER) {
-                router.push("/pos");
-              } else {
-                router.push("/dashboard");
-              }
+            onSuccess: () => {
+              router.push("/dashboard");
             },
             onError: (ctx) => {
               setError(ctx.error.message || "Failed to log in.");

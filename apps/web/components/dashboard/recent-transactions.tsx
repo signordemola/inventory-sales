@@ -80,7 +80,7 @@ export function RecentTransactions() {
           Recent Transactions
         </CardTitle>
         <Link
-          href={`owner/transactions`}
+          href={`/transactions`}
           className="text-[10px] font-bold text-primary hover:underline transition-all cursor-pointer"
         >
           VIEW ALL
