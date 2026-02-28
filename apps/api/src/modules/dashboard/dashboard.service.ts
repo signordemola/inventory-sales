@@ -130,14 +130,44 @@ export class DashboardService {
   }
 
   async getCashierShift(businessId: string, cashierId: string) {
-    const now = new Date();
-    const todayStart = startOfDay(now);
-    const todayEnd = endOfDay(now);
+    const activeSession = await this.prisma.posSession.findFirst({
+      where: { businessId, userId: cashierId, status: 'OPEN' },
+    });
+
+    // We can still fetch low stock warnings regardless of register status
+    const allProducts = await this.prisma.product.findMany({
+      where: { businessId, isActive: true },
+      include: { stockRecord: true },
+    });
+
+    const lowStockItems = allProducts
+      .filter((p) => {
+        const qty = Number(p.stockRecord?.quantity || 0);
+        return qty <= (p.lowStockThreshold || 0);
+      })
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        quantity: Number(p.stockRecord?.quantity || 0),
+        threshold: p.lowStockThreshold,
+      }))
+      .slice(0, 15);
+
+    if (!activeSession) {
+      return {
+        grossSales: 0,
+        transactionCount: 0,
+        cashDrawerExpected: 0,
+        recentSales: [],
+        lowStockItems,
+        shiftDetails: null,
+      };
+    }
 
     const salesWhere = {
       businessId,
-      cashierId,
-      createdAt: { gte: todayStart, lte: todayEnd },
+      posSessionId: activeSession.id,
       status: 'COMPLETED' as const,
     };
 
@@ -160,7 +190,7 @@ export class DashboardService {
 
     // 3. Recent Transactions (Last 5)
     const recentSales = await this.prisma.sale.findMany({
-      where: { businessId, cashierId },
+      where: { businessId, posSessionId: activeSession.id },
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: {
@@ -175,33 +205,22 @@ export class DashboardService {
       },
     });
 
-    // 4. Low Stock / Out of Stock List (Limit to 10 to keep payload small)
-    // Gets active products whose stock is <= lowStockThreshold
-    const allProducts = await this.prisma.product.findMany({
-      where: { businessId, isActive: true },
-      include: { stockRecord: true },
-    });
-
-    const lowStockItems = allProducts
-      .filter((p) => {
-        const qty = Number(p.stockRecord?.quantity || 0);
-        return qty <= (p.lowStockThreshold || 0);
-      })
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        sku: p.sku,
-        quantity: Number(p.stockRecord?.quantity || 0),
-        threshold: p.lowStockThreshold,
-      }))
-      .slice(0, 15);
+    // 4. Low Stock / Out of Stock List (already computed)
 
     return {
       grossSales: Number(todaySales._sum.total || 0),
       transactionCount: todaySales._count.id,
-      cashDrawerExpected: Number(cashPayments._sum.amount || 0),
+      cashDrawerExpected:
+        Number(cashPayments._sum.amount || 0) +
+        Number(activeSession.startingCash),
       recentSales,
       lowStockItems,
+      shiftDetails: {
+        id: activeSession.id,
+        startingCash: Number(activeSession.startingCash),
+        openedAt: activeSession.openedAt,
+        status: activeSession.status,
+      },
     };
   }
 }

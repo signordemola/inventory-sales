@@ -26,9 +26,9 @@ const Header = () => {
 
   const getLabel = (s: string) => {
     const labels: Record<string, string> = {
-      owner: "Business Owner",
-      manager: "Store Manager",
-      cashier: "Cashier POS",
+      owner: "Owner Dashboard",
+      manager: "Manager Dashboard",
+      cashier: "Cashier Dashboard",
       dashboard: "Overview",
       pos: "Point of Sale",
       staff: "Team Management",

@@ -81,6 +81,16 @@ export class SalesService {
     businessId: string,
     cashierId: string,
   ): Promise<Sale> {
+    const activeSession = await this.salesRepository.getActiveSession(
+      businessId,
+      cashierId,
+    );
+    if (!activeSession) {
+      throw new BadRequestException(
+        'You must have an open register shift to process sales.',
+      );
+    }
+
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestException(
         'Cannot process a sale with an empty cart.',
@@ -130,6 +140,7 @@ export class SalesService {
         notes: dto.notes,
         business: { connect: { id: businessId } },
         cashier: { connect: { id: cashierId } },
+        posSession: { connect: { id: activeSession.id } },
         ...(dto.customerId && {
           customer: { connect: { id: dto.customerId } },
         }),

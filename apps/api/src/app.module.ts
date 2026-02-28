@@ -19,6 +19,7 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AlertsModule } from './modules/alerts/alerts.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ShiftsModule } from './modules/shifts/shifts.module';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 
 @Module({
@@ -57,6 +58,7 @@ import { RequestLoggerMiddleware } from './common/middlewares/request-logger.mid
     ScheduleModule.forRoot(),
     AlertsModule,
     NotificationsModule,
+    ShiftsModule,
   ],
   controllers: [AppController],
   providers: [

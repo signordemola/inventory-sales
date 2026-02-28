@@ -12,6 +12,12 @@ export class SalesRepository {
     });
   }
 
+  async getActiveSession(businessId: string, userId: string) {
+    return this.prisma.posSession.findFirst({
+      where: { businessId, userId, status: 'OPEN' },
+    });
+  }
+
   async findMany(params: {
     skip?: number;
     take?: number;

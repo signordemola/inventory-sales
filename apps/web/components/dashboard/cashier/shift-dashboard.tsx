@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   AlertTriangle,
   Banknote,
-  ShoppingCart,
   Activity,
   ArrowRight,
+  Clock,
+  TrendingUp,
+  Receipt,
+  CheckCircle,
+  Timer,
 } from "lucide-react";
 import {
   Card,
@@ -20,7 +24,11 @@ import { useRouter } from "next/navigation";
 import apiClient from "@/lib/axios";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, intervalToDuration } from "date-fns";
+import { CloseRegisterModal } from "@/components/shifts/close-register-modal";
+
+const SHIFT_DURATION_HOURS = 6;
+const SHIFT_DURATION_MS = SHIFT_DURATION_HOURS * 60 * 60 * 1000;
 
 type ShiftMetrics = {
   grossSales: number;
@@ -41,28 +49,120 @@ type ShiftMetrics = {
     quantity: number;
     threshold: number;
   }[];
+  shiftDetails: {
+    id: string;
+    startingCash: number;
+    openedAt: string;
+    status: string;
+  } | null;
 };
+
+type PastSession = {
+  id: string;
+  openedAt: string;
+  closedAt: string | null;
+  status: string;
+  startingCash: number;
+  expectedCash: number;
+  actualCash: number | null;
+  variance: number | null;
+};
+
+function LiveShiftTimer({ openedAt }: { openedAt: string }) {
+  const [elapsed, setElapsed] = useState(0); // ms elapsed
+
+  useEffect(() => {
+    const update = () => {
+      setElapsed(Date.now() - new Date(openedAt).getTime());
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [openedAt]);
+
+  const d = intervalToDuration({ start: 0, end: elapsed });
+  const timeStr = [
+    String(d.hours ?? 0).padStart(2, "0"),
+    String(d.minutes ?? 0).padStart(2, "0"),
+    String(d.seconds ?? 0).padStart(2, "0"),
+  ].join(":");
+
+  const progress = Math.min((elapsed / SHIFT_DURATION_MS) * 100, 100);
+  const remaining = Math.max(SHIFT_DURATION_MS - elapsed, 0);
+  const remD = intervalToDuration({ start: 0, end: remaining });
+  const remStr =
+    remaining === 0
+      ? "Shift overtime"
+      : `${remD.hours ?? 0}h ${remD.minutes ?? 0}m remaining`;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Timer className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Elapsed</span>
+        </div>
+        <span className="font-mono text-3xl font-bold text-primary">
+          {timeStr}
+        </span>
+      </div>
+      <div className="space-y-1">
+        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ${
+              progress >= 100
+                ? "bg-red-500"
+                : progress >= 80
+                  ? "bg-orange-400"
+                  : "bg-primary"
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-[11px] text-muted-foreground">
+          <span>{format(new Date(openedAt), "h:mm a")} start</span>
+          <span className={progress >= 100 ? "text-red-600 font-semibold" : ""}>
+            {remStr}
+          </span>
+          <span>
+            {format(
+              new Date(new Date(openedAt).getTime() + SHIFT_DURATION_MS),
+              "h:mm a",
+            )}{" "}
+            end
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export const CashierShiftDashboard = () => {
   const router = useRouter();
   const [metrics, setMetrics] = useState<ShiftMetrics | null>(null);
+  const [pastSessions, setPastSessions] = useState<PastSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [metricsRes, historyRes] = await Promise.all([
+        apiClient.get("/analytics/cashier-shift"),
+        apiClient.get("/shifts/my"),
+      ]);
+      setMetrics(metricsRes.data);
+      setPastSessions(historyRes.data || []);
+    } catch (error) {
+      console.error("Failed to fetch shift metrics", error);
+      toast.error("Could not load your shift metrics. Please refresh.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const response = await apiClient.get("/analytics/cashier-shift");
-        setMetrics(response.data);
-      } catch (error) {
-        console.error("Failed to fetch shift metrics", error);
-        toast.error("Could not load your shift metrics. Please refresh.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMetrics();
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading) {
     return (
@@ -74,81 +174,146 @@ export const CashierShiftDashboard = () => {
 
   if (!metrics) return null;
 
+  const hasShift = !!metrics.shiftDetails;
+  const closedSessions = pastSessions.filter((s) => s.status === "CLOSED");
+
   return (
     <div className="space-y-6">
-      {/* Launch POS CTA */}
-      <Card className="border-primary/20 bg-primary/5 shadow-sm">
-        <CardContent className="flex flex-col sm:flex-row items-center justify-between p-6">
-          <div className="space-y-1 mb-4 sm:mb-0">
-            <h2 className="text-xl font-bold text-foreground">
-              Ready to start selling?
-            </h2>
-            <p className="text-muted-foreground">
-              Your drawer is assigned and your session is active.
-            </p>
-          </div>
-          <Button
-            size="lg"
-            onClick={() => router.push("/pos")}
-            className="w-full sm:w-auto font-bold px-8 shadow-md text-background"
-          >
-            Launch POS Screen <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+      {/* Active Shift Hero Card */}
+      <Card
+        className={`shadow-sm ${hasShift ? "border-primary/20 bg-primary/5" : "border-dashed border-2"}`}
+      >
+        <CardContent className="p-6">
+          {hasShift && metrics.shiftDetails ? (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                      SHIFT ACTIVE
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    Your Current Shift
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Started at{" "}
+                    <span className="font-semibold text-foreground">
+                      {format(
+                        new Date(metrics.shiftDetails.openedAt),
+                        "h:mm a, MMMM d",
+                      )}
+                    </span>{" "}
+                    with a{" "}
+                    <span className="font-semibold text-foreground">
+                      {formatCurrency(metrics.shiftDetails.startingCash)}
+                    </span>{" "}
+                    float
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="lg"
+                    onClick={() => router.push("/pos")}
+                    className="font-bold text-background"
+                  >
+                    POS Terminal <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-destructive/40 text-destructive hover:bg-destructive/5"
+                    onClick={() => setIsCloseModalOpen(true)}
+                  >
+                    Close Register
+                  </Button>
+                </div>
+              </div>
+
+              {/* Live Timer + Progress Bar */}
+              <div className="rounded-xl bg-background border p-4">
+                <LiveShiftTimer openedAt={metrics.shiftDetails.openedAt} />
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="rounded-xl bg-background border p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <TrendingUp className="h-4 w-4" />
+                    <p className="text-xs font-medium">Gross Sales</p>
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(metrics.grossSales)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    This shift only
+                  </p>
+                </div>
+                <div className="rounded-xl bg-background border p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <Receipt className="h-4 w-4" />
+                    <p className="text-xs font-medium">Transactions</p>
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {metrics.transactionCount}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Completed sales
+                  </p>
+                </div>
+                <div className="rounded-xl bg-background border p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <Banknote className="h-4 w-4" />
+                    <p className="text-xs font-medium">Cash in Drawer</p>
+                  </div>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency(metrics.cashDrawerExpected)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Float + cash sales
+                  </p>
+                </div>
+                <div className="rounded-xl bg-background border p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <Activity className="h-4 w-4" />
+                    <p className="text-xs font-medium">Starting Float</p>
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(metrics.shiftDetails.startingCash)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Opening cash
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Clock className="h-5 w-5" />
+                  <span className="text-sm font-medium">Register Closed</span>
+                </div>
+                <h2 className="text-xl font-bold text-foreground">
+                  No Active Shift
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Open a register session to start processing sales.
+                </p>
+              </div>
+              <Button
+                size="lg"
+                onClick={() => router.push("/pos")}
+                className="w-full sm:w-auto font-bold text-background"
+              >
+                Open Register <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Shift Metrics Grid */}
-      <h3 className="text-lg font-semibold tracking-tight">
-        {"Today's Shift Activity"}
-      </h3>
-      <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">
-              Gross Transactions
-            </CardTitle>
-            <Banknote className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(metrics.grossSales)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Processed by you today
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">
-              Cash in Drawer
-            </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(metrics.cashDrawerExpected)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Expected cash based on sales
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Items Sold</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.transactionCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Total checkout sessions
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Low Stock Alerts */}
@@ -180,19 +345,17 @@ export const CashierShiftDashboard = () => {
                         SKU: {item.sku}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          item.quantity === 0
-                            ? "bg-red-100 text-red-800"
-                            : "bg-orange-100 text-orange-800"
-                        }`}
-                      >
-                        {item.quantity === 0
-                          ? "Out of Stock"
-                          : `${item.quantity} left`}
-                      </span>
-                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        item.quantity === 0
+                          ? "bg-red-100 text-red-800"
+                          : "bg-orange-100 text-orange-800"
+                      }`}
+                    >
+                      {item.quantity === 0
+                        ? "Out of Stock"
+                        : `${item.quantity} left`}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -200,19 +363,23 @@ export const CashierShiftDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Sales History */}
+        {/* Recent Sales */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Sales</CardTitle>
-            <CardDescription>Your latest transactions today.</CardDescription>
+            <CardDescription>
+              {hasShift
+                ? "Transactions from this shift."
+                : "Your latest transactions."}
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {metrics.recentSales.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
-                No sales processed yet today.
+                No sales processed yet this shift.
               </div>
             ) : (
-              <ul className="divide-y relative">
+              <ul className="divide-y">
                 {metrics.recentSales.map((sale) => (
                   <li
                     key={sale.id}
@@ -232,17 +399,15 @@ export const CashierShiftDashboard = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${
-                          sale.status === "COMPLETED"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {sale.status}
-                      </span>
-                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${
+                        sale.status === "COMPLETED"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {sale.status}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -250,6 +415,103 @@ export const CashierShiftDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Shift History */}
+      {closedSessions.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Recent Shift History
+          </h3>
+          <div className="space-y-2">
+            {closedSessions.slice(0, 5).map((session) => {
+              const variance = Number(session.variance ?? 0);
+              const dur = session.closedAt
+                ? intervalToDuration({
+                    start: new Date(session.openedAt),
+                    end: new Date(session.closedAt),
+                  })
+                : null;
+              const durStr = dur
+                ? [
+                    dur.hours && `${dur.hours}h`,
+                    dur.minutes && `${dur.minutes}m`,
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || "<1m"
+                : "—";
+
+              return (
+                <Card key={session.id}>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-sm">
+                          {format(new Date(session.openedAt), "EEE, MMM d")}
+                          <span className="text-muted-foreground font-normal">
+                            {" · "}
+                            {format(new Date(session.openedAt), "h:mm a")}
+                            {session.closedAt &&
+                              ` → ${format(new Date(session.closedAt), "h:mm a")}`}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Duration: {durStr}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-6 text-sm">
+                        <div className="text-center">
+                          <p className="text-[10px] text-muted-foreground">
+                            Expected
+                          </p>
+                          <p className="font-bold">
+                            {formatCurrency(Number(session.expectedCash))}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-muted-foreground">
+                            Variance
+                          </p>
+                          <p
+                            className={`font-bold ${
+                              variance < 0
+                                ? "text-red-600"
+                                : variance > 0
+                                  ? "text-green-600"
+                                  : ""
+                            }`}
+                          >
+                            {variance === 0
+                              ? "±0"
+                              : (variance > 0 ? "+" : "") +
+                                formatCurrency(variance)}
+                          </p>
+                        </div>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider">
+                          <CheckCircle className="h-3 w-3 text-green-600" />
+                          Closed
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {hasShift && metrics.shiftDetails && (
+        <CloseRegisterModal
+          isOpen={isCloseModalOpen}
+          expectedCash={metrics.cashDrawerExpected}
+          onClose={() => setIsCloseModalOpen(false)}
+          onSuccess={() => {
+            setIsCloseModalOpen(false);
+            toast.success("Register closed! Shift saved.");
+            fetchData();
+          }}
+        />
+      )}
     </div>
   );
 };

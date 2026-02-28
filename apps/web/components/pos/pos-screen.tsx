@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { ProductBrowser } from "@/components/pos/product-browser";
 import { CartPanel, CartItem } from "@/components/pos/cart-panel";
 import { PaymentModal } from "@/components/pos/payment-modal";
+import { OpenRegisterModal } from "@/components/pos/open-register-modal";
+import apiClient from "@/lib/axios";
 import { Product } from "@/types/products";
 import { UserRoleType } from "@/types";
 import { toast } from "sonner";
@@ -15,6 +17,24 @@ interface POSScreenProps {
 export default function POSScreen({ userRole }: POSScreenProps) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [hasActiveShift, setHasActiveShift] = useState(false);
+  const [isLoadingShift, setIsLoadingShift] = useState(true);
+
+  useEffect(() => {
+    const checkShift = async () => {
+      try {
+        const response = await apiClient.get("/shifts/current");
+        setHasActiveShift(!!response.data);
+      } catch (error) {
+        console.error("Failed to verify active shift", error);
+        setHasActiveShift(false);
+      } finally {
+        setIsLoadingShift(false);
+      }
+    };
+
+    checkShift();
+  }, []);
 
   const handleSelectProduct = useCallback((product: Product) => {
     setCartItems((prev) => {
@@ -98,6 +118,14 @@ export default function POSScreen({ userRole }: POSScreenProps) {
         onSuccess={handlePaymentSuccess}
         userRole={userRole}
       />
+
+      {/* Register Lock Modal */}
+      {!isLoadingShift && (
+        <OpenRegisterModal
+          isOpen={!hasActiveShift}
+          onSuccess={() => setHasActiveShift(true)}
+        />
+      )}
     </div>
   );
 }
