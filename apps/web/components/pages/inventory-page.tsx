@@ -170,13 +170,16 @@ export function InventoryPageView() {
   return (
     <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-          Inventory & Stock Adjustments
-        </h1>
-        <p className="text-sm font-semibold text-slate-500 mt-1">
-          Monitor stock levels, make adjustments, and view the full audit trail.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 font-display">
+            Inventory & Stock Adjustments
+          </h1>
+          <p className="text-sm font-semibold text-slate-500 mt-1">
+            Monitor stock levels, make adjustments, and view the full audit
+            trail.
+          </p>
+        </div>
       </div>
 
       {/* Stats Row */}

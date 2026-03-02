@@ -36,6 +36,12 @@ export default function POSScreen({ userRole }: POSScreenProps) {
   // On mount: check shift, seed IndexedDB, flush any pending sales
   useEffect(() => {
     const checkShift = async () => {
+      // OWNER and MANAGER can always use the POS — no shift required
+      if (userRole === "OWNER" || userRole === "MANAGER") {
+        setHasActiveShift(true);
+        setIsLoadingShift(false);
+        return;
+      }
       try {
         const response = await apiClient.get("/shifts/current");
         setHasActiveShift(!!response.data);
@@ -57,7 +63,7 @@ export default function POSScreen({ userRole }: POSScreenProps) {
     };
 
     init();
-  }, []);
+  }, [userRole]);
 
   // Keyboard shortcuts
   useEffect(() => {

@@ -12,8 +12,6 @@
     "@base-ui/react": "^1.2.0",
     "@hookform/resolvers": "^5.2.2",
     "@serwist/next": "^9.5.6",
-    "@serwist/precaching": "^9.5.6",
-    "@serwist/sw": "^9.5.6",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.13.5",
@@ -30,7 +28,6 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
     "recharts": "^3.7.0",
-    "serwist": "^9.5.6",
     "shadcn": "^3.8.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
@@ -39,6 +36,9 @@
   },
   "devDependencies": {
     "@serwist/cli": "^9.5.6",
+    "@serwist/precaching": "^9.5.6",
+    "@serwist/sw": "^9.5.6",
+    "@serwist/turbopack": "^9.5.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -46,6 +46,7 @@
     "esbuild": "^0.27.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "serwist": "^9.5.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

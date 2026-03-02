@@ -13,9 +13,11 @@ import { ProductsTable } from "@/components/products/products-table";
 export function ProductsPageView() {
   const router = useRouter();
   const pathname = usePathname();
-  const basePath = pathname.split("/")[1]
-    ? `/${pathname.split("/")[1]}`
-    : "/owner";
+  // pathname is e.g. "/products" or "/manager/products"
+  // We want the base without the trailing "/products" segment
+  const pathParts = pathname.split("/").filter(Boolean);
+  const basePath =
+    pathParts.length > 1 ? `/${pathParts.slice(0, -1).join("/")}` : "";
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");

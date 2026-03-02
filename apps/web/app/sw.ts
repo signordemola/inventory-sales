@@ -1,4 +1,4 @@
-import { defaultCache } from "@serwist/next/worker";
+import { defaultCache } from "@serwist/turbopack/worker";
 import { Serwist } from "serwist";
 
 // Enables Background Sync — syncs queued sales even when the tab is closed

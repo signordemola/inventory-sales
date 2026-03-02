@@ -23,7 +23,6 @@ const Header = () => {
 
   const segments = pathname.split("/").filter(Boolean);
   const userRole = user?.role || "cashier";
-  const page = segments[0] || "dashboard";
 
   const getLabel = (s: string) => {
     const labels: Record<string, string> = {
@@ -33,9 +32,11 @@ const Header = () => {
       dashboard: "Overview",
       pos: "Point of Sale",
       staff: "Team Management",
-      products: "Inventory",
+      products: "Products",
       suppliers: "Supply Chain",
       settings: "Configuration",
+      categories: "Category Manager",
+      new: "Add New Product",
     };
     return labels[s.toLowerCase()] || s.replace(/-/g, " ");
   };
@@ -57,12 +58,34 @@ const Header = () => {
                 {getLabel(userRole)}
               </BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="text-sm font-bold text-slate-900 dark:text-white capitalize">
-                {getLabel(page)}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
+
+            {segments.map((segment, index) => {
+              const isLast = index === segments.length - 1;
+              const href = `/${segments.slice(0, index + 1).join("/")}`;
+
+              return (
+                <div
+                  key={segment}
+                  className="flex items-center gap-1.5 sm:gap-2.5"
+                >
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage className="text-sm font-bold text-slate-900 dark:text-white capitalize">
+                        {getLabel(segment)}
+                      </BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink
+                        href={href}
+                        className="text-xs font-medium text-slate-500 uppercase tracking-wider hover:text-slate-900 transition-colors"
+                      >
+                        {getLabel(segment)}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </div>
+              );
+            })}
           </BreadcrumbList>
         </Breadcrumb>
       </div>
