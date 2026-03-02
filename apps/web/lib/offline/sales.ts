@@ -1,4 +1,5 @@
 import { db, PendingSale, PendingSaleItem, PendingPayment } from "@/lib/db";
+import { createId } from "@paralleldrive/cuid2";
 
 export type CreateSaleOfflineInput = {
   items: PendingSaleItem[];
@@ -12,8 +13,8 @@ export type CreateSaleOfflineInput = {
 
 export async function createSaleOffline(
   input: CreateSaleOfflineInput,
-): Promise<{ uid: string; localReference: string }> {
-  const uid = crypto.randomUUID();
+): Promise<{ cuid: string; localReference: string }> {
+  const cuid = createId();
   const createdAt = Date.now();
   const localReference = `LOCAL-${createdAt}`;
 
@@ -29,7 +30,7 @@ export async function createSaleOffline(
   }
 
   const pendingSale: Omit<PendingSale, "localId"> = {
-    uid,
+    cuid,
     items: input.items,
     subtotal: input.subtotal,
     discount: input.discount ?? 0,
@@ -56,5 +57,5 @@ export async function createSaleOffline(
     }
   }
 
-  return { uid, localReference };
+  return { cuid, localReference };
 }

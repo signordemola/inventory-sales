@@ -28,7 +28,7 @@ export async function flushSyncQueue(): Promise<void> {
         await db.pendingSales.update(sale.localId, { syncStatus: "SYNCING" });
 
         const response = await apiClient.post("/sales", {
-          uid: sale.uid,
+          cuid: sale.cuid,
           items: sale.items.map((item: PendingSale["items"][number]) => ({
             productId: item.productId,
             quantity: item.quantity,

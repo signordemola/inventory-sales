@@ -379,7 +379,7 @@ model Customer {
 
 model Sale {
   id           String     @id @default(cuid())
-  uid          String?    @unique // client-generated UUID for offline idempotency
+  cuid         String?    @unique // client-generated CUID for offline idempotency
   reference    String     @unique
   businessId   String
   cashierId    String
@@ -407,7 +407,7 @@ model Sale {
   @@index([businessId, createdAt])
   @@index([cashierId])
   @@index([customerId])
-  @@index([uid])
+  @@index([cuid])
   @@map("sale")
 }
 

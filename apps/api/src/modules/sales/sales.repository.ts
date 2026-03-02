@@ -23,9 +23,9 @@ export class SalesRepository {
     });
   }
 
-  async findByUid(uid: string, businessId: string) {
+  async findByCuid(cuid: string, businessId: string) {
     return this.prisma.sale.findFirst({
-      where: { uid, businessId },
+      where: { cuid, businessId },
       select: { id: true, reference: true },
     });
   }

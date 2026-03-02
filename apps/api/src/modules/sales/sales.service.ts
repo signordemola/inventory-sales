@@ -101,10 +101,10 @@ export class SalesService {
       );
     }
 
-    // Idempotency: if this uid was already processed (offline sync retry), return existing
-    if (dto.uid) {
-      const existing = await this.salesRepository.findByUid(
-        dto.uid,
+    // Idempotency: if this cuid was already processed (offline sync retry), return existing
+    if (dto.cuid) {
+      const existing = await this.salesRepository.findByCuid(
+        dto.cuid,
         businessId,
       );
       if (existing) {
@@ -151,7 +151,7 @@ export class SalesService {
     const sale = await this.salesRepository.create({
       data: {
         reference,
-        uid: dto.uid,
+        cuid: dto.cuid,
         subtotal,
         total,
         discount: dto.discount,

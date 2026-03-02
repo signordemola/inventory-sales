@@ -48,7 +48,7 @@ export interface PendingPayment {
 
 export interface PendingSale {
   localId?: number;
-  uid: string;
+  cuid: string;
   items: PendingSaleItem[];
   subtotal: number;
   discount: number;
@@ -77,12 +77,12 @@ export class NaijaStockDB extends Dexie {
 
   constructor() {
     super("NaijaStockDB");
-    this.version(1).stores({
+    this.version(2).stores({
       products: "&id, name, sku, barcode, categoryId",
       categories: "&id",
       stockLevels: "&productId",
       customers: "&id, name, phone",
-      pendingSales: "++localId, &uid, syncStatus, createdAt",
+      pendingSales: "++localId, &cuid, syncStatus, createdAt",
       seedMeta: "&key",
     });
   }

@@ -18,7 +18,7 @@ import { CreatePaymentDto } from './create-payment.dto';
 export class CreateSaleDto {
   @IsString()
   @IsOptional()
-  uid?: string; // client-generated UUID for offline idempotency
+  cuid?: string; // client-generated CUID for offline idempotency
 
   @IsString()
   @IsOptional()
