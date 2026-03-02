@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -15,6 +16,10 @@ import { CreateSaleItemDto } from './create-sale-item.dto';
 import { CreatePaymentDto } from './create-payment.dto';
 
 export class CreateSaleDto {
+  @IsString()
+  @IsOptional()
+  uid?: string; // client-generated UUID for offline idempotency
+
   @IsString()
   @IsOptional()
   customerId?: string;
@@ -47,4 +52,8 @@ export class CreateSaleDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsDateString()
+  @IsOptional()
+  creditDueDate?: string; // ISO date — only used when payment method is CREDIT
 }

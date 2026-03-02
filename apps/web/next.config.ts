@@ -1,40 +1,47 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from "next";
+import withSerwistInit from "@serwist/next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+});
 
 const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
           },
           {
-            key: 'Permissions-Policy',
+            key: "Permissions-Policy",
             value:
-              'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+              "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
         ],
       },
-    ]
+    ];
   },
   async rewrites() {
     return [
       {
-        source: '/backend/:path*',
+        source: "/backend/:path*",
         destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
       },
-    ]
+    ];
   },
-}
+};
 
-export default nextConfig
+export default withSerwist(nextConfig);

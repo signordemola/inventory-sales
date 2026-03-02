@@ -20,6 +20,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AlertsModule } from './modules/alerts/alerts.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ShiftsModule } from './modules/shifts/shifts.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 
 @Module({
@@ -59,6 +60,7 @@ import { RequestLoggerMiddleware } from './common/middlewares/request-logger.mid
     AlertsModule,
     NotificationsModule,
     ShiftsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [

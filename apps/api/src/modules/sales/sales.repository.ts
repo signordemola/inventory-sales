@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
-import { Sale, Prisma, StockMovementType } from 'generated/prisma/client';
+import {
+  Sale,
+  Prisma,
+  StockMovementType,
+  SaleStatus,
+} from 'generated/prisma/client';
 
 @Injectable()
 export class SalesRepository {
@@ -16,6 +21,35 @@ export class SalesRepository {
     return this.prisma.posSession.findFirst({
       where: { businessId, userId, status: 'OPEN' },
     });
+  }
+
+  async findByUid(uid: string, businessId: string) {
+    return this.prisma.sale.findFirst({
+      where: { uid, businessId },
+      select: { id: true, reference: true },
+    });
+  }
+
+  async generateReference(businessId: string): Promise<string> {
+    const now = new Date();
+    const datePart = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const todayCount = await this.prisma.sale.count({
+      where: {
+        businessId,
+        createdAt: { gte: startOfDay, lt: endOfDay },
+      },
+    });
+
+    const sequence = String(todayCount + 1).padStart(4, '0');
+    return `INV-${datePart}-${sequence}`;
   }
 
   async findMany(params: {
@@ -101,10 +135,7 @@ export class SalesRepository {
     });
   }
 
-  async updateStatus(
-    id: string,
-    status: Prisma.EnumSaleStatusFieldUpdateOperationsInput | any,
-  ): Promise<Sale> {
+  async updateStatus(id: string, status: SaleStatus): Promise<Sale> {
     return this.prisma.sale.update({
       where: { id },
       data: { status },
@@ -204,6 +235,72 @@ export class SalesRepository {
           payments: true,
         },
       });
+    });
+  }
+
+  async getOutstandingCredit(businessId: string, skip: number, take: number) {
+    const where = {
+      sale: { businessId },
+      balance: { gt: 0 },
+    };
+    const [items, total] = await Promise.all([
+      this.prisma.creditSale.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          sale: {
+            include: { cashier: true, payments: true },
+          },
+          customer: true,
+          repayments: { orderBy: { createdAt: 'desc' }, take: 5 },
+        },
+      }),
+      this.prisma.creditSale.count({ where }),
+    ]);
+    return { items, total };
+  }
+
+  async recordCreditRepayment(
+    creditSaleId: string,
+    businessId: string,
+    amount: number,
+    notes?: string,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const creditSale = await tx.creditSale.findFirst({
+        where: { id: creditSaleId, sale: { businessId } },
+      });
+
+      if (!creditSale) return null;
+
+      const newBalance = Math.max(0, Number(creditSale.balance) - amount);
+      const newAmountPaid = Number(creditSale.amountPaid) + amount;
+
+      const [repayment, updated] = await Promise.all([
+        tx.creditRepayment.create({
+          data: {
+            creditSaleId,
+            amount,
+            notes,
+          },
+        }),
+        tx.creditSale.update({
+          where: { id: creditSaleId },
+          data: {
+            balance: newBalance,
+            amountPaid: newAmountPaid,
+          },
+          include: {
+            sale: true,
+            customer: true,
+            repayments: { orderBy: { createdAt: 'desc' } },
+          },
+        }),
+      ]);
+
+      return { repayment, creditSale: updated };
     });
   }
 

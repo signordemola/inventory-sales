@@ -301,6 +301,158 @@ export function ManagerShiftPage() {
           </div>
         )}
       </div>
+
+      {/* Outstanding Credit Balances */}
+      <CreditBalancesSection />
+    </div>
+  );
+}
+
+// ─── Credit Balances ─────────────────────────────────────────────────────────
+
+type CustomerWithCredit = {
+  id: string;
+  name: string;
+  phone?: string;
+  creditSales: {
+    id: string;
+    balance: number;
+    totalAmount: number;
+    dueDate: string | null;
+  }[];
+};
+
+function CreditBalancesSection() {
+  const [customers, setCustomers] = useState<CustomerWithCredit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [repayingId, setRepayingId] = useState<string | null>(null);
+  const [repayAmount, setRepayAmount] = useState("");
+
+  const fetchCredit = useCallback(async () => {
+    try {
+      const res = await apiClient.get<CustomerWithCredit[]>("/customers");
+      setCustomers(
+        res.data.filter((c) => c.creditSales?.some((cs) => cs.balance > 0)),
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCredit();
+  }, [fetchCredit]);
+
+  const handleRepay = async (creditSaleId: string) => {
+    const amount = parseFloat(repayAmount);
+    if (!amount || amount <= 0) return;
+    try {
+      await apiClient.post("/customers/repayments", { creditSaleId, amount });
+      setRepayingId(null);
+      setRepayAmount("");
+      fetchCredit();
+    } catch {
+      /* toast handled by interceptor */
+    }
+  };
+
+  if (isLoading) return null;
+  if (customers.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Users className="h-4 w-4 text-amber-500" />
+        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+          Outstanding Credit
+        </h3>
+        <span className="ml-auto text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+          {customers.length} customer{customers.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {customers.map((customer) => {
+          const totalOwed = customer.creditSales.reduce(
+            (sum, cs) => sum + Number(cs.balance),
+            0,
+          );
+          const overdueCredit = customer.creditSales.find(
+            (cs) =>
+              cs.dueDate && new Date(cs.dueDate) < new Date() && cs.balance > 0,
+          );
+
+          return (
+            <Card
+              key={customer.id}
+              className={`border ${overdueCredit ? "border-red-200 bg-red-50/30" : "border-amber-100"}`}
+            >
+              <CardContent className="p-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-900 text-sm">
+                    {customer.name}
+                  </p>
+                  {customer.phone && (
+                    <p className="text-xs text-slate-400">{customer.phone}</p>
+                  )}
+                  {overdueCredit && (
+                    <p className="text-xs font-semibold text-red-600 mt-0.5">
+                      Overdue since{" "}
+                      {format(new Date(overdueCredit.dueDate!), "MMM d")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-[10px] text-muted-foreground">Balance</p>
+                    <p
+                      className={`font-black text-sm ${overdueCredit ? "text-red-600" : "text-amber-600"}`}
+                    >
+                      {formatCurrency(totalOwed)}
+                    </p>
+                  </div>
+
+                  {repayingId === customer.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        placeholder="Amount"
+                        value={repayAmount}
+                        onChange={(e) => setRepayAmount(e.target.value)}
+                        className="w-24 h-8 text-sm border border-slate-200 rounded-lg px-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                        autoFocus
+                      />
+                      <button
+                        className="text-xs font-bold bg-primary text-slate-900 px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+                        onClick={() => handleRepay(customer.creditSales[0]?.id)}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="text-xs text-slate-400 hover:text-slate-600"
+                        onClick={() => {
+                          setRepayingId(null);
+                          setRepayAmount("");
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="text-xs font-bold text-primary border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary/5 transition-colors"
+                      onClick={() => setRepayingId(customer.id)}
+                    >
+                      Record Payment
+                    </button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

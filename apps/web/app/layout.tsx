@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 
 const roboto = Roboto({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -36,6 +37,7 @@ export default function RootLayout({
           <TooltipProvider>
             {children}
             <Toaster position="top-center" />
+            <ServiceWorkerRegistrar />
           </TooltipProvider>
         </Providers>
       </body>

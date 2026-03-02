@@ -26,13 +26,13 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.CASHIER)
   async findAll(@Req() req: Request): Promise<Category[]> {
     return this.categoriesService.findAll(req.user?.businessId!);
   }
 
   @Get(':id')
-  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  @Roles(UserRole.OWNER, UserRole.MANAGER, UserRole.CASHIER)
   async findOne(
     @Param() params: CategoryIdDto,
     @Req() req: Request,

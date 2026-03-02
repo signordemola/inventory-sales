@@ -13,8 +13,9 @@ import {
 } from "../ui/breadcrumb";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { formattedDate } from "@/lib/date";
+import { NotificationsDropdown } from "./notifications-dropdown";
 
 const Header = () => {
   const pathname = usePathname();
@@ -80,14 +81,7 @@ const Header = () => {
             <Search className="size-5" />
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 shadow-none transition-colors"
-          >
-            <Bell className="size-5" />
-            <span className="absolute right-1 top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900"></span>
-          </Button>
+          <NotificationsDropdown />
         </div>
       </div>
     </header>

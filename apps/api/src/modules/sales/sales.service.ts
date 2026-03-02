@@ -2,13 +2,17 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { SalesRepository } from './sales.repository';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { SaleQueryDto } from './dto/sale-query.dto';
 import { ReturnSaleDto } from './dto/return-sale.dto';
-import { Sale, Prisma } from 'generated/prisma/client';
+import { Sale, SaleItem, Prisma } from 'generated/prisma/client';
 import { AlertsService } from 'src/modules/alerts/alerts.service';
+
+// Sale returned from the repository always includes items
+type SaleWithItems = Sale & { items: SaleItem[] };
 
 @Injectable()
 export class SalesService {
@@ -97,7 +101,22 @@ export class SalesService {
       );
     }
 
-    const reference = `SALE-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Idempotency: if this uid was already processed (offline sync retry), return existing
+    if (dto.uid) {
+      const existing = await this.salesRepository.findByUid(
+        dto.uid,
+        businessId,
+      );
+      if (existing) {
+        throw new ConflictException({
+          message: 'Sale already processed',
+          existingId: existing.id,
+          existingReference: existing.reference,
+        });
+      }
+    }
+
+    const reference = await this.salesRepository.generateReference(businessId);
     const subtotal = dto.items.reduce(
       (acc, item) => acc + item.quantity * item.unitPrice,
       0,
@@ -132,6 +151,7 @@ export class SalesService {
     const sale = await this.salesRepository.create({
       data: {
         reference,
+        uid: dto.uid,
         subtotal,
         total,
         discount: dto.discount,
@@ -161,6 +181,21 @@ export class SalesService {
             confirmed: payment.confirmed,
           })),
         },
+        // Auto-create CreditSale ledger when payment method is CREDIT
+        ...(dto.payments.some((p) => p.method === 'CREDIT') &&
+          dto.customerId && {
+            creditSale: {
+              create: {
+                customerId: dto.customerId,
+                totalAmount: total,
+                amountPaid: 0,
+                balance: total,
+                ...(dto.creditDueDate && {
+                  dueDate: new Date(dto.creditDueDate),
+                }),
+              },
+            },
+          }),
       },
       items: dto.items.map((item) => ({
         productId: item.productId,
@@ -173,6 +208,13 @@ export class SalesService {
     this.alertsService.checkLowStockForBusiness(businessId).catch((err) => {
       console.error('Failed to run low stock check after sale:', err);
     });
+
+    // Fire-and-forget discrepancy check (for offline sync cases where stock might go negative)
+    this.alertsService
+      .checkStockDiscrepancyAfterSale(businessId, dto.items, reference)
+      .catch((err) => {
+        console.error('Failed to run stock discrepancy check after sale:', err);
+      });
 
     return sale;
   }
@@ -189,8 +231,8 @@ export class SalesService {
     for (const returnItem of dto.items) {
       // Find the corresponding sale item, making sure to include variants where necessary
       // Assuming sale.items is included in findOne (which it should be via the repository)
-      const saleItem = (sale as any).items?.find(
-        (i: any) => i.id === returnItem.saleItemId,
+      const saleItem = (sale as SaleWithItems).items?.find(
+        (i) => i.id === returnItem.saleItemId,
       );
 
       if (!saleItem) {
@@ -209,9 +251,44 @@ export class SalesService {
     return this.salesRepository.processReturn(saleId, dto.items, userId);
   }
 
+  async getOutstandingCredit(businessId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const { items, total } = await this.salesRepository.getOutstandingCredit(
+      businessId,
+      skip,
+      limit,
+    );
+    return {
+      items,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async recordCreditRepayment(
+    creditSaleId: string,
+    businessId: string,
+    amount: number,
+    notes?: string,
+  ) {
+    if (!amount || amount <= 0) {
+      throw new BadRequestException(
+        'Repayment amount must be greater than zero.',
+      );
+    }
+    const result = await this.salesRepository.recordCreditRepayment(
+      creditSaleId,
+      businessId,
+      amount,
+      notes,
+    );
+    if (!result) {
+      throw new NotFoundException('Credit sale not found.');
+    }
+    return result;
+  }
+
   async getDailySummary(businessId: string, customDate?: string) {
     const date = customDate ? new Date(customDate) : new Date();
-    // Normalize to midnight UTC
     const startOfDay = new Date(
       date.getFullYear(),
       date.getMonth(),
