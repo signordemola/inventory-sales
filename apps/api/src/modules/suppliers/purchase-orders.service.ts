@@ -18,6 +18,13 @@ export class PurchaseOrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreatePurchaseOrderDto, businessId: string) {
+    // Guard: PO must have at least one item
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException(
+        'A purchase order must have at least one item.',
+      );
+    }
+
     // 1. Verify supplier exists and belongs to business
     const supplier = await this.prisma.supplier.findUnique({
       where: { id: dto.supplierId },

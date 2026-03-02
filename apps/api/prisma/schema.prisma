@@ -152,6 +152,7 @@ model Business {
   email     String?
   currency  String   @default("NGN")
   taxRate   Decimal  @default(0) @db.Decimal(10, 2)
+  logoUrl   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -390,6 +391,7 @@ model Sale {
   total        Decimal    @db.Decimal(10, 2)
   status       SaleStatus @default(PENDING)
   notes        String?
+  receiptUrl   String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 

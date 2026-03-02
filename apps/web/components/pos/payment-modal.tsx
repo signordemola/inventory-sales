@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   X,
   Banknote,
@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   User,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -54,6 +55,24 @@ export const PaymentModal = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [localRef, setLocalRef] = useState<string | null>(null);
+  const [syncedSaleId, setSyncedSaleId] = useState<string | null>(null);
+
+  const handleReset = () => {
+    setIsSuccess(false);
+    setStep("method");
+    setSelectedCustomer(null);
+    setCreditDueDate("");
+    setSyncedSaleId(null);
+    setLocalRef(null);
+    onSuccess();
+    onClose();
+  };
+
+  const handleDownloadReceipt = () => {
+    if (syncedSaleId) {
+      window.open(`/api/v1/sales/${syncedSaleId}/receipt`, "_blank");
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -98,14 +117,34 @@ export const PaymentModal = ({
       const { localReference } = await createSaleOffline(input);
       setLocalRef(localReference);
       setIsSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-        setIsSuccess(false);
-        setStep("method");
-        setSelectedCustomer(null);
-        setCreditDueDate("");
-        onClose();
-      }, 2000);
+
+      // Try to flush queue immediately if online to get the real server ID
+      if (navigator.onLine) {
+        const { flushSyncQueue } = await import("@/lib/offline/flushSyncQueue");
+        await flushSyncQueue();
+
+        // After flush, look up the record in Dexie by localReference to get the serverId
+        const { db } = await import("@/lib/db");
+        const synced = await db.pendingSales
+          .filter((s) => s.localReference === localReference)
+          .first();
+
+        if (synced?.serverId) {
+          setSyncedSaleId(synced.serverId);
+
+          // Silently trigger Cloudinary PDF generation and storage on the server
+          import("@/lib/axios").then(({ default: apiClient }) => {
+            apiClient
+              .post(`/sales/${synced.serverId}/receipt/store`)
+              .catch((err: unknown) => {
+                console.error(
+                  "Failed to automatically store receipt to Cloudinary:",
+                  err,
+                );
+              });
+          });
+        }
+      }
     } catch (error) {
       console.error(error);
       toast.error("Sale failed", {
@@ -137,14 +176,14 @@ export const PaymentModal = ({
   if (isSuccess) {
     return (
       <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300">
-        <Card className="w-full max-w-md p-12 flex flex-col items-center text-center space-y-4 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center animate-bounce">
+        <Card className="w-full max-w-md p-10 flex flex-col items-center text-center space-y-4 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
             <CheckCircle2 className="w-10 h-10" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white">
             {selectedMethod === "CREDIT"
               ? "Credit Sale Recorded!"
-              : "Sale Recorded!"}
+              : "Sale Complete!"}
           </h2>
           {selectedCustomer && (
             <p className="text-sm font-semibold text-slate-600">
@@ -153,15 +192,36 @@ export const PaymentModal = ({
             </p>
           )}
           {localRef && (
-            <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-500">
+            <span className="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-slate-500">
               {localRef}
             </span>
           )}
           <p className="text-xs text-slate-400 italic">
             {navigator.onLine
-              ? "Syncing to server..."
+              ? syncedSaleId
+                ? "Synced to server ✓"
+                : "Syncing to server..."
               : "Will sync when back online."}
           </p>
+
+          <div className="w-full space-y-2 pt-2">
+            {syncedSaleId && (
+              <Button
+                onClick={handleDownloadReceipt}
+                variant="outline"
+                className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Receipt
+              </Button>
+            )}
+            <Button
+              onClick={handleReset}
+              className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+            >
+              New Sale
+            </Button>
+          </div>
         </Card>
       </div>
     );

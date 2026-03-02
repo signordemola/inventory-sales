@@ -7,11 +7,16 @@ import {
   businessProfileSchema,
   BusinessProfileValues,
 } from "@/schemas/settings";
-import { useBusiness, useUpdateBusiness } from "@/hooks/use-business";
+import {
+  useBusiness,
+  useUpdateBusiness,
+  useUploadBusinessLogo,
+} from "@/hooks/use-business";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ui/image-upload";
 import {
   Building2,
   Mail,
@@ -27,11 +32,11 @@ import {
   FieldError,
   FieldContent,
 } from "@/components/ui/field";
-import Image from "next/image";
 
 export function BusinessProfileForm() {
   const { data: business, isLoading: isFetching } = useBusiness();
   const updateMutation = useUpdateBusiness();
+  const uploadLogoMutation = useUploadBusinessLogo();
 
   const form = useForm<BusinessProfileValues>({
     resolver: zodResolver(businessProfileSchema),
@@ -167,26 +172,22 @@ export function BusinessProfileForm() {
                 <ImageIcon className="w-4 h-4 text-primary/60" />
                 Business Logo
               </FieldLabel>
-              <div className="mt-2 flex items-center gap-6 p-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm overflow-hidden">
-                  {logo ? (
-                    <Image
-                      src={logo || ""}
-                      alt="Logo"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <ImageIcon className="w-6 h-6 text-slate-300" />
-                  )}
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-bold text-slate-600 group-hover:text-primary transition-colors">
-                    Click to upload logo
-                  </p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    PNG, JPG up to 5MB
-                  </p>
-                </div>
+              <div className="mt-2">
+                <ImageUpload
+                  value={logo ? [logo] : []}
+                  onChange={(urls) => {
+                    form.setValue("logo", urls[0] || "", {
+                      shouldDirty: true,
+                    });
+                  }}
+                  onRemove={() => {
+                    form.setValue("logo", "", { shouldDirty: true });
+                  }}
+                  onUpload={async (file) => {
+                    return await uploadLogoMutation.mutateAsync(file);
+                  }}
+                  maxFiles={1}
+                />
               </div>
             </Field>
           </div>

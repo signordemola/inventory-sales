@@ -9,8 +9,16 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
+import { multerOptions } from 'src/common/config/multer.config';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductIdDto } from './dto/product-id.dto';
@@ -68,5 +76,36 @@ export class ProductsController {
     @Req() req: Request,
   ): Promise<Product> {
     return this.productsService.delete(params.id, req.user?.businessId!);
+  }
+
+  @Post(':id/images')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  @UseInterceptors(FileInterceptor('file', multerOptions))
+  async uploadImage(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ): Promise<Product> {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return this.productsService.uploadImage(id, req.user?.businessId!, file);
+  }
+
+  @Delete(':id/images/:publicId')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async deleteImage(
+    @Param('id') id: string,
+    @Param('publicId') publicId: string,
+    @Req() req: Request,
+  ): Promise<Product> {
+    // Reconstruct the actual Cloudinary public_id which may include slashes depending on the route param encoding
+    // Let's decode it safely here
+    const decodedPublicId = decodeURIComponent(publicId);
+    return this.productsService.deleteImage(
+      id,
+      req.user?.businessId!,
+      decodedPublicId,
+    );
   }
 }

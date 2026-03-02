@@ -62,4 +62,12 @@ export class ProductsRepository {
       data: { isActive: false },
     });
   }
+
+  async countStockMovements(productId: string): Promise<number> {
+    return this.prisma.stockMovement.count({ where: { productId } });
+  }
+
+  async countSaleItems(productId: string): Promise<number> {
+    return this.prisma.saleItem.count({ where: { productId } });
+  }
 }

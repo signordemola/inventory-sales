@@ -22,6 +22,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ShiftsModule } from './modules/shifts/shifts.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
+import { ReceiptModule } from './modules/receipts/receipt.module';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { RequestLoggerMiddleware } from './common/middlewares/request-logger.mid
     NotificationsModule,
     ShiftsModule,
     AnalyticsModule,
+    ReceiptModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [

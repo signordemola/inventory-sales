@@ -22,6 +22,7 @@ export interface Product {
   businessId: string;
   categoryId?: string;
   supplierId?: string;
+  unit?: string;
   category?: Category;
   images?: string[];
   stockRecord?: StockRecord;

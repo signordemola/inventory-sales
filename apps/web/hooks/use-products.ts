@@ -113,3 +113,36 @@ export function useDeleteProduct() {
     },
   });
 }
+
+export function useUploadProductImage(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await apiClient.post<{ url: string }>(
+        `/products/${id}/images`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useDeleteProductImage(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (publicId: string) => {
+      await apiClient.delete(
+        `/products/${id}/images/${encodeURIComponent(publicId)}`,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}

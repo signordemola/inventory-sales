@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Req,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { multerOptions } from 'src/common/config/multer.config';
 import { BusinessService } from './business.service';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { RolesGuard } from 'src/guards/roles.guard';
@@ -26,5 +38,18 @@ export class BusinessController {
     @Req() req: Request,
   ): Promise<Business> {
     return this.businessService.updateMe(req.user?.businessId!, dto);
+  }
+
+  @Patch('me/logo')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  @UseInterceptors(FileInterceptor('file', multerOptions))
+  async uploadLogo(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ): Promise<Business> {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return this.businessService.uploadLogo(req.user?.businessId!, file);
   }
 }

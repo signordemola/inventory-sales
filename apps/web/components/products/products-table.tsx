@@ -118,7 +118,7 @@ export const ProductsTable = ({
                   <tr
                     key={product.id}
                     className="cursor-pointer hover:bg-slate-50/50 transition-colors group"
-                    onClick={() => router.push(`/owner/products/${product.id}`)}
+                    onClick={() => router.push(`/products/${product.id}`)}
                   >
                     <td className="px-5 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">

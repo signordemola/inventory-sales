@@ -26,3 +26,22 @@ export function useUpdateBusiness() {
     },
   });
 }
+
+export function useUploadBusinessLogo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await apiClient.patch<{ url: string }>(
+        `/business/me/logo`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["business", "me"] });
+    },
+  });
+}

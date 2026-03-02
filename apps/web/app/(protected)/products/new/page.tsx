@@ -2,10 +2,15 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCreateProduct, CreateProductPayload } from "@/hooks/use-products";
+import {
+  useCreateProduct,
+  CreateProductPayload,
+  useUploadProductImage,
+} from "@/hooks/use-products";
 import { useCategories } from "@/hooks/use-categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
@@ -26,11 +31,20 @@ export default function NewProductPage() {
     sellingPrice: 0,
     lowStockThreshold: 5,
     isActive: true,
+    images: [],
   });
+
+  // We need to initialize the upload hook but it requires an ID.
+  // Since the product isn't created yet, we can't upload images immediately to the /products/:id/images endpoint.
+  // Wait, the API endpoint is `POST /products/:id/images`.
+  // We cannot upload images *before* the product is created.
+  // Option A: Let the backend handle base64 array at creation.
+  // Option B: Create product first, then upload images, then invalidate.
+  // Option C: The backend POST /products doesn't currently handle images array for uploading, they are uploaded via the /products/:id/images route.
 
   const set = (
     key: keyof CreateProductPayload,
-    value: string | number | boolean,
+    value: string | number | boolean | string[],
   ) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const generateSku = (name: string) =>
@@ -48,6 +62,13 @@ export default function NewProductPage() {
     }));
   };
 
+  // We'll store File objects that haven't been uploaded yet in a separate state
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+
+  // The UI needs a mock URL to display previews before uploading
+  // We'll create temporary object URLs for the pending images
+  const previewUrls = pendingImages.map((file) => URL.createObjectURL(file));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return toast.error("Product name is required.");
@@ -61,10 +82,38 @@ export default function NewProductPage() {
     };
 
     try {
-      await createMutation.mutateAsync(payload);
+      // 1. Create the product first to get its ID
+      const newProduct = await createMutation.mutateAsync(payload);
+
+      // 2. If there are pending images, upload them now
+      if (pendingImages.length > 0) {
+        toast.loading(`Uploading ${pendingImages.length} images...`, {
+          id: "upload",
+        });
+
+        // Import apiClient to make the raw FormData post
+        const { default: apiClient } = await import("@/lib/axios");
+
+        const uploadPromises = pendingImages.map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          return await apiClient.post(
+            `/products/${newProduct.id}/images`,
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            },
+          );
+        });
+
+        await Promise.all(uploadPromises);
+        toast.dismiss("upload");
+      }
+
       toast.success(`${form.name} added to catalog!`);
       router.back();
     } catch (err) {
+      toast.dismiss("upload");
       const e = err as AxiosError<{ message: string }>;
       toast.error(e?.response?.data?.message || "Failed to create product.");
     }
@@ -175,6 +224,31 @@ export default function NewProductPage() {
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-medium"
                   value={form.description}
                   onChange={(e) => set("description", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2 lg:col-span-4">
+                <label className="text-sm font-bold text-slate-700">
+                  Product Images
+                </label>
+                <ImageUpload
+                  value={previewUrls}
+                  onChange={() => {}} // Not used because we don't upload until submit
+                  onRemove={(url) => {
+                    // Find the index of the file corresponding to this URL and remove it
+                    const index = previewUrls.indexOf(url);
+                    if (index > -1) {
+                      setPendingImages((prev) =>
+                        prev.filter((_, i) => i !== index),
+                      );
+                      URL.revokeObjectURL(url); // Clean up memory
+                    }
+                  }}
+                  onUpload={async (file) => {
+                    setPendingImages((prev) => [...prev, file]);
+                    return { url: "" }; // Mock return since actual upload happens later
+                  }}
+                  maxFiles={4}
+                  disabled={createMutation.isPending}
                 />
               </div>
             </div>
