@@ -3,27 +3,21 @@
 import { useReducer } from "react";
 import {
   X,
-  Banknote,
-  CreditCard,
-  Send,
-  ShieldCheck,
   Lock,
   ArrowRight,
-  Ban,
-  CheckCircle2,
   ChevronLeft,
-  User,
-  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { CartItem } from "./cart-panel";
 import { CustomerPicker } from "./customer-picker";
 import { toast } from "sonner";
 import { createSaleOffline, CreateSaleOfflineInput } from "@/lib/offline/sales";
 import { PendingPaymentMethod, LocalCustomer } from "@/lib/db";
 import { useQueryClient } from "@tanstack/react-query";
+import { PaymentModalState, Step } from "./payment-types";
+import { PaymentSuccessView } from "./payment-success-view";
+import { PaymentMethodSelector } from "./payment-method-selector";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -35,21 +29,6 @@ interface PaymentModalProps {
   onSuccess: () => void;
   userRole?: string;
 }
-
-type Step = "method" | "customer" | "confirm";
-
-type PaymentModalState = {
-  selectedMethod: PendingPaymentMethod;
-  step: Step;
-  selectedCustomer: LocalCustomer | null;
-  creditDueDate: string;
-  isProcessing: boolean;
-  isSuccess: boolean;
-  localRef: string | null;
-  syncedSaleId: string | null;
-  amountTendered: string;
-  changeDue: number;
-};
 
 type PaymentModalAction =
   | { type: "SET_METHOD"; payload: PendingPaymentMethod }
@@ -110,258 +89,6 @@ function reducer(
       return state;
   }
 }
-
-// --- Subcomponents ---
-
-function PaymentSuccessView({
-  state,
-  onReset,
-  onDownloadReceipt,
-}: {
-  state: PaymentModalState;
-  onReset: () => void;
-  onDownloadReceipt: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300">
-      <Card className="w-full max-w-md p-10 flex flex-col items-center text-center space-y-4 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
-          <CheckCircle2 className="w-10 h-10" />
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-          {state.selectedMethod === "CREDIT"
-            ? "Credit Sale Recorded!"
-            : "Sale Complete!"}
-        </h2>
-        {state.selectedCustomer && (
-          <p className="text-sm font-semibold text-slate-600">
-            Credited to{" "}
-            <span className="text-primary">{state.selectedCustomer.name}</span>
-          </p>
-        )}
-        {state.localRef && (
-          <span className="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-slate-500">
-            {state.localRef}
-          </span>
-        )}
-
-        {/* Change Due — shown prominently for the cashier to hand back */}
-        {state.selectedMethod === "CASH" && state.changeDue > 0 && (
-          <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
-            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">
-              Change Due
-            </p>
-            <p className="text-3xl font-black text-emerald-700">
-              ₦
-              {state.changeDue.toLocaleString("en-NG", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </p>
-            <p className="text-xs text-emerald-500 mt-1">
-              Hand back to the customer
-            </p>
-          </div>
-        )}
-
-        <p className="text-xs text-slate-400 italic">
-          {typeof window !== "undefined" && navigator.onLine
-            ? state.syncedSaleId
-              ? "Synced to server ✓"
-              : "Syncing to server..."
-            : "Will sync when back online."}
-        </p>
-
-        <div className="w-full space-y-2 pt-2">
-          {state.syncedSaleId && (
-            <Button
-              onClick={onDownloadReceipt}
-              variant="outline"
-              className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Receipt
-            </Button>
-          )}
-          <Button
-            onClick={onReset}
-            className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-          >
-            New Sale
-          </Button>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function PaymentMethodSelector({
-  state,
-  total,
-  userRole,
-  onMethodSelect,
-  setStep,
-  setAmountTendered,
-  setCreditDueDate,
-  onClose,
-}: {
-  state: PaymentModalState;
-  total: number;
-  userRole?: string;
-  onMethodSelect: (id: PendingPaymentMethod) => void;
-  setStep: (step: Step) => void;
-  setAmountTendered: (amount: string) => void;
-  setCreditDueDate: (date: string) => void;
-  onClose: () => void;
-}) {
-  const methods = [
-    { id: "CASH" as PendingPaymentMethod, label: "Cash", icon: Banknote },
-    { id: "CARD" as PendingPaymentMethod, label: "Card", icon: CreditCard },
-    { id: "TRANSFER" as PendingPaymentMethod, label: "Transfer", icon: Send },
-    {
-      id: "PAYSTACK" as PendingPaymentMethod,
-      label: "Paystack",
-      icon: ShieldCheck,
-    },
-    {
-      id: "CREDIT" as PendingPaymentMethod,
-      label: "Credit Sale",
-      icon: Lock,
-      admin: true,
-    },
-  ];
-
-  return (
-    <>
-      {/* Selected customer badge */}
-      {state.selectedMethod === "CREDIT" && state.selectedCustomer && (
-        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-primary" />
-            <span className="text-sm font-bold text-slate-900">
-              {state.selectedCustomer.name}
-            </span>
-            {state.selectedCustomer.phone && (
-              <span className="text-xs text-slate-400">
-                {state.selectedCustomer.phone}
-              </span>
-            )}
-          </div>
-          <button
-            className="text-xs text-primary font-semibold hover:underline"
-            onClick={() => setStep("customer")}
-          >
-            Change
-          </button>
-        </div>
-      )}
-
-      {/* Method grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {methods.map((method) => {
-          if (method.admin && userRole === "CASHIER") return null;
-          return (
-            <button
-              key={method.id}
-              className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all group relative overflow-hidden ${
-                state.selectedMethod === method.id
-                  ? "border-primary bg-primary/5 shadow-inner"
-                  : "border-slate-100 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50"
-              }`}
-              onClick={() => onMethodSelect(method.id)}
-            >
-              {method.admin && (
-                <div className="absolute top-0 right-0 bg-amber-400 text-[8px] font-black px-2 py-0.5 rounded-bl-lg text-slate-900">
-                  ADMIN
-                </div>
-              )}
-              <method.icon
-                className={`w-8 h-8 transition-transform group-hover:scale-110 ${
-                  state.selectedMethod === method.id
-                    ? "text-primary"
-                    : "text-slate-400 group-hover:text-slate-900"
-                }`}
-              />
-              <span
-                className={`font-bold text-sm ${
-                  state.selectedMethod === method.id
-                    ? "text-slate-900 dark:text-white"
-                    : "text-slate-500"
-                }`}
-              >
-                {method.label}
-              </span>
-            </button>
-          );
-        })}
-        <button
-          className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-100 hover:border-red-400 hover:bg-red-50 transition-all group text-slate-400 hover:text-red-500"
-          onClick={onClose}
-        >
-          <Ban className="w-8 h-8 group-hover:scale-110 transition-transform" />
-          <span className="font-bold text-sm">Cancel Sale</span>
-        </button>
-      </div>
-
-      {/* Cash tendered */}
-      {state.selectedMethod === "CASH" && (
-        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 animate-in slide-in-from-top-2 duration-300">
-          <label
-            htmlFor="cash-tendered"
-            className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 block mb-2"
-          >
-            Cash Tendered
-          </label>
-          <Input
-            id="cash-tendered"
-            type="number"
-            placeholder="Enter amount..."
-            value={state.amountTendered}
-            onChange={(e) => setAmountTendered(e.target.value)}
-            className="h-12 text-lg font-bold rounded-xl border-slate-200 focus-visible:ring-primary/20"
-          />
-          {state.amountTendered && Number(state.amountTendered) < total && (
-            <p className="text-xs text-red-500 font-bold mt-2 pl-1">
-              Insufficient amount
-            </p>
-          )}
-          {state.amountTendered && Number(state.amountTendered) >= total && (
-            <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200">
-              <span className="text-xs font-bold text-slate-500">
-                Change Due
-              </span>
-              <span className="text-lg font-black text-emerald-600">
-                ₦{(Number(state.amountTendered) - total).toLocaleString()}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Credit due date */}
-      {state.selectedMethod === "CREDIT" && state.selectedCustomer && (
-        <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 animate-in slide-in-from-top-2 duration-300">
-          <label
-            htmlFor="credit-due-date"
-            className="text-[10px] font-bold text-amber-600 uppercase tracking-widest pl-1 block mb-2"
-          >
-            Due Date (optional)
-          </label>
-          <Input
-            id="credit-due-date"
-            type="date"
-            value={state.creditDueDate}
-            onChange={(e) => setCreditDueDate(e.target.value)}
-            className="h-10 rounded-xl border-amber-200 bg-white text-sm"
-            min={new Date().toISOString().split("T")[0]}
-          />
-        </div>
-      )}
-    </>
-  );
-}
-
-// --- Main Component ---
 
 export const PaymentModal = ({
   isOpen,
