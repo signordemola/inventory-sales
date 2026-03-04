@@ -30,20 +30,11 @@ export function PreferencesForm() {
   const form = useForm<PreferencesValues>({
     // @ts-expect-error zodResolver type mismatch with z.coerce
     resolver: zodResolver(preferencesSchema),
-    defaultValues: {
-      currency: "NGN",
-      taxRate: 0,
+    values: {
+      currency: business?.currency || "NGN",
+      taxRate: business?.taxRate || 0,
     },
   });
-
-  useEffect(() => {
-    if (business) {
-      form.reset({
-        currency: business.currency || "NGN",
-        taxRate: business.taxRate || 0,
-      });
-    }
-  }, [business, form]);
 
   const onSubmit = async (data: PreferencesValues) => {
     try {

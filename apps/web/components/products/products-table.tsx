@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Package, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -124,10 +125,11 @@ export const ProductsTable = ({
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                           {product.images && product.images[0] ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <Image
                               src={product.images[0]}
                               alt=""
+                              width={36}
+                              height={36}
                               className="w-full h-full object-cover"
                             />
                           ) : (

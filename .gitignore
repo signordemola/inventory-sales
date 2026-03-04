@@ -38,6 +38,7 @@ yarn-error.log*
 *.pem
 
 **/demo-ui
-# **/checklist*
+**/checklist*
 **/ofline*
 **/seed*
+**/mvp*

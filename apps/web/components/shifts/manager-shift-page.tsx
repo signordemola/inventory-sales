@@ -421,7 +421,6 @@ function CreditBalancesSection() {
                         value={repayAmount}
                         onChange={(e) => setRepayAmount(e.target.value)}
                         className="w-24 h-8 text-sm border border-slate-200 rounded-lg px-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                        autoFocus
                       />
                       <button
                         className="text-xs font-bold bg-primary text-slate-900 px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"

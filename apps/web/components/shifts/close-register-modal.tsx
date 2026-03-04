@@ -46,6 +46,168 @@ type ZReportData = {
   variance: number | null;
 };
 
+// --- Subcomponents ---
+
+function ZReportView({
+  isOpen,
+  zReport,
+  onDismiss,
+}: {
+  isOpen: boolean;
+  zReport: ZReportData;
+  onDismiss: () => void;
+}) {
+  const varianceVal = zReport.variance ?? 0;
+  const methodLabels: Record<string, string> = {
+    CASH: "Cash",
+    CARD: "Card",
+    TRANSFER: "Transfer",
+    PAYSTACK: "Paystack",
+    CREDIT: "Credit",
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onDismiss}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 mb-4">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+          </div>
+          <DialogTitle className="text-center text-xl">
+            Shift Closed — Z-Report
+          </DialogTitle>
+          <DialogDescription className="text-center">
+            Summary of your completed shift
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 mt-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-slate-50 border p-3 text-center">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Total Revenue
+              </p>
+              <p className="text-xl font-black text-slate-900">
+                {formatCurrency(zReport.totalRevenue)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-slate-50 border p-3 text-center">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Transactions
+              </p>
+              <p className="text-xl font-black text-slate-900">
+                {zReport.transactionCount}
+              </p>
+            </div>
+          </div>
+
+          {Object.keys(zReport.salesByMethod).length > 0 && (
+            <div className="rounded-lg border p-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                Sales by Payment Method
+              </p>
+              <div className="space-y-1.5">
+                {Object.entries(zReport.salesByMethod).map(
+                  ([method, amount]) => (
+                    <div key={method} className="flex justify-between text-sm">
+                      <span className="text-slate-600">
+                        {methodLabels[method] || method}
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        {formatCurrency(amount)}
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+
+          {(zReport.totalPaidIn > 0 || zReport.totalPaidOut > 0) && (
+            <div className="rounded-lg border p-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                Drawer Movements
+              </p>
+              <div className="space-y-1.5">
+                {zReport.totalPaidIn > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-emerald-600">Cash In</span>
+                    <span className="font-bold text-emerald-700">
+                      +{formatCurrency(zReport.totalPaidIn)}
+                    </span>
+                  </div>
+                )}
+                {zReport.totalPaidOut > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-red-600">Cash Out</span>
+                    <span className="font-bold text-red-700">
+                      −{formatCurrency(zReport.totalPaidOut)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-lg border p-3 space-y-1.5">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+              Cash Reconciliation
+            </p>
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500">Starting Float</span>
+              <span className="font-semibold">
+                {formatCurrency(zReport.startingCash)}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500">Expected Cash</span>
+              <span className="font-semibold">
+                {formatCurrency(zReport.expectedCash)}
+              </span>
+            </div>
+            {zReport.actualCash !== null && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Actual Cash</span>
+                <span className="font-semibold">
+                  {formatCurrency(zReport.actualCash)}
+                </span>
+              </div>
+            )}
+            {varianceVal !== 0 && (
+              <div
+                className={`flex justify-between text-sm font-bold pt-1 border-t ${
+                  varianceVal < 0 ? "text-red-600" : "text-emerald-600"
+                }`}
+              >
+                <span>{varianceVal < 0 ? "Shortage" : "Overage"}</span>
+                <span>
+                  {varianceVal < 0 ? "−" : "+"}
+                  {formatCurrency(Math.abs(varianceVal))}
+                </span>
+              </div>
+            )}
+            {varianceVal === 0 && (
+              <div className="flex justify-between text-sm font-bold pt-1 border-t text-emerald-600">
+                <span>Variance</span>
+                <span>₦0.00 ✓</span>
+              </div>
+            )}
+          </div>
+
+          <Button
+            onClick={onDismiss}
+            className="w-full h-11 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
+          >
+            Done
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// --- Main Component ---
+
 export function CloseRegisterModal({
   isOpen,
   expectedCash,
@@ -61,7 +223,6 @@ export function CloseRegisterModal({
     defaultValues: { actualCash: 0, notes: "" },
   });
 
-  // Live variance — watch the actualCash field safely using useWatch
   const watchedCash = useWatch({
     control: form.control,
     name: "actualCash",
@@ -81,12 +242,10 @@ export function CloseRegisterModal({
           notes: values.notes || undefined,
         });
 
-        // Fetch the Z-report for the just-closed shift
         try {
           const res = await apiClient.get("/shifts/z-report");
           setZReport(res.data);
         } catch {
-          // If Z-report fails, still show success
           onSuccess();
         }
       } catch (err) {
@@ -101,159 +260,13 @@ export function CloseRegisterModal({
     onSuccess();
   };
 
-  // Z-Report view
   if (zReport) {
-    const varianceVal = zReport.variance ?? 0;
-    const methodLabels: Record<string, string> = {
-      CASH: "Cash",
-      CARD: "Card",
-      TRANSFER: "Transfer",
-      PAYSTACK: "Paystack",
-      CREDIT: "Credit",
-    };
-
     return (
-      <Dialog open={isOpen} onOpenChange={handleDismissReport}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 mb-4">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-            </div>
-            <DialogTitle className="text-center text-xl">
-              Shift Closed — Z-Report
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Summary of your completed shift
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 mt-2">
-            {/* Revenue Summary */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-slate-50 border p-3 text-center">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  Total Revenue
-                </p>
-                <p className="text-xl font-black text-slate-900">
-                  {formatCurrency(zReport.totalRevenue)}
-                </p>
-              </div>
-              <div className="rounded-lg bg-slate-50 border p-3 text-center">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  Transactions
-                </p>
-                <p className="text-xl font-black text-slate-900">
-                  {zReport.transactionCount}
-                </p>
-              </div>
-            </div>
-
-            {/* Sales by Method */}
-            {Object.keys(zReport.salesByMethod).length > 0 && (
-              <div className="rounded-lg border p-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Sales by Payment Method
-                </p>
-                <div className="space-y-1.5">
-                  {Object.entries(zReport.salesByMethod).map(
-                    ([method, amount]) => (
-                      <div
-                        key={method}
-                        className="flex justify-between text-sm"
-                      >
-                        <span className="text-slate-600">
-                          {methodLabels[method] || method}
-                        </span>
-                        <span className="font-bold text-slate-900">
-                          {formatCurrency(amount)}
-                        </span>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Drawer Movements */}
-            {(zReport.totalPaidIn > 0 || zReport.totalPaidOut > 0) && (
-              <div className="rounded-lg border p-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Drawer Movements
-                </p>
-                <div className="space-y-1.5">
-                  {zReport.totalPaidIn > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-emerald-600">Cash In</span>
-                      <span className="font-bold text-emerald-700">
-                        +{formatCurrency(zReport.totalPaidIn)}
-                      </span>
-                    </div>
-                  )}
-                  {zReport.totalPaidOut > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-red-600">Cash Out</span>
-                      <span className="font-bold text-red-700">
-                        −{formatCurrency(zReport.totalPaidOut)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Reconciliation */}
-            <div className="rounded-lg border p-3 space-y-1.5">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                Cash Reconciliation
-              </p>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Starting Float</span>
-                <span className="font-semibold">
-                  {formatCurrency(zReport.startingCash)}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Expected Cash</span>
-                <span className="font-semibold">
-                  {formatCurrency(zReport.expectedCash)}
-                </span>
-              </div>
-              {zReport.actualCash !== null && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Actual Cash</span>
-                  <span className="font-semibold">
-                    {formatCurrency(zReport.actualCash)}
-                  </span>
-                </div>
-              )}
-              {varianceVal !== 0 && (
-                <div
-                  className={`flex justify-between text-sm font-bold pt-1 border-t ${varianceVal < 0 ? "text-red-600" : "text-emerald-600"}`}
-                >
-                  <span>{varianceVal < 0 ? "Shortage" : "Overage"}</span>
-                  <span>
-                    {varianceVal < 0 ? "−" : "+"}
-                    {formatCurrency(Math.abs(varianceVal))}
-                  </span>
-                </div>
-              )}
-              {varianceVal === 0 && (
-                <div className="flex justify-between text-sm font-bold pt-1 border-t text-emerald-600">
-                  <span>Variance</span>
-                  <span>₦0.00 ✓</span>
-                </div>
-              )}
-            </div>
-
-            <Button
-              onClick={handleDismissReport}
-              className="w-full h-11 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
-            >
-              Done
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ZReportView
+        isOpen={isOpen}
+        zReport={zReport}
+        onDismiss={handleDismissReport}
+      />
     );
   }
 
@@ -280,7 +293,6 @@ export function CloseRegisterModal({
         )}
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 mt-2">
-          {/* Expected cash display */}
           <div className="rounded-lg bg-muted/50 border p-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Expected Cash</p>
@@ -315,7 +327,6 @@ export function CloseRegisterModal({
                       placeholder="Enter the exact amount you counted"
                       className="text-lg font-bold"
                       aria-invalid={fieldState.invalid}
-                      autoFocus
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -325,17 +336,24 @@ export function CloseRegisterModal({
               )}
             />
 
-            {/* Live variance calculation */}
             {hasVariance && (
               <div
-                className={`rounded-lg p-3 flex items-center gap-3 border ${variance < 0 ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"}`}
+                className={`rounded-lg p-3 flex items-center gap-3 border ${
+                  variance < 0
+                    ? "bg-red-50 border-red-200"
+                    : "bg-green-50 border-green-200"
+                }`}
               >
                 <AlertTriangle
-                  className={`h-4 w-4 shrink-0 ${variance < 0 ? "text-red-600" : "text-green-600"}`}
+                  className={`h-4 w-4 shrink-0 ${
+                    variance < 0 ? "text-red-600" : "text-green-600"
+                  }`}
                 />
                 <div>
                   <p
-                    className={`text-sm font-semibold ${variance < 0 ? "text-red-700" : "text-green-700"}`}
+                    className={`text-sm font-semibold ${
+                      variance < 0 ? "text-red-700" : "text-green-700"
+                    }`}
                   >
                     {variance < 0 ? "Cash Shortage" : "Cash Overage"}:{" "}
                     {variance < 0 ? "-" : "+"}

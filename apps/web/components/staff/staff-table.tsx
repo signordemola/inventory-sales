@@ -68,7 +68,10 @@ export function StaffTable({
         {Array(5)
           .fill(0)
           .map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            <Skeleton
+              key={`staff-skel-${i}`}
+              className="h-16 w-full rounded-xl"
+            />
           ))}
       </div>
     );

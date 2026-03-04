@@ -140,7 +140,6 @@ export const CategoryEditor = ({
                         id={field.name}
                         placeholder="e.g. Beverages"
                         aria-invalid={fieldState.invalid}
-                        autoFocus
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />

@@ -10,7 +10,7 @@ const Loading = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-32 rounded-xl" />
+          <Skeleton key={`skel-${i}`} className="h-32 rounded-xl" />
         ))}
       </div>
 

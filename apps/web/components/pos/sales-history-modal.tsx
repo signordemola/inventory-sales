@@ -129,7 +129,7 @@ export function SalesHistoryModal({ isOpen, onClose }: SalesHistoryModalProps) {
             <div className="flex flex-col gap-3 p-3">
               {[...Array(5)].map((_, i) => (
                 <div
-                  key={i}
+                  key={`sale-skel-${i}`}
                   className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse"
                 />
               ))}

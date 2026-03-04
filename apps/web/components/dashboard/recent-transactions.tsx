@@ -42,7 +42,7 @@ export function RecentTransactions() {
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex gap-4 items-center">
+            <div key={`tx-skel-${i}`} className="flex gap-4 items-center">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="flex-1 space-y-2">
                 <div className="flex justify-between">

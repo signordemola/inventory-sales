@@ -109,7 +109,6 @@ export function OpenRegisterModal({
                       }
                       className="text-lg font-bold"
                       aria-invalid={fieldState.invalid}
-                      autoFocus
                     />
                     <p className="text-xs text-muted-foreground">
                       Count the physical cash currently in your drawer.

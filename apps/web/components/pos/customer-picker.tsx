@@ -45,7 +45,6 @@ export function CustomerPicker({ onSelect, onCancel }: CustomerPickerProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 h-10 rounded-xl border-slate-200 bg-slate-50 text-sm"
-          autoFocus
         />
       </div>
 

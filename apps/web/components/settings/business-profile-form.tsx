@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -40,26 +39,14 @@ export function BusinessProfileForm() {
 
   const form = useForm<BusinessProfileValues>({
     resolver: zodResolver(businessProfileSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      logo: "",
+    values: {
+      name: business?.name || "",
+      email: business?.email || "",
+      phone: business?.phone || "",
+      address: business?.address || "",
+      logo: business?.logo || "",
     },
   });
-
-  useEffect(() => {
-    if (business) {
-      form.reset({
-        name: business.name || "",
-        email: business.email || "",
-        phone: business.phone || "",
-        address: business.address || "",
-        logo: business.logo || "",
-      });
-    }
-  }, [business, form]);
   const logo = useWatch({ control: form.control, name: "logo" });
 
   const onSubmit = async (data: BusinessProfileValues) => {

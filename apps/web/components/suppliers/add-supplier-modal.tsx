@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supplierSchema, SupplierFormData } from "@/schemas/suppliers";
@@ -44,24 +44,13 @@ export function AddSupplierModal({
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
+    values: {
+      name: supplier?.name ?? "",
+      email: supplier?.email ?? "",
+      phone: supplier?.phone ?? "",
+      address: supplier?.address ?? "",
     },
   });
-
-  useEffect(() => {
-    if (isOpen) {
-      form.reset({
-        name: supplier?.name ?? "",
-        email: supplier?.email ?? "",
-        phone: supplier?.phone ?? "",
-        address: supplier?.address ?? "",
-      });
-    }
-  }, [isOpen, supplier, form]);
 
   const onSubmit = async (data: SupplierFormData) => {
     try {
@@ -191,7 +180,11 @@ export function AddSupplierModal({
             >
               Cancel
             </Button>
-            <Button type="submit" className={`text-background`} disabled={isPending}>
+            <Button
+              type="submit"
+              className={`text-background`}
+              disabled={isPending}
+            >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Save Changes" : "Create Supplier"}
             </Button>

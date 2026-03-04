@@ -98,10 +98,10 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
 
         {/* Category Pills with fade indicator */}
         <div className="relative mt-3">
-          <div className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar pr-8 [mask-image:linear-gradient(to_right,white_90%,transparent_100%)]">
+          <div className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar pr-8 mask-[linear-gradient(to_right,white_90%,transparent_100%)]">
             <button
               onClick={() => setSelectedCategoryId(undefined)}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all shrink-0 ${
                 !selectedCategoryId
                   ? "bg-slate-900 text-white"
                   : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -113,7 +113,7 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategoryId(cat.id)}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all shrink-0 ${
                   selectedCategoryId === cat.id
                     ? "bg-slate-900 text-white"
                     : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -136,7 +136,10 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
             }}
           >
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="p-3 border rounded-xl bg-white space-y-3">
+              <div
+                key={`prod-skel-${i}`}
+                className="p-3 border rounded-xl bg-white space-y-3"
+              >
                 <Skeleton className="aspect-square w-full rounded-lg" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />

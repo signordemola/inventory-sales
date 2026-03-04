@@ -170,6 +170,7 @@ export const CartPanel = ({
                       src={item.product.images[0]}
                       alt={item.product.name}
                       fill
+                      sizes="(max-width: 768px) 100vw, 68px"
                       className="object-cover"
                     />
                   ) : (

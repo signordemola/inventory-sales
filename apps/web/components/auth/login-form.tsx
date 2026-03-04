@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -131,12 +132,12 @@ const LoginForm = () => {
             />
             <span className="text-sm text-foreground">Remember me</span>
           </label>
-          <a
-            href="#"
+          <Link
+            href="/forgot-password"
             className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
           >
             Forgot password?
-          </a>
+          </Link>
         </div>
 
         <SubmitButton isPending={isPending} buttonText="Log In" />

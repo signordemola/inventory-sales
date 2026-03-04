@@ -22,7 +22,10 @@ export function ManagerStatsGrid() {
         {Array(4)
           .fill(0)
           .map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+            <Skeleton
+              key={`stat-skel-${i}`}
+              className="h-32 w-full rounded-2xl"
+            />
           ))}
       </div>
     );

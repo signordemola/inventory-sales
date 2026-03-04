@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { paymentSchema, PaymentFormData } from "@/schemas/suppliers";
@@ -50,12 +50,6 @@ export function RecordPaymentModal({
     },
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      reset({ amount: 0, notes: "" });
-    }
-  }, [isOpen, reset]);
-
   const onSubmit = (data: PaymentFormData) => {
     if (data.amount > balance.balance) {
       toast.error("Cannot pay more than the outstanding balance.");
@@ -75,7 +69,15 @@ export function RecordPaymentModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          reset({ amount: 0, notes: "" });
+        }
+        onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Record Supplier Payment</DialogTitle>
