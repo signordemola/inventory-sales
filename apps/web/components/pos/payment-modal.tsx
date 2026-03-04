@@ -306,10 +306,14 @@ function PaymentMethodSelector({
       {/* Cash tendered */}
       {state.selectedMethod === "CASH" && (
         <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 animate-in slide-in-from-top-2 duration-300">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 block mb-2">
+          <label
+            htmlFor="cash-tendered"
+            className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 block mb-2"
+          >
             Cash Tendered
           </label>
           <Input
+            id="cash-tendered"
             type="number"
             placeholder="Enter amount..."
             value={state.amountTendered}
@@ -337,10 +341,14 @@ function PaymentMethodSelector({
       {/* Credit due date */}
       {state.selectedMethod === "CREDIT" && state.selectedCustomer && (
         <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 animate-in slide-in-from-top-2 duration-300">
-          <label className="text-[10px] font-bold text-amber-600 uppercase tracking-widest pl-1 block mb-2">
+          <label
+            htmlFor="credit-due-date"
+            className="text-[10px] font-bold text-amber-600 uppercase tracking-widest pl-1 block mb-2"
+          >
             Due Date (optional)
           </label>
           <Input
+            id="credit-due-date"
             type="date"
             value={state.creditDueDate}
             onChange={(e) => setCreditDueDate(e.target.value)}
@@ -444,12 +452,17 @@ export const PaymentModal = ({
         payload: { localRef: localReference, changeDue: change },
       });
 
-      if (navigator.onLine) {
+      const syncAndGetDb = async () => {
         const [{ flushSyncQueue }, { db }] = await Promise.all([
           import("@/lib/offline/flushSyncQueue"),
           import("@/lib/db"),
         ]);
         await flushSyncQueue();
+        return db;
+      };
+
+      if (navigator.onLine) {
+        const db = await syncAndGetDb();
 
         const synced = await db.pendingSales
           .filter((s) => s.localReference === localReference)

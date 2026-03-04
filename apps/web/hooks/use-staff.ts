@@ -14,7 +14,7 @@ export function useStaff() {
   });
 }
 
-export interface InviteStaffPayload {
+interface InviteStaffPayload {
   email: string;
   role: UserRole;
 }

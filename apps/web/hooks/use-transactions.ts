@@ -39,12 +39,12 @@ export interface Transaction {
   items: TransactionItem[];
 }
 
-export interface PaginatedTransactions {
+interface PaginatedTransactions {
   items: Transaction[];
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
-export interface TransactionFilters {
+interface TransactionFilters {
   page?: number;
   limit?: number;
   search?: string;

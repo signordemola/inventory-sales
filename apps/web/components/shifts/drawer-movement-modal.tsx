@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useReducer, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,54 +30,95 @@ interface DrawerMovementModalProps {
 
 type MovementType = "PAID_IN" | "PAID_OUT";
 
+type MovementState = {
+  type: MovementType;
+  amount: string;
+  reason: string;
+  isSubmitting: boolean;
+  error: string;
+};
+
+type MovementAction =
+  | { type: "SET_TYPE"; payload: MovementType }
+  | { type: "SET_AMOUNT"; payload: string }
+  | { type: "SET_REASON"; payload: string }
+  | { type: "SET_SUBMITTING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string }
+  | { type: "RESET" };
+
+const initialState: MovementState = {
+  type: "PAID_IN",
+  amount: "",
+  reason: "",
+  isSubmitting: false,
+  error: "",
+};
+
+function movementReducer(
+  state: MovementState,
+  action: MovementAction,
+): MovementState {
+  switch (action.type) {
+    case "SET_TYPE":
+      return { ...state, type: action.payload };
+    case "SET_AMOUNT":
+      return { ...state, amount: action.payload };
+    case "SET_REASON":
+      return { ...state, reason: action.payload };
+    case "SET_SUBMITTING":
+      return { ...state, isSubmitting: action.payload, error: "" };
+    case "SET_ERROR":
+      return { ...state, error: action.payload, isSubmitting: false };
+    case "RESET":
+      return { ...initialState };
+    default:
+      return state;
+  }
+}
+
 export function DrawerMovementModal({
   isOpen,
   onClose,
   onSuccess,
 }: DrawerMovementModalProps) {
-  const [type, setType] = useState<MovementType>("PAID_IN");
-  const [amount, setAmount] = useState("");
-  const [reason, setReason] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [state, dispatch] = useReducer(movementReducer, initialState);
 
-  const parsedAmount = Number(amount);
-  const isValid = parsedAmount > 0 && reason.trim().length > 0;
+  const parsedAmount = useMemo(() => Number(state.amount), [state.amount]);
+  const isValid = useMemo(
+    () => parsedAmount > 0 && state.reason.trim().length > 0,
+    [parsedAmount, state.reason],
+  );
 
   const handleSubmit = async () => {
     if (!isValid) return;
-
-    setIsSubmitting(true);
-    setError("");
+    dispatch({ type: "SET_SUBMITTING", payload: true });
 
     try {
       await apiClient.post("/shifts/drawer-movement", {
-        type,
+        type: state.type,
         amount: parsedAmount,
-        reason: reason.trim(),
+        reason: state.reason.trim(),
       });
 
       toast.success(
-        type === "PAID_IN"
+        state.type === "PAID_IN"
           ? `${formatCurrency(parsedAmount)} added to drawer`
           : `${formatCurrency(parsedAmount)} removed from drawer`,
       );
 
-      setAmount("");
-      setReason("");
+      dispatch({ type: "RESET" });
       onSuccess();
       onClose();
     } catch {
-      setError("Failed to record movement. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Failed to record movement. Please try again.",
+      });
     }
   };
 
   const handleClose = () => {
-    setAmount("");
-    setReason("");
-    setError("");
+    dispatch({ type: "RESET" });
     onClose();
   };
 
@@ -98,9 +139,9 @@ export function DrawerMovementModal({
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setType("PAID_IN")}
+              onClick={() => dispatch({ type: "SET_TYPE", payload: "PAID_IN" })}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                type === "PAID_IN"
+                state.type === "PAID_IN"
                   ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                   : "border-slate-200 text-slate-400 hover:border-slate-300"
               }`}
@@ -113,9 +154,11 @@ export function DrawerMovementModal({
             </button>
             <button
               type="button"
-              onClick={() => setType("PAID_OUT")}
+              onClick={() =>
+                dispatch({ type: "SET_TYPE", payload: "PAID_OUT" })
+              }
               className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                type === "PAID_OUT"
+                state.type === "PAID_OUT"
                   ? "border-red-500 bg-red-50 text-red-700"
                   : "border-slate-200 text-slate-400 hover:border-slate-300"
               }`}
@@ -135,14 +178,16 @@ export function DrawerMovementModal({
                 <Input
                   type="number"
                   placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={state.amount}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_AMOUNT", payload: e.target.value })
+                  }
                   min="0"
                   step="0.01"
                   className="h-12 text-lg font-bold"
                 />
               </FieldContent>
-              {amount && parsedAmount <= 0 && (
+              {state.amount && parsedAmount <= 0 && (
                 <FieldError>Amount must be greater than zero</FieldError>
               )}
             </Field>
@@ -152,50 +197,51 @@ export function DrawerMovementModal({
               <FieldContent>
                 <Input
                   placeholder={
-                    type === "PAID_IN"
+                    state.type === "PAID_IN"
                       ? "e.g. Change top-up, float adjustment"
                       : "e.g. Petty cash, vendor payment"
                   }
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  value={state.reason}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_REASON", payload: e.target.value })
+                  }
                   className="h-10"
                 />
               </FieldContent>
-              {reason.length === 0 && amount && (
+              {state.reason.length === 0 && state.amount && (
                 <FieldError>Reason is required</FieldError>
               )}
             </Field>
           </FieldGroup>
 
-          {error && (
+          {state.error && (
             <p className="text-sm text-red-500 font-medium text-center">
-              {error}
+              {state.error}
             </p>
           )}
 
-          {/* Preview */}
           {isValid && (
             <div
               className={`rounded-xl p-4 text-center ${
-                type === "PAID_IN"
+                state.type === "PAID_IN"
                   ? "bg-emerald-50 border border-emerald-200"
                   : "bg-red-50 border border-red-200"
               }`}
             >
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">
-                {type === "PAID_IN"
+                {state.type === "PAID_IN"
                   ? "Adding to Drawer"
                   : "Removing from Drawer"}
               </p>
               <p
                 className={`text-2xl font-black ${
-                  type === "PAID_IN" ? "text-emerald-700" : "text-red-700"
+                  state.type === "PAID_IN" ? "text-emerald-700" : "text-red-700"
                 }`}
               >
-                {type === "PAID_IN" ? "+" : "−"}
+                {state.type === "PAID_IN" ? "+" : "−"}
                 {formatCurrency(parsedAmount)}
               </p>
-              <p className="text-xs text-slate-500 mt-1">{reason}</p>
+              <p className="text-xs text-slate-500 mt-1">{state.reason}</p>
             </div>
           )}
 
@@ -209,17 +255,17 @@ export function DrawerMovementModal({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!isValid || isSubmitting}
+              disabled={!isValid || state.isSubmitting}
               className={`flex-1 h-11 rounded-xl font-bold ${
-                type === "PAID_IN"
+                state.type === "PAID_IN"
                   ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-red-600 hover:bg-red-700"
               } text-white`}
             >
-              {isSubmitting ? (
+              {state.isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                `Confirm ${type === "PAID_IN" ? "Cash In" : "Cash Out"}`
+                `Confirm ${state.type === "PAID_IN" ? "Cash In" : "Cash Out"}`
               )}
             </Button>
           </div>

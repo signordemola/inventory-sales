@@ -7,7 +7,7 @@ export const formattedDate = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 }).format(today);
 
-export const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",

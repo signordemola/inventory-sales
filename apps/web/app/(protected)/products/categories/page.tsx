@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useReducer } from "react";
 import { useRouter } from "next/navigation";
 import { useCategories, useDeleteCategory } from "@/hooks/use-categories";
 import { CategoryTree } from "@/components/categories/category-tree";
@@ -19,78 +19,113 @@ import {
 import { ArrowLeft, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
+type CategoryState = {
+  search: string;
+  selectedCategoryId: string | null;
+  isCreating: boolean;
+  initialParentId: string | undefined;
+  pendingDeleteId: string | null;
+};
+
+type CategoryAction =
+  | { type: "SET_SEARCH"; payload: string }
+  | { type: "CREATE_NEW" }
+  | { type: "CREATE_CHILD"; payload: string }
+  | { type: "SELECT_CATEGORY"; payload: string }
+  | { type: "SET_PENDING_DELETE"; payload: string | null }
+  | { type: "CANCEL_CREATION" }
+  | { type: "SUCCESS_CREATE" };
+
+const initialState: CategoryState = {
+  search: "",
+  selectedCategoryId: null,
+  isCreating: false,
+  initialParentId: undefined,
+  pendingDeleteId: null,
+};
+
+function categoryReducer(
+  state: CategoryState,
+  action: CategoryAction,
+): CategoryState {
+  switch (action.type) {
+    case "SET_SEARCH":
+      return { ...state, search: action.payload };
+    case "CREATE_NEW":
+      return {
+        ...state,
+        selectedCategoryId: null,
+        initialParentId: undefined,
+        isCreating: true,
+      };
+    case "CREATE_CHILD":
+      return {
+        ...state,
+        selectedCategoryId: null,
+        initialParentId: action.payload,
+        isCreating: true,
+      };
+    case "SELECT_CATEGORY":
+      return {
+        ...state,
+        selectedCategoryId: action.payload,
+        isCreating: false,
+        initialParentId: undefined,
+      };
+    case "SET_PENDING_DELETE":
+      return { ...state, pendingDeleteId: action.payload };
+    case "CANCEL_CREATION":
+      return { ...state, isCreating: false, initialParentId: undefined };
+    case "SUCCESS_CREATE":
+      return {
+        ...state,
+        isCreating: true,
+        selectedCategoryId: null,
+        initialParentId: undefined,
+      };
+    default:
+      return state;
+  }
+}
+
 export default function CategoriesPage() {
   const router = useRouter();
   const { data: categories = [], isLoading } = useCategories();
   const deleteMutation = useDeleteCategory();
 
-  const [search, setSearch] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
-  );
-  const [isCreating, setIsCreating] = useState(false);
-  const [initialParentId, setInitialParentId] = useState<string | undefined>();
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(categoryReducer, initialState);
 
-  const handleCreateNew = () => {
-    setSelectedCategoryId(null);
-    setInitialParentId(undefined);
-    setIsCreating(true);
-  };
-
-  const handleCreateChild = (parentId: string) => {
-    setSelectedCategoryId(null);
-    setInitialParentId(parentId);
-    setIsCreating(true);
-  };
-
-  const handleSelect = (id: string) => {
-    setSelectedCategoryId(id);
-    setIsCreating(false);
-    setInitialParentId(undefined);
-  };
-
-  const handleDelete = (id: string) => {
-    setPendingDeleteId(id);
-  };
+  const handleCreateNew = () => dispatch({ type: "CREATE_NEW" });
+  const handleCreateChild = (parentId: string) =>
+    dispatch({ type: "CREATE_CHILD", payload: parentId });
+  const handleSelect = (id: string) =>
+    dispatch({ type: "SELECT_CATEGORY", payload: id });
+  const handleDelete = (id: string) =>
+    dispatch({ type: "SET_PENDING_DELETE", payload: id });
+  const handleCancel = () => dispatch({ type: "CANCEL_CREATION" });
+  const handleCreateSuccess = () => dispatch({ type: "SUCCESS_CREATE" });
+  const handleUpdateSuccess = (id: string) =>
+    dispatch({ type: "SELECT_CATEGORY", payload: id });
 
   const confirmDelete = async () => {
-    if (!pendingDeleteId) return;
+    if (!state.pendingDeleteId) return;
     try {
-      await deleteMutation.mutateAsync(pendingDeleteId);
+      await deleteMutation.mutateAsync(state.pendingDeleteId);
       toast.success("Category deleted");
-      if (selectedCategoryId === pendingDeleteId) setSelectedCategoryId(null);
+      if (state.selectedCategoryId === state.pendingDeleteId) {
+        dispatch({ type: "SELECT_CATEGORY", payload: "" }); // Clear selection if deleted
+      }
     } catch {
       toast.error(
         "Failed to delete category. It may still have products assigned.",
       );
     } finally {
-      setPendingDeleteId(null);
+      dispatch({ type: "SET_PENDING_DELETE", payload: null });
     }
-  };
-
-  const handleCancel = () => {
-    setIsCreating(false);
-    setInitialParentId(undefined);
-  };
-
-  // Called after CREATING a category — stay in create mode ready for next entry
-  const handleCreateSuccess = () => {
-    setIsCreating(true);
-    setSelectedCategoryId(null);
-    setInitialParentId(undefined);
-  };
-
-  // Called after UPDATING a category — stay in edit mode
-  const handleUpdateSuccess = (id: string) => {
-    setSelectedCategoryId(id);
-    setIsCreating(false);
-    setInitialParentId(undefined);
   };
 
   return (
     <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
@@ -115,8 +150,10 @@ export default function CategoriesPage() {
             <input
               type="text"
               placeholder="Search categories…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={state.search}
+              onChange={(e) =>
+                dispatch({ type: "SET_SEARCH", payload: e.target.value })
+              }
               className="pl-10 pr-4 h-11 w-full rounded-xl border border-slate-200 bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-700"
             />
           </div>
@@ -129,36 +166,38 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Two-panel layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
         <CategoryTree
           categories={categories}
           isLoading={isLoading}
-          search={search}
-          selectedCategoryId={selectedCategoryId}
-          isCreating={isCreating}
+          search={state.search}
+          selectedCategoryId={state.selectedCategoryId}
+          isCreating={state.isCreating}
           onSelect={handleSelect}
           onCreateChild={handleCreateChild}
           onCreateNew={handleCreateNew}
           onDelete={handleDelete}
         />
         <CategoryEditor
-          key={isCreating ? "__new__" : (selectedCategoryId ?? "__empty__")}
-          selectedCategoryId={selectedCategoryId}
-          isCreating={isCreating}
+          key={
+            state.isCreating
+              ? "__new__"
+              : (state.selectedCategoryId ?? "__empty__")
+          }
+          selectedCategoryId={state.selectedCategoryId}
+          isCreating={state.isCreating}
           categories={categories}
-          initialParentId={initialParentId}
+          initialParentId={state.initialParentId}
           onCancel={handleCancel}
           onCreateSuccess={handleCreateSuccess}
           onUpdateSuccess={handleUpdateSuccess}
         />
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog
-        open={!!pendingDeleteId}
+        open={!!state.pendingDeleteId}
         onOpenChange={(open) => {
-          if (!open) setPendingDeleteId(null);
+          if (!open) dispatch({ type: "SET_PENDING_DELETE", payload: null });
         }}
       >
         <AlertDialogContent>
@@ -170,7 +209,11 @@ export default function CategoriesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingDeleteId(null)}>
+            <AlertDialogCancel
+              onClick={() =>
+                dispatch({ type: "SET_PENDING_DELETE", payload: null })
+              }
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

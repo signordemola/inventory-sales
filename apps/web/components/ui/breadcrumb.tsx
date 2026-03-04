@@ -114,12 +114,9 @@ function BreadcrumbEllipsis({
   )
 }
 
-export {
-  Breadcrumb,
+export { Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbPage,
-  BreadcrumbSeparator,
-  BreadcrumbEllipsis,
-}
+  BreadcrumbSeparator }

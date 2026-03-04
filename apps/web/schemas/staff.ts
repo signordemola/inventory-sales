@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-export const STAFF_ROLES = ["OWNER", "CASHIER", "MANAGER"] as const;
+const STAFF_ROLES = ["OWNER", "CASHIER", "MANAGER"] as const;
 
 export const inviteStaffSchema = z.object({
   email: z.email("Please enter a valid email address"),

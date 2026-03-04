@@ -96,11 +96,6 @@ function AvatarGroupCount({
   )
 }
 
-export {
-  Avatar,
+export { Avatar,
   AvatarImage,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarBadge,
-}
+  AvatarFallback }

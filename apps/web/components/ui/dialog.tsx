@@ -143,15 +143,9 @@ function DialogDescription({
   )
 }
 
-export {
-  Dialog,
-  DialogClose,
+export { Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
-}
+  DialogTitle }

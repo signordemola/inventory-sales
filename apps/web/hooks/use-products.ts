@@ -8,12 +8,12 @@ export type { Product };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface PaginatedProducts {
+interface PaginatedProducts {
   items: Product[];
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
-export interface ProductFilters {
+interface ProductFilters {
   page?: number;
   limit?: number;
   search?: string;
@@ -21,7 +21,7 @@ export interface ProductFilters {
   isActive?: boolean;
 }
 
-export interface CreateProductPayload {
+interface CreateProductPayload {
   name: string;
   sku: string;
   categoryId?: string;
@@ -35,7 +35,7 @@ export interface CreateProductPayload {
   images?: string[];
 }
 
-export type UpdateProductPayload = Partial<CreateProductPayload>;
+type UpdateProductPayload = Partial<CreateProductPayload>;
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
@@ -102,7 +102,7 @@ export function useUpdateProduct(id: string) {
   });
 }
 
-export function useDeleteProduct() {
+function useDeleteProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {

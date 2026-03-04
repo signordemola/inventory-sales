@@ -3,14 +3,14 @@ import { Product, Category } from "@/types/products";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface LocalStockLevel {
+interface LocalStockLevel {
   productId: string;
   quantity: number;
   threshold: number;
   lastSyncedAt: number;
 }
 
-export interface LocalSeedMeta {
+interface LocalSeedMeta {
   key: string;
   value: number;
 }
@@ -68,7 +68,7 @@ export interface PendingSale {
 
 // ─── Database ─────────────────────────────────────────────────────────────────
 
-export class NaijaStockDB extends Dexie {
+class NaijaStockDB extends Dexie {
   products!: Table<Product, string>;
   categories!: Table<Category, string>;
   stockLevels!: Table<LocalStockLevel, string>;

@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import { UserRoleType } from "@/types";
 
-export interface SessionUser {
+interface SessionUser {
   id: string;
   name: string;
   email: string;
@@ -13,7 +13,7 @@ export interface SessionUser {
   isActive?: boolean;
 }
 
-export interface SessionData {
+interface SessionData {
   user: SessionUser;
 }
 

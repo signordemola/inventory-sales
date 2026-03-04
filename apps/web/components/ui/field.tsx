@@ -224,15 +224,8 @@ function FieldError({
   );
 }
 
-export {
-  Field,
+export { Field,
   FieldLabel,
-  FieldDescription,
   FieldError,
   FieldGroup,
-  FieldLegend,
-  FieldSeparator,
-  FieldSet,
-  FieldContent,
-  FieldTitle,
-};
+  FieldContent };

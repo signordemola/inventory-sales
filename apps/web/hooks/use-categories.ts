@@ -16,14 +16,14 @@ export interface Category {
   updatedAt: string;
 }
 
-export interface CreateCategoryPayload {
+interface CreateCategoryPayload {
   name: string;
   slug?: string;
   description?: string;
   parentId?: string;
 }
 
-export interface UpdateCategoryPayload {
+interface UpdateCategoryPayload {
   name?: string;
   slug?: string;
   description?: string | null;

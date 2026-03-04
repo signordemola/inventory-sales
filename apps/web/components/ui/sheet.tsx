@@ -117,13 +117,8 @@ function SheetDescription({
   )
 }
 
-export {
-  Sheet,
-  SheetTrigger,
-  SheetClose,
+export { Sheet,
   SheetContent,
   SheetHeader,
-  SheetFooter,
   SheetTitle,
-  SheetDescription,
-}
+  SheetDescription }

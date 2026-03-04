@@ -46,7 +46,7 @@ export interface PaginatedMovements {
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
-export interface AdjustStockPayload {
+interface AdjustStockPayload {
   productId: string;
   variantId?: string;
   type: StockMovementType;

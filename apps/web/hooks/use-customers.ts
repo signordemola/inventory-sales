@@ -35,13 +35,13 @@ export interface Customer {
   creditSales?: CreditSale[];
 }
 
-export interface CreateCustomerPayload {
+interface CreateCustomerPayload {
   name: string;
   phone?: string;
   email?: string;
 }
 
-export type UpdateCustomerPayload = Partial<CreateCustomerPayload>;
+type UpdateCustomerPayload = Partial<CreateCustomerPayload>;
 
 export function useCustomers() {
   return useQuery<Customer[]>({
@@ -53,7 +53,7 @@ export function useCustomers() {
   });
 }
 
-export function useCustomer(id: string | undefined) {
+function useCustomer(id: string | undefined) {
   return useQuery<Customer>({
     queryKey: ["customers", id],
     queryFn: async () => {
@@ -95,7 +95,7 @@ export function useUpdateCustomer(id: string | undefined) {
   });
 }
 
-export function useDeleteCustomer() {
+function useDeleteCustomer() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
@@ -109,7 +109,7 @@ export function useDeleteCustomer() {
 
 // Credit Ledger Hooks
 
-export interface CreateRepaymentPayload {
+interface CreateRepaymentPayload {
   creditSaleId: string;
   amount: number;
   notes?: string;

@@ -76,7 +76,7 @@ export function useUpdateSupplier() {
   });
 }
 
-export function useDeleteSupplier() {
+function useDeleteSupplier() {
   const queryClient = useQueryClient();
 
   return useMutation({

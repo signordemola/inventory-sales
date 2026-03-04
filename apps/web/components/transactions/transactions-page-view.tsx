@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useReducer } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useStaff } from "@/hooks/use-staff";
 import { Download, Filter, Search } from "lucide-react";
@@ -10,21 +10,65 @@ import { TransactionsTable } from "@/components/transactions/transactions-table"
 import apiClient from "@/lib/axios";
 import { toast } from "sonner";
 
+// --- State Management ---
+type FiltersState = {
+  page: number;
+  search: string;
+  status: string;
+  paymentMethod: string;
+  cashierId: string;
+  dateRange: string;
+};
+
+type FilterAction =
+  | { type: "SET_SEARCH"; payload: string }
+  | { type: "SET_STATUS"; payload: string }
+  | { type: "SET_PAYMENT_METHOD"; payload: string }
+  | { type: "SET_CASHIER_ID"; payload: string }
+  | { type: "SET_DATE_RANGE"; payload: string }
+  | { type: "SET_PAGE"; payload: number };
+
+const initialFilters: FiltersState = {
+  page: 1,
+  search: "",
+  status: "",
+  paymentMethod: "",
+  cashierId: "",
+  dateRange: "",
+};
+
+function filterReducer(
+  state: FiltersState,
+  action: FilterAction,
+): FiltersState {
+  switch (action.type) {
+    case "SET_SEARCH":
+      return { ...state, search: action.payload, page: 1 };
+    case "SET_STATUS":
+      return { ...state, status: action.payload, page: 1 };
+    case "SET_PAYMENT_METHOD":
+      return { ...state, paymentMethod: action.payload, page: 1 };
+    case "SET_CASHIER_ID":
+      return { ...state, cashierId: action.payload, page: 1 };
+    case "SET_DATE_RANGE":
+      return { ...state, dateRange: action.payload, page: 1 };
+    case "SET_PAGE":
+      return { ...state, page: action.payload };
+    default:
+      return state;
+  }
+}
+
 export function TransactionsPageView() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [cashierId, setCashierId] = useState("");
-  const [dateRange, setDateRange] = useState("");
+  const [state, dispatch] = useReducer(filterReducer, initialFilters);
 
   const { data, isLoading, isFetching } = useTransactions({
-    page,
+    page: state.page,
     limit: 20,
-    search: search.length >= 3 ? search : undefined,
-    status,
-    paymentMethod,
-    cashierId,
+    search: state.search.length >= 3 ? state.search : undefined,
+    status: state.status,
+    paymentMethod: state.paymentMethod,
+    cashierId: state.cashierId,
   });
 
   const { data: staffData } = useStaff();
@@ -78,21 +122,19 @@ export function TransactionsPageView() {
             id="transaction-search"
             placeholder="Search reference..."
             className="pl-10 h-11 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-primary/20"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            value={state.search}
+            onChange={(e) =>
+              dispatch({ type: "SET_SEARCH", payload: e.target.value })
+            }
           />
         </div>
 
         <select
           className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20"
-          value={dateRange}
-          onChange={(e) => {
-            setDateRange(e.target.value);
-            setPage(1);
-          }}
+          value={state.dateRange}
+          onChange={(e) =>
+            dispatch({ type: "SET_DATE_RANGE", payload: e.target.value })
+          }
         >
           <option value="">Date: All</option>
           <option value="today">Today</option>
@@ -103,11 +145,10 @@ export function TransactionsPageView() {
 
         <select
           className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 max-w-[180px] truncate"
-          value={cashierId}
-          onChange={(e) => {
-            setCashierId(e.target.value);
-            setPage(1);
-          }}
+          value={state.cashierId}
+          onChange={(e) =>
+            dispatch({ type: "SET_CASHIER_ID", payload: e.target.value })
+          }
         >
           <option value="">Staff: All</option>
           {staffData?.map((s) => (
@@ -119,11 +160,10 @@ export function TransactionsPageView() {
 
         <select
           className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20"
-          value={paymentMethod}
-          onChange={(e) => {
-            setPaymentMethod(e.target.value);
-            setPage(1);
-          }}
+          value={state.paymentMethod}
+          onChange={(e) =>
+            dispatch({ type: "SET_PAYMENT_METHOD", payload: e.target.value })
+          }
         >
           <option value="">Payment: All Types</option>
           <option value="CASH">Cash</option>
@@ -133,11 +173,10 @@ export function TransactionsPageView() {
 
         <select
           className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20"
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
+          value={state.status}
+          onChange={(e) =>
+            dispatch({ type: "SET_STATUS", payload: e.target.value })
+          }
         >
           <option value="">Status: All</option>
           <option value="COMPLETED">Completed</option>
@@ -151,10 +190,10 @@ export function TransactionsPageView() {
           transactions={data?.items || []}
           isLoading={isLoading}
           isFetching={isFetching}
-          page={page}
+          page={state.page}
           totalItems={data?.meta.total || 0}
           totalPages={data?.meta.totalPages || 0}
-          onPageChange={setPage}
+          onPageChange={(p) => dispatch({ type: "SET_PAGE", payload: p })}
           onDownloadReceipt={handleDownloadReceipt}
         />
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useReducer } from "react";
 import {
   useStaff,
   useDeactivateStaff,
@@ -23,6 +23,50 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+type StaffState = {
+  search: string;
+  isEditorOpen: boolean;
+  selectedMember: User | null;
+  inviteToRevoke: StaffInvite | null;
+  memberToDeactivate: User | null;
+};
+
+type StaffAction =
+  | { type: "SET_SEARCH"; payload: string }
+  | { type: "OPEN_EDITOR"; payload?: User | null }
+  | { type: "CLOSE_EDITOR" }
+  | { type: "SET_REVOKE_INVITE"; payload: StaffInvite | null }
+  | { type: "SET_DEACTIVATE_MEMBER"; payload: User | null };
+
+const initialState: StaffState = {
+  search: "",
+  isEditorOpen: false,
+  selectedMember: null,
+  inviteToRevoke: null,
+  memberToDeactivate: null,
+};
+
+function staffReducer(state: StaffState, action: StaffAction): StaffState {
+  switch (action.type) {
+    case "SET_SEARCH":
+      return { ...state, search: action.payload };
+    case "OPEN_EDITOR":
+      return {
+        ...state,
+        isEditorOpen: true,
+        selectedMember: action.payload || null,
+      };
+    case "CLOSE_EDITOR":
+      return { ...state, isEditorOpen: false, selectedMember: null };
+    case "SET_REVOKE_INVITE":
+      return { ...state, inviteToRevoke: action.payload };
+    case "SET_DEACTIVATE_MEMBER":
+      return { ...state, memberToDeactivate: action.payload };
+    default:
+      return state;
+  }
+}
+
 export default function StaffPage() {
   const { data: staff, isLoading } = useStaff();
   const { data: pendingInvites, isLoading: isInvitesLoading } =
@@ -30,61 +74,43 @@ export default function StaffPage() {
   const deactivateMutation = useDeactivateStaff();
   const revokeMutation = useRevokeInvite();
 
-  const [search, setSearch] = useState("");
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<User | null>(null);
-  const [inviteToRevoke, setInviteToRevoke] = useState<StaffInvite | null>(
-    null,
-  );
-  const [memberToDeactivate, setMemberToDeactivate] = useState<User | null>(
-    null,
-  );
+  const [state, dispatch] = useReducer(staffReducer, initialState);
 
   const filteredStaff = staff?.filter(
     (u) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()),
+      u.name.toLowerCase().includes(state.search.toLowerCase()) ||
+      u.email.toLowerCase().includes(state.search.toLowerCase()),
   );
 
   const filteredInvites = pendingInvites?.filter((i) =>
-    i.email.toLowerCase().includes(search.toLowerCase()),
+    i.email.toLowerCase().includes(state.search.toLowerCase()),
   );
 
-  const handleAddStaff = () => {
-    setSelectedMember(null);
-    setIsEditorOpen(true);
-  };
-
-  const handleEditStaff = (user: User) => {
-    setSelectedMember(user);
-    setIsEditorOpen(true);
-  };
-
-  const handleDeactivate = (user: User) => {
-    setMemberToDeactivate(user);
-  };
+  const handleAddStaff = () => dispatch({ type: "OPEN_EDITOR" });
+  const handleEditStaff = (user: User) =>
+    dispatch({ type: "OPEN_EDITOR", payload: user });
+  const handleDeactivate = (user: User) =>
+    dispatch({ type: "SET_DEACTIVATE_MEMBER", payload: user });
+  const handleRevokeInvite = (invite: StaffInvite) =>
+    dispatch({ type: "SET_REVOKE_INVITE", payload: invite });
 
   const confirmDeactivate = async () => {
-    if (!memberToDeactivate) return;
+    if (!state.memberToDeactivate) return;
     try {
-      await deactivateMutation.mutateAsync(memberToDeactivate.id);
+      await deactivateMutation.mutateAsync(state.memberToDeactivate.id);
       toast.success("Staff member deactivated");
-      setMemberToDeactivate(null);
+      dispatch({ type: "SET_DEACTIVATE_MEMBER", payload: null });
     } catch {
       toast.error("Failed to deactivate staff member");
     }
   };
 
-  const handleRevokeInvite = (invite: StaffInvite) => {
-    setInviteToRevoke(invite);
-  };
-
   const confirmRevokeInvite = async () => {
-    if (!inviteToRevoke) return;
+    if (!state.inviteToRevoke) return;
     try {
-      await revokeMutation.mutateAsync(inviteToRevoke.token);
+      await revokeMutation.mutateAsync(state.inviteToRevoke.token);
       toast.success("Invite revoked successfully");
-      setInviteToRevoke(null);
+      dispatch({ type: "SET_REVOKE_INVITE", payload: null });
     } catch {
       toast.error("Failed to revoke invite");
     }
@@ -98,7 +124,6 @@ export default function StaffPage() {
 
   return (
     <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
-      {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight font-display">
@@ -119,15 +144,16 @@ export default function StaffPage() {
         </div>
       </div>
 
-      {/* Toolbar Section */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative flex-1 sm:max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
             placeholder="Search staff by name or email..."
             className="pl-10 h-11 rounded-xl bg-white border-slate-200 shadow-sm focus-visible:ring-primary/20 text-sm font-medium"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={state.search}
+            onChange={(e) =>
+              dispatch({ type: "SET_SEARCH", payload: e.target.value })
+            }
           />
         </div>
         <div className="ml-auto text-sm font-bold text-slate-500 bg-white px-4 py-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-2">
@@ -136,7 +162,6 @@ export default function StaffPage() {
         </div>
       </div>
 
-      {/* Table Section */}
       <StaffTable
         staff={filteredStaff}
         pendingInvites={filteredInvites}
@@ -147,17 +172,17 @@ export default function StaffPage() {
         onCopyInviteUrl={handleCopyInviteUrl}
       />
 
-      {/* Editor Slide-over */}
       <StaffEditor
-        isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-        member={selectedMember}
+        isOpen={state.isEditorOpen}
+        onClose={() => dispatch({ type: "CLOSE_EDITOR" })}
+        member={state.selectedMember}
       />
 
-      {/* Revoke Invite Dialog */}
       <Dialog
-        open={!!inviteToRevoke}
-        onOpenChange={(open) => !open && setInviteToRevoke(null)}
+        open={!!state.inviteToRevoke}
+        onOpenChange={(open) =>
+          !open && dispatch({ type: "SET_REVOKE_INVITE", payload: null })
+        }
       >
         <DialogContent>
           <DialogHeader>
@@ -165,7 +190,7 @@ export default function StaffPage() {
             <DialogDescription>
               Are you sure you want to revoke the invite for{" "}
               <span className="font-bold text-slate-900">
-                {inviteToRevoke?.email}
+                {state.inviteToRevoke?.email}
               </span>
               ? This action cannot be undone.
             </DialogDescription>
@@ -173,7 +198,9 @@ export default function StaffPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setInviteToRevoke(null)}
+              onClick={() =>
+                dispatch({ type: "SET_REVOKE_INVITE", payload: null })
+              }
               disabled={revokeMutation.isPending}
             >
               Cancel
@@ -189,10 +216,11 @@ export default function StaffPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Deactivate Member Dialog */}
       <Dialog
-        open={!!memberToDeactivate}
-        onOpenChange={(open) => !open && setMemberToDeactivate(null)}
+        open={!!state.memberToDeactivate}
+        onOpenChange={(open) =>
+          !open && dispatch({ type: "SET_DEACTIVATE_MEMBER", payload: null })
+        }
       >
         <DialogContent>
           <DialogHeader>
@@ -200,7 +228,7 @@ export default function StaffPage() {
             <DialogDescription>
               Are you sure you want to deactivate{" "}
               <span className="font-bold text-slate-900">
-                {memberToDeactivate?.name}
+                {state.memberToDeactivate?.name}
               </span>
               ? They will no longer be able to access the system.
             </DialogDescription>
@@ -208,7 +236,9 @@ export default function StaffPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setMemberToDeactivate(null)}
+              onClick={() =>
+                dispatch({ type: "SET_DEACTIVATE_MEMBER", payload: null })
+              }
               disabled={deactivateMutation.isPending}
             >
               Cancel
