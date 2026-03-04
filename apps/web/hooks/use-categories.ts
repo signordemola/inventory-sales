@@ -8,7 +8,7 @@ import apiClient from "@/lib/axios";
 export interface Category {
   id: string;
   name: string;
-  slug: string;
+  slug?: string;
   description: string | null;
   parentId: string | null;
   businessId: string;
@@ -18,7 +18,7 @@ export interface Category {
 
 export interface CreateCategoryPayload {
   name: string;
-  slug: string;
+  slug?: string;
   description?: string;
   parentId?: string;
 }
@@ -39,6 +39,7 @@ export function useCategories() {
       const { data } = await apiClient.get<Category[]>("/categories");
       return data;
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 
@@ -49,8 +50,9 @@ export function useCreateCategory() {
       const { data } = await apiClient.post<Category>("/categories", payload);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    onSuccess: async () => {
+      // refetchQueries awaits the fresh data — invalidateQueries only marks stale
+      await queryClient.refetchQueries({ queryKey: ["categories"] });
     },
   });
 }

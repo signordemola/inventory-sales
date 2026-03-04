@@ -10,9 +10,10 @@ export class CategoriesRepository {
     where?: Prisma.CategoryWhereInput;
     orderBy?: Prisma.CategoryOrderByWithRelationInput;
   }): Promise<Category[]> {
+    // Return flat list — the frontend tree builder groups children by parentId
     return this.prisma.category.findMany({
       ...params,
-      include: { children: true },
+      orderBy: params.orderBy ?? { name: 'asc' },
     });
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, RefObject } from "react";
+import React, { useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Search, QrCode, WifiOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,9 @@ import { db } from "@/lib/db";
 
 interface ProductBrowserProps {
   onSelectProduct: (product: Product) => void;
-  searchInputRef?: RefObject<HTMLInputElement | null>;
 }
 
-export const ProductBrowser = ({ onSelectProduct, searchInputRef }: ProductBrowserProps) => {
+export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
   const [search, setSearch] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<
     string | undefined
@@ -69,7 +68,7 @@ export const ProductBrowser = ({ onSelectProduct, searchInputRef }: ProductBrows
   const isEmpty = !isLoading && (products?.length ?? 0) === 0;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-slate-900/50">
+    <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-slate-50 dark:bg-slate-900/50">
       {/* Search + Category Bar */}
       <div className="px-5 py-4 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
         {/* Offline indicator */}
@@ -97,38 +96,45 @@ export const ProductBrowser = ({ onSelectProduct, searchInputRef }: ProductBrows
           </Button>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex gap-2 mt-3 overflow-x-auto pb-0.5 no-scrollbar">
-          <button
-            onClick={() => setSelectedCategoryId(undefined)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
-              !selectedCategoryId
-                ? "bg-slate-900 text-white"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            All Items
-          </button>
-          {categories?.map((cat) => (
+        {/* Category Pills with fade indicator */}
+        <div className="relative mt-3">
+          <div className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar pr-8 [mask-image:linear-gradient(to_right,white_90%,transparent_100%)]">
             <button
-              key={cat.id}
-              onClick={() => setSelectedCategoryId(cat.id)}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
-                selectedCategoryId === cat.id
+              onClick={() => setSelectedCategoryId(undefined)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+                !selectedCategoryId
                   ? "bg-slate-900 text-white"
                   : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {cat.name}
+              All Items
             </button>
-          ))}
+            {categories?.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategoryId(cat.id)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
+                  selectedCategoryId === cat.id
+                    ? "bg-slate-900 text-white"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Product Grid */}
       <ScrollArea className="flex-1 p-5">
         {isLoading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
+            }}
+          >
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="p-3 border rounded-xl bg-white space-y-3">
                 <Skeleton className="aspect-square w-full rounded-lg" />
@@ -150,7 +156,12 @@ export const ProductBrowser = ({ onSelectProduct, searchInputRef }: ProductBrows
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-12">
+          <div
+            className="grid gap-3 pb-12"
+            style={{
+              gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
+            }}
+          >
             {products?.map((product) => (
               <ProductCard
                 key={product.id}

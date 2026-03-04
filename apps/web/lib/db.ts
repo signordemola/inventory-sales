@@ -51,6 +51,7 @@ export interface PendingSale {
   cuid: string;
   items: PendingSaleItem[];
   subtotal: number;
+  tax: number;
   discount: number;
   total: number;
   payments: PendingPayment[];

@@ -37,7 +37,7 @@ export class ProductsService {
       skip,
       take: limit,
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ category: { name: 'asc' } }, { name: 'asc' }] as any,
     });
 
     return {

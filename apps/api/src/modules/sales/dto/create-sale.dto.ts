@@ -45,6 +45,11 @@ export class CreateSaleDto {
   @IsOptional()
   discountType?: string;
 
+  @IsNumber()
+  @Min(0, { message: 'Tax cannot be negative' })
+  @IsOptional()
+  tax: number = 0;
+
   @IsEnum(SaleStatus, { message: 'Invalid sale status' })
   @IsOptional()
   status: SaleStatus = SaleStatus.COMPLETED;

@@ -142,6 +142,18 @@ export class SalesRepository {
     });
   }
 
+  async incrementExpectedCash(
+    sessionId: string,
+    amount: number,
+  ): Promise<void> {
+    await this.prisma.posSession.update({
+      where: { id: sessionId },
+      data: {
+        expectedCash: { increment: amount },
+      },
+    });
+  }
+
   async processReturn(
     saleId: string,
     returnItems: { saleItemId: string; quantity: number }[],

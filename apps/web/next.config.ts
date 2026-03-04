@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 import { withSerwist } from "@serwist/turbopack";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
+  },
   async headers() {
     return [
       {

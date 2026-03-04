@@ -7,6 +7,8 @@ import { Download, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TransactionsTable } from "@/components/transactions/transactions-table";
+import apiClient from "@/lib/axios";
+import { toast } from "sonner";
 
 export function TransactionsPageView() {
   const [page, setPage] = useState(1);
@@ -26,6 +28,20 @@ export function TransactionsPageView() {
   });
 
   const { data: staffData } = useStaff();
+
+  const handleDownloadReceipt = async (id: string) => {
+    try {
+      const loadingToastId = toast.loading("Generating receipt...");
+      const res = await apiClient.post(`/sales/${id}/receipt/store`);
+      toast.dismiss(loadingToastId);
+      if (res.data?.url) {
+        window.open(res.data.url, "_blank");
+      }
+    } catch {
+      toast.dismiss();
+      toast.error("Failed to generate receipt");
+    }
+  };
 
   return (
     <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
@@ -59,6 +75,7 @@ export function TransactionsPageView() {
         <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
+            id="transaction-search"
             placeholder="Search reference..."
             className="pl-10 h-11 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-primary/20"
             value={search}
@@ -138,6 +155,7 @@ export function TransactionsPageView() {
           totalItems={data?.meta.total || 0}
           totalPages={data?.meta.totalPages || 0}
           onPageChange={setPage}
+          onDownloadReceipt={handleDownloadReceipt}
         />
       </div>
     </div>

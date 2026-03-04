@@ -94,8 +94,8 @@ export function useAdjustStock() {
       const { data } = await apiClient.post("/inventory/adjust", payload);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory-levels"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["inventory-levels"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-history"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });

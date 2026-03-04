@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DrawerMovementType } from 'generated/prisma/enums';
 
 @Injectable()
 export class ShiftsService {
@@ -42,6 +43,7 @@ export class ShiftsService {
             payments: true,
           },
         },
+        movements: true,
       },
     });
 
@@ -59,7 +61,19 @@ export class ShiftsService {
       });
     });
 
-    const expectedCash = Number(shift.startingCash) + totalCashSales;
+    // Factor in drawer movements (paid-in adds, paid-out subtracts)
+    let totalPaidIn = 0;
+    let totalPaidOut = 0;
+    shift.movements.forEach((m) => {
+      if (m.type === 'PAID_IN') {
+        totalPaidIn += Number(m.amount);
+      } else {
+        totalPaidOut += Number(m.amount);
+      }
+    });
+
+    const expectedCash =
+      Number(shift.startingCash) + totalCashSales + totalPaidIn - totalPaidOut;
     const variance = actualCash - expectedCash;
 
     return this.prisma.posSession.update({
@@ -75,6 +89,131 @@ export class ShiftsService {
     });
   }
 
+  async recordDrawerMovement(
+    businessId: string,
+    userId: string,
+    type: DrawerMovementType,
+    amount: number,
+    reason: string,
+  ) {
+    const shift = await this.prisma.posSession.findFirst({
+      where: { businessId, userId, status: 'OPEN' },
+    });
+
+    if (!shift) {
+      throw new BadRequestException(
+        'No open shift found. Open a register first.',
+      );
+    }
+
+    if (amount <= 0) {
+      throw new BadRequestException('Amount must be greater than zero.');
+    }
+
+    // Create the movement and update expectedCash atomically
+    const increment = type === 'PAID_IN' ? amount : -amount;
+
+    const [movement] = await this.prisma.$transaction([
+      this.prisma.cashDrawerMovement.create({
+        data: {
+          sessionId: shift.id,
+          userId,
+          type,
+          amount,
+          reason,
+        },
+      }),
+      this.prisma.posSession.update({
+        where: { id: shift.id },
+        data: {
+          expectedCash: { increment },
+        },
+      }),
+    ]);
+
+    return movement;
+  }
+
+  async getZReport(businessId: string, userId: string) {
+    const shift = await this.prisma.posSession.findFirst({
+      where: { businessId, userId },
+      orderBy: { openedAt: 'desc' },
+      include: {
+        sales: {
+          where: { status: 'COMPLETED' },
+          include: {
+            payments: true,
+            items: {
+              include: { product: { select: { name: true } } },
+            },
+          },
+        },
+        movements: {
+          orderBy: { createdAt: 'asc' },
+          include: { user: { select: { name: true } } },
+        },
+      },
+    });
+
+    if (!shift) {
+      throw new BadRequestException('No shift found.');
+    }
+
+    // Sales breakdown by payment method
+    const salesByMethod: Record<string, number> = {};
+    let totalCashSales = 0;
+    let totalRevenue = 0;
+
+    shift.sales.forEach((sale) => {
+      totalRevenue += Number(sale.total);
+      sale.payments.forEach((p) => {
+        salesByMethod[p.method] =
+          (salesByMethod[p.method] || 0) + Number(p.amount);
+        if (p.method === 'CASH') {
+          totalCashSales += Number(p.amount);
+        }
+      });
+    });
+
+    // Drawer movements
+    let totalPaidIn = 0;
+    let totalPaidOut = 0;
+    shift.movements.forEach((m) => {
+      if (m.type === 'PAID_IN') {
+        totalPaidIn += Number(m.amount);
+      } else {
+        totalPaidOut += Number(m.amount);
+      }
+    });
+
+    const expectedCash =
+      Number(shift.startingCash) + totalCashSales + totalPaidIn - totalPaidOut;
+
+    return {
+      shiftId: shift.id,
+      status: shift.status,
+      openedAt: shift.openedAt,
+      closedAt: shift.closedAt,
+      startingCash: Number(shift.startingCash),
+      totalRevenue,
+      transactionCount: shift.sales.length,
+      salesByMethod,
+      totalPaidIn,
+      totalPaidOut,
+      movements: shift.movements.map((m) => ({
+        id: m.id,
+        type: m.type,
+        amount: Number(m.amount),
+        reason: m.reason,
+        createdAt: m.createdAt,
+        userName: m.user.name,
+      })),
+      expectedCash,
+      actualCash: shift.actualCash ? Number(shift.actualCash) : null,
+      variance: shift.variance ? Number(shift.variance) : null,
+    };
+  }
+
   async getCurrentShift(businessId: string, userId: string) {
     return this.prisma.posSession.findFirst({
       where: { businessId, userId, status: 'OPEN' },
@@ -83,6 +222,7 @@ export class ShiftsService {
           where: { status: 'COMPLETED' },
           include: { payments: true },
         },
+        movements: true,
       },
     });
   }

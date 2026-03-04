@@ -12,14 +12,25 @@ import { CartPanel, CartItem } from "@/components/pos/cart-panel";
 import { PaymentModal } from "@/components/pos/payment-modal";
 import { OpenRegisterModal } from "@/components/pos/open-register-modal";
 import { SyncStatusBar } from "@/components/pos/sync-status-bar";
-import { SalesHistoryDrawer } from "@/components/pos/sales-history-drawer";
+import { SalesHistoryModal } from "@/components/pos/sales-history-modal";
+import { ShiftDurationWarning } from "@/components/pos/shift-duration-warning";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import apiClient from "@/lib/axios";
 import { Product } from "@/types/products";
 import { UserRoleType } from "@/types";
 import { toast } from "sonner";
 import { seedOfflineData } from "@/lib/offline/seed";
 import { flushSyncQueue } from "@/lib/offline/flushSyncQueue";
-import { History } from "lucide-react";
+import { DrawerMovementModal } from "@/components/shifts/drawer-movement-modal";
 
 interface POSScreenProps {
   userRole: UserRoleType;
@@ -29,8 +40,11 @@ export default function POSScreen({ userRole }: POSScreenProps) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [hasActiveShift, setHasActiveShift] = useState(false);
+  const [shiftOpenedAt, setShiftOpenedAt] = useState<string | null>(null);
   const [isLoadingShift, setIsLoadingShift] = useState(true);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isClearCartOpen, setIsClearCartOpen] = useState(false);
+  const [isDrawerMovementOpen, setIsDrawerMovementOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   // On mount: check shift, seed IndexedDB, flush any pending sales
@@ -44,7 +58,11 @@ export default function POSScreen({ userRole }: POSScreenProps) {
       }
       try {
         const response = await apiClient.get("/shifts/current");
-        setHasActiveShift(!!response.data);
+        const shift = response.data;
+        setHasActiveShift(!!shift);
+        if (shift?.openedAt) {
+          setShiftOpenedAt(shift.openedAt);
+        }
       } catch {
         setHasActiveShift(false);
       } finally {
@@ -82,10 +100,7 @@ export default function POSScreen({ userRole }: POSScreenProps) {
           return;
         }
         if (cartItems.length > 0) {
-          if (window.confirm("Clear all items from the cart?")) {
-            setCartItems([]);
-            toast("Cart cleared");
-          }
+          setIsClearCartOpen(true);
         }
       }
     };
@@ -149,30 +164,25 @@ export default function POSScreen({ userRole }: POSScreenProps) {
   }, [cartItems]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-white">
-      <div className="flex flex-1 min-h-0">
-        <ProductBrowser
-          onSelectProduct={handleSelectProduct}
-          searchInputRef={searchInputRef}
-        />
+    <div
+      className="flex flex-col overflow-hidden bg-white"
+      style={{ height: "calc(100dvh - 64px)" }}
+    >
+      {/* Shift duration warning — only for cashiers with a stored openedAt */}
+      {shiftOpenedAt && <ShiftDurationWarning shiftOpenedAt={shiftOpenedAt} />}
+
+      <div className="flex flex-1 min-h-0 min-w-0">
+        <ProductBrowser onSelectProduct={handleSelectProduct} />
 
         <CartPanel
           items={cartItems}
           onUpdateQuantity={handleUpdateQuantity}
           onClearCart={handleClearCart}
           onCheckout={() => setIsPaymentModalOpen(true)}
+          onOpenDrawer={() => setIsDrawerMovementOpen(true)}
+          onOpenHistory={() => setIsHistoryOpen(true)}
         />
       </div>
-
-      {/* History toggle button */}
-      <button
-        onClick={() => setIsHistoryOpen(true)}
-        className="fixed right-4 bottom-20 z-30 flex items-center gap-2 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg hover:bg-slate-700 transition-all"
-        title="View today's sales history"
-      >
-        <History className="w-4 h-4" />
-        History
-      </button>
 
       <PaymentModal
         isOpen={isPaymentModalOpen}
@@ -188,19 +198,46 @@ export default function POSScreen({ userRole }: POSScreenProps) {
       {/* Offline sale queue indicator */}
       <SyncStatusBar />
 
-      {/* Sales history drawer */}
-      <SalesHistoryDrawer
+      {/* Cash Drawer Movement Modal */}
+      <DrawerMovementModal
+        isOpen={isDrawerMovementOpen}
+        onClose={() => setIsDrawerMovementOpen(false)}
+        onSuccess={() => {}}
+      />
+
+      {/* Sales history modal */}
+      <SalesHistoryModal
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
       />
 
-      {/* Backdrop for drawer */}
-      {isHistoryOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/20"
-          onClick={() => setIsHistoryOpen(false)}
-        />
-      )}
+      {/* Clear Cart Confirmation */}
+      <AlertDialog open={isClearCartOpen} onOpenChange={setIsClearCartOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear cart?</AlertDialogTitle>
+            <AlertDialogDescription>
+              All {cartItems.length} item{cartItems.length !== 1 ? "s" : ""}{" "}
+              will be removed from the cart.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsClearCartOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={() => {
+                setCartItems([]);
+                setIsClearCartOpen(false);
+                toast("Cart cleared");
+              }}
+            >
+              Clear Cart
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Register Lock */}
       {!isLoadingShift && (

@@ -1,125 +1,121 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useTransition } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { productSchema, ProductInput } from "@/schemas/products";
 import { useRouter } from "next/navigation";
-import {
-  useCreateProduct,
-  CreateProductPayload,
-  useUploadProductImage,
-} from "@/hooks/use-products";
+import { useCreateProduct } from "@/hooks/use-products";
 import { useCategories } from "@/hooks/use-categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/ui/image-upload";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 
 export default function NewProductPage() {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [formError, setFormError] = useState<string>("");
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+
   const createMutation = useCreateProduct();
   const { data: categories = [] } = useCategories();
 
-  const [form, setForm] = useState<CreateProductPayload>({
-    name: "",
-    sku: "",
-    categoryId: "",
-    description: "",
-    barcode: "",
-    unit: "pcs",
-    buyingPrice: 0,
-    sellingPrice: 0,
-    lowStockThreshold: 5,
-    isActive: true,
-    images: [],
+  const form = useForm<ProductInput>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: "",
+      sku: "",
+      categoryId: "",
+      description: "",
+      barcode: "",
+      unit: "pcs",
+      buyingPrice: 0,
+      sellingPrice: 0,
+      lowStockThreshold: 5,
+      isActive: true,
+    },
   });
 
-  // We need to initialize the upload hook but it requires an ID.
-  // Since the product isn't created yet, we can't upload images immediately to the /products/:id/images endpoint.
-  // Wait, the API endpoint is `POST /products/:id/images`.
-  // We cannot upload images *before* the product is created.
-  // Option A: Let the backend handle base64 array at creation.
-  // Option B: Create product first, then upload images, then invalidate.
-  // Option C: The backend POST /products doesn't currently handle images array for uploading, they are uploaded via the /products/:id/images route.
-
-  const set = (
-    key: keyof CreateProductPayload,
-    value: string | number | boolean | string[],
-  ) => setForm((prev) => ({ ...prev, [key]: value }));
-
-  const generateSku = (name: string) =>
-    name
-      .toUpperCase()
-      .trim()
-      .replace(/[^A-Z0-9]+/g, "-")
-      .slice(0, 16);
-
-  const handleNameChange = (name: string) => {
-    setForm((prev) => ({
-      ...prev,
-      name,
-      sku: prev.sku ? prev.sku : generateSku(name),
-    }));
-  };
-
-  // We'll store File objects that haven't been uploaded yet in a separate state
-  const [pendingImages, setPendingImages] = useState<File[]>([]);
-
-  // The UI needs a mock URL to display previews before uploading
-  // We'll create temporary object URLs for the pending images
+  // Preview URLs for pending (not-yet-uploaded) images
   const previewUrls = pendingImages.map((file) => URL.createObjectURL(file));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim()) return toast.error("Product name is required.");
-    if (!form.sku.trim()) return toast.error("SKU is required.");
-
-    const payload: CreateProductPayload = {
-      ...form,
-      categoryId: form.categoryId || undefined,
-      description: form.description?.trim() || undefined,
-      barcode: form.barcode?.trim() || undefined,
-    };
-
-    try {
-      // 1. Create the product first to get its ID
-      const newProduct = await createMutation.mutateAsync(payload);
-
-      // 2. If there are pending images, upload them now
-      if (pendingImages.length > 0) {
-        toast.loading(`Uploading ${pendingImages.length} images...`, {
-          id: "upload",
-        });
-
-        // Import apiClient to make the raw FormData post
-        const { default: apiClient } = await import("@/lib/axios");
-
-        const uploadPromises = pendingImages.map(async (file) => {
-          const formData = new FormData();
-          formData.append("file", file);
-          return await apiClient.post(
-            `/products/${newProduct.id}/images`,
-            formData,
-            {
-              headers: { "Content-Type": "multipart/form-data" },
-            },
-          );
-        });
-
-        await Promise.all(uploadPromises);
-        toast.dismiss("upload");
-      }
-
-      toast.success(`${form.name} added to catalog!`);
-      router.back();
-    } catch (err) {
-      toast.dismiss("upload");
-      const e = err as AxiosError<{ message: string }>;
-      toast.error(e?.response?.data?.message || "Failed to create product.");
+  // Auto-generate SKU from name if SKU is still empty
+  const handleNameChange = (name: string) => {
+    form.setValue("name", name);
+    const currentSku = form.getValues("sku");
+    if (!currentSku) {
+      const slug = name
+        .toUpperCase()
+        .trim()
+        .replace(/[^A-Z0-9]+/g, "-")
+        .slice(0, 16);
+      form.setValue("sku", slug);
     }
   };
 
-  const field = "h-10 rounded-xl bg-slate-50 border-slate-200 font-medium";
+  const onSubmit = (values: ProductInput) => {
+    setFormError("");
+    startTransition(async () => {
+      try {
+        const payload = {
+          ...values,
+          categoryId: values.categoryId || undefined,
+          description: values.description?.trim() || undefined,
+          barcode: values.barcode?.trim() || undefined,
+        };
+
+        // 1. Create product to get ID
+        const newProduct = await createMutation.mutateAsync(payload);
+
+        // 2. Upload any pending images
+        if (pendingImages.length > 0) {
+          toast.loading(`Uploading ${pendingImages.length} image(s)...`, {
+            id: "upload",
+          });
+          const { default: apiClient } = await import("@/lib/axios");
+          await Promise.all(
+            pendingImages.map((file) => {
+              const fd = new FormData();
+              fd.append("file", file);
+              return apiClient.post(`/products/${newProduct.id}/images`, fd, {
+                headers: { "Content-Type": "multipart/form-data" },
+              });
+            }),
+          );
+          toast.dismiss("upload");
+        }
+
+        toast.success(`${values.name} added to catalog!`);
+        router.back();
+      } catch (err) {
+        toast.dismiss("upload");
+        const e = err as AxiosError<{ message: string }>;
+        setFormError(e?.response?.data?.message || "Failed to create product.");
+      }
+    });
+  };
+
+  const inputCls =
+    "flex w-full h-10 rounded-xl bg-slate-50 border-slate-200 font-medium";
 
   return (
     <div className="flex-1 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
@@ -146,110 +142,237 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {formError && (
+          <Alert variant="destructive">
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Info */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-6">
             <h2 className="text-base font-black text-slate-900 tracking-tight">
               Basic Information
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="space-y-2 lg:col-span-2">
-                <label className="text-sm font-bold text-slate-700">
-                  Product Name <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  className={field}
-                  placeholder="e.g. Peak Milk 400g"
-                  value={form.name}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  required
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Name */}
+              <div>
+                <Controller
+                  name="name"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldContent>
+                        <FieldLabel htmlFor={field.name}>
+                          Product Name <span className="text-red-500">*</span>
+                        </FieldLabel>
+                        <Input
+                          id={field.name}
+                          className={inputCls}
+                          placeholder="e.g. Peak Milk 400g"
+                          value={field.value}
+                          onChange={(e) => handleNameChange(e.target.value)}
+                          aria-invalid={fieldState.invalid}
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </FieldContent>
+                    </Field>
+                  )}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-slate-700">
-                  SKU <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  className={field}
-                  placeholder="e.g. PEAK-MILK-400G"
-                  value={form.sku}
-                  onChange={(e) => set("sku", e.target.value.toUpperCase())}
-                  required
+
+              {/* SKU */}
+              <Controller
+                name="sku"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldContent>
+                      <FieldLabel htmlFor={field.name}>
+                        SKU <span className="text-red-500">*</span>
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        className={inputCls}
+                        placeholder="e.g. PEAK-MILK-400G"
+                        onChange={(e) =>
+                          field.onChange(e.target.value.toUpperCase())
+                        }
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+
+              {/* Category */}
+              <Controller
+                name="categoryId"
+                control={form.control}
+                render={({ field }) => (
+                  <Field>
+                    <FieldContent>
+                      <FieldLabel htmlFor="categoryId">Category</FieldLabel>
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={(val) =>
+                          field.onChange(val === "none" ? "" : val)
+                        }
+                      >
+                        <SelectTrigger id="categoryId" className={inputCls}>
+                          <SelectValue placeholder="None">
+                            {field.value && field.value !== "none"
+                              ? categories.find((c) => c.id === field.value)
+                                  ?.name
+                              : undefined}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+
+              {/* Unit */}
+              <div>
+                <Controller
+                  name="unit"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Field>
+                      <FieldContent>
+                        <FieldLabel htmlFor={field.name}>Unit</FieldLabel>
+                        <Select
+                          value={field.value ?? ""}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id={field.name} className={inputCls}>
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              "pcs",
+                              "pack",
+                              "box",
+                              "carton",
+                              "bottle",
+                              "can",
+                              "bag",
+                              "kg",
+                              "litres",
+                              "piece",
+                              "tube",
+                              "sachet",
+                              "ream",
+                              "basket",
+                              "tin",
+                              "loaf",
+                            ].map((u) => (
+                              <SelectItem key={u} value={u}>
+                                {u}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FieldContent>
+                    </Field>
+                  )}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-slate-700">
-                  Category
-                </label>
-                <select
-                  className="w-full h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-primary/20"
-                  value={form.categoryId}
-                  onChange={(e) => set("categoryId", e.target.value)}
-                >
-                  <option value="">None</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2 lg:col-span-1">
-                <label className="text-sm font-bold text-slate-700">Unit</label>
-                <Input
-                  className={field}
-                  placeholder="e.g. pcs, kg, litres"
-                  value={form.unit}
-                  onChange={(e) => set("unit", e.target.value)}
+
+              {/* Barcode */}
+              <div>
+                <Controller
+                  name="barcode"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Field>
+                      <FieldContent>
+                        <FieldLabel htmlFor={field.name}>Barcode</FieldLabel>
+                        <Input
+                          {...field}
+                          id={field.name}
+                          className={inputCls}
+                          placeholder="Scan or enter barcode"
+                          value={field.value ?? ""}
+                        />
+                      </FieldContent>
+                    </Field>
+                  )}
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-bold text-slate-700">
-                  Barcode
-                </label>
-                <Input
-                  className={field}
-                  placeholder="Scan or enter barcode"
-                  value={form.barcode}
-                  onChange={(e) => set("barcode", e.target.value)}
+
+              {/* Description */}
+              <div>
+                <Controller
+                  name="description"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldContent>
+                        <FieldLabel htmlFor={field.name}>
+                          Description
+                        </FieldLabel>
+                        <Textarea
+                          {...field}
+                          id={field.name}
+                          rows={2}
+                          placeholder="Optional product description…"
+                          className="rounded-xl border border-slate-200 bg-slate-50 font-medium resize-none"
+                          value={field.value ?? ""}
+                          aria-invalid={fieldState.invalid}
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </FieldContent>
+                    </Field>
+                  )}
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2 lg:col-span-4">
-                <label className="text-sm font-bold text-slate-700">
-                  Description
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Optional product description…"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-medium"
-                  value={form.description}
-                  onChange={(e) => set("description", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2 lg:col-span-4">
-                <label className="text-sm font-bold text-slate-700">
-                  Product Images
-                </label>
-                <ImageUpload
-                  value={previewUrls}
-                  onChange={() => {}} // Not used because we don't upload until submit
-                  onRemove={(url) => {
-                    // Find the index of the file corresponding to this URL and remove it
-                    const index = previewUrls.indexOf(url);
-                    if (index > -1) {
-                      setPendingImages((prev) =>
-                        prev.filter((_, i) => i !== index),
-                      );
-                      URL.revokeObjectURL(url); // Clean up memory
-                    }
-                  }}
-                  onUpload={async (file) => {
-                    setPendingImages((prev) => [...prev, file]);
-                    return { url: "" }; // Mock return since actual upload happens later
-                  }}
-                  maxFiles={4}
-                  disabled={createMutation.isPending}
-                />
+
+              {/* Images — managed outside form */}
+              <div className="sm:col-span-2">
+                <FieldGroup>
+                  <Field>
+                    <FieldContent>
+                      <FieldLabel>Product Images</FieldLabel>
+                      <ImageUpload
+                        value={previewUrls}
+                        onChange={() => {}}
+                        onRemove={(url) => {
+                          const index = previewUrls.indexOf(url);
+                          if (index > -1) {
+                            setPendingImages((prev) =>
+                              prev.filter((_, i) => i !== index),
+                            );
+                            URL.revokeObjectURL(url);
+                          }
+                        }}
+                        onUpload={async (file) => {
+                          setPendingImages((prev) => [...prev, file]);
+                          return { url: "" };
+                        }}
+                        maxFiles={4}
+                        disabled={isPending}
+                      />
+                    </FieldContent>
+                  </Field>
+                </FieldGroup>
               </div>
             </div>
           </div>
@@ -257,56 +380,99 @@ export default function NewProductPage() {
           {/* Pricing & Stock */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-6">
             <h2 className="text-base font-black text-slate-900 tracking-tight">
-              Pricing &amp; Stock
+              Pricing & Stock
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">
-                  Buying Price (₦)
-                </label>
-                <Input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  className={field}
-                  placeholder="0.00"
-                  value={form.buyingPrice}
-                  onChange={(e) =>
-                    set("buyingPrice", parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">
-                  Selling Price (₦)
-                </label>
-                <Input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  className={field}
-                  placeholder="0.00"
-                  value={form.sellingPrice}
-                  onChange={(e) =>
-                    set("sellingPrice", parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-slate-700">
-                  Low Stock Threshold
-                </label>
-                <Input
-                  type="number"
-                  min={0}
-                  className={field}
-                  placeholder="5"
-                  value={form.lowStockThreshold}
-                  onChange={(e) =>
-                    set("lowStockThreshold", parseInt(e.target.value) || 0)
-                  }
-                />
-              </div>
+              <Controller
+                name="buyingPrice"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldContent>
+                      <FieldLabel htmlFor={field.name}>
+                        Buying Price (₦)
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        className={inputCls}
+                        placeholder="0.00"
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === "" ? undefined : Number(val));
+                        }}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="sellingPrice"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldContent>
+                      <FieldLabel htmlFor={field.name}>
+                        Selling Price (₦)
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        className={inputCls}
+                        placeholder="0.00"
+                        value={field.value ?? 0}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value) || 0)
+                        }
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="lowStockThreshold"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldContent>
+                      <FieldLabel htmlFor={field.name}>
+                        Low Stock Threshold
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        type="number"
+                        min={0}
+                        className={inputCls}
+                        placeholder="5"
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          field.onChange(val === "" ? undefined : Number(val));
+                        }}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
             </div>
           </div>
 
@@ -317,18 +483,17 @@ export default function NewProductPage() {
               variant="outline"
               className="h-11 px-6 rounded-xl font-bold w-full sm:w-auto"
               onClick={() => router.back()}
+              disabled={isPending}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={createMutation.isPending}
+              disabled={isPending}
               className="h-11 px-8 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all active:scale-95 w-full sm:w-auto flex items-center justify-center"
             >
-              {createMutation.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
-              {createMutation.isPending ? "Saving..." : "Save Product"}
+              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isPending ? "Saving..." : "Save Product"}
             </Button>
           </div>
         </form>

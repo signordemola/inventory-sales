@@ -27,7 +27,7 @@ export async function flushSyncQueue(): Promise<void> {
       try {
         await db.pendingSales.update(sale.localId, { syncStatus: "SYNCING" });
 
-        const response = await apiClient.post("/sales", {
+        const payload = {
           cuid: sale.cuid,
           items: sale.items.map((item: PendingSale["items"][number]) => ({
             productId: item.productId,
@@ -36,10 +36,14 @@ export async function flushSyncQueue(): Promise<void> {
           })),
           payments: sale.payments,
           discount: sale.discount,
+          tax: sale.tax,
           customerId: sale.customerId,
           creditDueDate: sale.creditDueDate,
-          localReference: sale.localReference,
-        });
+        };
+
+        console.log(`[NaijaStock] Sending payload for ${sale.cuid}:`, payload);
+
+        const response = await apiClient.post("/sales", payload);
 
         await db.pendingSales.update(sale.localId, {
           syncStatus: "SYNCED",
@@ -69,9 +73,27 @@ export async function flushSyncQueue(): Promise<void> {
             serverReference: axiosError.response.data?.existingReference,
           });
         } else {
+          // Extract backend validation messages if available
+          const errorPayload = axiosError.response?.data as
+            | { message?: string | string[] }
+            | undefined;
+          let detailedError = axiosError.message ?? "Unknown error";
+          if (errorPayload?.message) {
+            detailedError = Array.isArray(errorPayload.message)
+              ? errorPayload.message.join(", ")
+              : typeof errorPayload.message === "string"
+                ? errorPayload.message
+                : detailedError;
+          }
+
+          console.error(
+            `[NaijaStock] Sync failed for ${sale.localReference}:`,
+            detailedError,
+          );
+
           await db.pendingSales.update(sale.localId, {
             syncStatus: "FAILED",
-            syncError: axiosError.message ?? "Unknown error",
+            syncError: detailedError,
             syncAttempts: (sale.syncAttempts ?? 0) + 1,
           });
         }

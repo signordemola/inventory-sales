@@ -46,8 +46,8 @@ export function useCreateSupplier() {
       const { data } = await apiClient.post<Supplier>("/suppliers", payload);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["suppliers"] });
     },
   });
 }
@@ -69,8 +69,8 @@ export function useUpdateSupplier() {
       );
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    onSuccess: async (_, variables) => {
+      await queryClient.refetchQueries({ queryKey: ["suppliers"] });
       queryClient.invalidateQueries({ queryKey: ["supplier", variables.id] });
     },
   });
@@ -83,8 +83,8 @@ export function useDeleteSupplier() {
     mutationFn: async (id: string) => {
       await apiClient.delete(`/suppliers/${id}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["suppliers"] });
     },
   });
 }

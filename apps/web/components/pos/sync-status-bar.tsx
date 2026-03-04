@@ -17,11 +17,13 @@ export function SyncStatusBar() {
       [],
     ) ?? 0;
 
-  const failedCount =
+  const failedSales =
     useLiveQuery(
-      () => db.pendingSales.where("syncStatus").equals("FAILED").count(),
+      () => db.pendingSales.where("syncStatus").equals("FAILED").toArray(),
       [],
-    ) ?? 0;
+    ) ?? [];
+  const failedCount = failedSales.length;
+  const firstError = failedSales[0]?.syncError;
 
   useEffect(() => {
     const handleOnline = async () => {
@@ -88,13 +90,20 @@ export function SyncStatusBar() {
           </span>
         </>
       ) : failedCount > 0 ? (
-        <>
-          <AlertCircle className="h-4 w-4" />
-          <span>
-            {failedCount} sale{failedCount !== 1 ? "s" : ""} failed — tap to
-            retry
-          </span>
-        </>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            <span>
+              {failedCount} sale{failedCount !== 1 ? "s" : ""} failed — tap to
+              retry
+            </span>
+          </div>
+          {firstError && (
+            <span className="text-[10px] opacity-90 truncate max-w-[300px]">
+              {firstError}
+            </span>
+          )}
+        </div>
       ) : null}
     </div>
   );

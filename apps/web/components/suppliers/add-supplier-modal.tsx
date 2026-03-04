@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supplierSchema, SupplierFormData } from "@/schemas/suppliers";
 import {
@@ -13,8 +13,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Supplier } from "@/types/suppliers";
 import { useCreateSupplier, useUpdateSupplier } from "@/hooks/use-suppliers";
 import { toast } from "sonner";
@@ -36,12 +42,7 @@ export function AddSupplierModal({
   const updateSupplier = useUpdateSupplier();
   const isPending = createSupplier.isPending || updateSupplier.isPending;
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<SupplierFormData>({
+  const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
@@ -53,39 +54,29 @@ export function AddSupplierModal({
 
   useEffect(() => {
     if (isOpen) {
-      if (supplier) {
-        reset({
-          name: supplier.name,
-          email: supplier.email || "",
-          phone: supplier.phone || "",
-          address: supplier.address || "",
-        });
-      } else {
-        reset({ name: "", email: "", phone: "", address: "" });
-      }
-    }
-  }, [isOpen, supplier, reset]);
-
-  const onSubmit = (data: SupplierFormData) => {
-    if (isEditing && supplier) {
-      updateSupplier.mutate(
-        { id: supplier.id, payload: data },
-        {
-          onSuccess: () => {
-            toast.success("Supplier updated successfully");
-            onClose();
-          },
-          onError: () => toast.error("Failed to update supplier"),
-        },
-      );
-    } else {
-      createSupplier.mutate(data, {
-        onSuccess: () => {
-          toast.success("Supplier created successfully");
-          onClose();
-        },
-        onError: () => toast.error("Failed to create supplier"),
+      form.reset({
+        name: supplier?.name ?? "",
+        email: supplier?.email ?? "",
+        phone: supplier?.phone ?? "",
+        address: supplier?.address ?? "",
       });
+    }
+  }, [isOpen, supplier, form]);
+
+  const onSubmit = async (data: SupplierFormData) => {
+    try {
+      if (isEditing && supplier) {
+        await updateSupplier.mutateAsync({ id: supplier.id, payload: data });
+        toast.success("Supplier updated successfully");
+      } else {
+        await createSupplier.mutateAsync(data);
+        toast.success("Supplier created successfully");
+      }
+      onClose();
+    } catch {
+      toast.error(
+        isEditing ? "Failed to update supplier" : "Failed to create supplier",
+      );
     }
   };
 
@@ -98,50 +89,98 @@ export function AddSupplierModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Company Name *</Label>
-            <Input
-              id="name"
-              placeholder="Acme Logistics Ltd"
-              {...register("name")}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1 pt-2">
+          <FieldGroup>
+            <Controller
+              name="name"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>
+                      Company Name <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      placeholder="Acme Logistics Ltd"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </FieldContent>
+                </Field>
+              )}
             />
-            {errors.name && (
-              <p className="text-xs text-red-500">{errors.name.message}</p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="sales@acme.com"
-              {...register("email")}
+            <Controller
+              name="email"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>Email Address</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      type="email"
+                      placeholder="sales@acme.com"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </FieldContent>
+                </Field>
+              )}
             />
-            {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              placeholder="+234 800 000 0000"
-              {...register("phone")}
+            <Controller
+              name="phone"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>Phone Number</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      placeholder="+234 800 000 0000"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </FieldContent>
+                </Field>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="address">Physical Address</Label>
-            <Textarea
-              id="address"
-              placeholder="Warehouse 4, Trade Fair Complex..."
-              className="resize-none"
-              {...register("address")}
+            <Controller
+              name="address"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>
+                      Physical Address
+                    </FieldLabel>
+                    <Textarea
+                      {...field}
+                      id={field.name}
+                      placeholder="Warehouse 4, Trade Fair Complex..."
+                      className="resize-none"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </FieldContent>
+                </Field>
+              )}
             />
-          </div>
+          </FieldGroup>
 
           <DialogFooter className="pt-4">
             <Button
@@ -152,7 +191,7 @@ export function AddSupplierModal({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" className={`text-background`} disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? "Save Changes" : "Create Supplier"}
             </Button>

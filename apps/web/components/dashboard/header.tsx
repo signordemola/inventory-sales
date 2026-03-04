@@ -25,6 +25,15 @@ const Header = () => {
   const userRole = user?.role || "cashier";
 
   const getLabel = (s: string) => {
+    // If segment looks like a CUID or ObjID, display "Details" or standard generic name instead of the raw ID
+    if (
+      s.length >= 24 ||
+      (s.length === 25 && s.startsWith("c")) ||
+      s.startsWith("C")
+    ) {
+      return "Details";
+    }
+
     const labels: Record<string, string> = {
       owner: "Owner Dashboard",
       manager: "Manager Dashboard",

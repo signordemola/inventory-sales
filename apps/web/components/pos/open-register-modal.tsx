@@ -1,4 +1,9 @@
-import React, { useState } from "react";
+"use client";
+
+import { useState, useTransition } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { openRegisterSchema, OpenRegisterInput } from "@/schemas/shifts";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +13,19 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Calculator } from "lucide-react";
 import apiClient from "@/lib/axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { AxiosError } from "axios";
 
 interface OpenRegisterModalProps {
   isOpen: boolean;
@@ -23,40 +36,34 @@ export function OpenRegisterModal({
   isOpen,
   onSuccess,
 }: OpenRegisterModalProps) {
-  const [startingCash, setStartingCash] = useState<string>("0");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  const handleOpenShift = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const amount = Number(startingCash);
+  const form = useForm<OpenRegisterInput>({
+    resolver: zodResolver(openRegisterSchema),
+    defaultValues: { startingCash: 0 },
+  });
 
-    if (isNaN(amount) || amount < 0) {
-      toast.error("Please enter a valid starting cash amount.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await apiClient.post("/shifts/open", { startingCash: amount });
-      toast.success("Register opened successfully!");
-      onSuccess();
-    } catch (error) {
-      console.error(error);
-      const axiosError = error as {
-        response?: { data?: { message?: string } };
-      };
-      toast.error(
-        axiosError.response?.data?.message || "Failed to open register.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+  const onSubmit = (values: OpenRegisterInput) => {
+    setError("");
+    startTransition(async () => {
+      try {
+        await apiClient.post("/shifts/open", {
+          startingCash: values.startingCash,
+        });
+        toast.success("Register opened successfully!");
+        onSuccess();
+      } catch (err) {
+        const e = err as AxiosError<{ message: string }>;
+        setError(e?.response?.data?.message || "Failed to open register.");
+      }
+    });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      {/* 
+      {/*
         Prevent closing by clicking outside or pressing escape.
         The shift MUST be opened to use the POS.
       */}
@@ -74,33 +81,56 @@ export function OpenRegisterModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleOpenShift} className="space-y-6 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="startingCash">Starting Cash Float (₦)</Label>
-            <Input
-              id="startingCash"
-              type="number"
-              min="0"
-              step="100"
-              value={startingCash}
-              onChange={(e) => setStartingCash(e.target.value)}
-              className="text-lg font-bold"
-              required
-              autoFocus
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+          <FieldGroup>
+            <Controller
+              name="startingCash"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>
+                      Starting Cash Float (₦)
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={field.value}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                      className="text-lg font-bold"
+                      aria-invalid={fieldState.invalid}
+                      autoFocus
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Count the physical cash currently in your drawer.
+                    </p>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </FieldContent>
+                </Field>
+              )}
             />
-            <p className="text-xs text-muted-foreground">
-              Count the physical cash currently in your drawer.
-            </p>
-          </div>
+          </FieldGroup>
 
           <div className="flex flex-col gap-2">
             <Button
               type="submit"
               size="lg"
-              disabled={isSubmitting}
+              disabled={isPending}
               className="w-full font-bold text-background"
             >
-              {isSubmitting ? (
+              {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Opening Register...

@@ -43,7 +43,6 @@ export function useProducts(filters?: ProductFilters) {
   return useQuery<PaginatedProducts>({
     queryKey: ["products", filters],
     queryFn: async () => {
-      // Remove undefined/empty values so they don't clog the URL
       const cleanFilters = Object.fromEntries(
         Object.entries(filters || {}).filter(
           ([key, v]) => key && v !== undefined && v !== "",
@@ -56,6 +55,7 @@ export function useProducts(filters?: ProductFilters) {
       return data;
     },
     placeholderData: (prev) => prev,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 
@@ -67,6 +67,7 @@ export function useProduct(id: string) {
       return data;
     },
     enabled: !!id,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -77,8 +78,8 @@ export function useCreateProduct() {
       const { data } = await apiClient.post<Product>("/products", payload);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-levels"] });
     },
   });
@@ -94,8 +95,8 @@ export function useUpdateProduct(id: string) {
       );
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-levels"] });
     },
   });
@@ -107,8 +108,8 @@ export function useDeleteProduct() {
     mutationFn: async (id: string) => {
       await apiClient.delete(`/products/${id}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-levels"] });
     },
   });
@@ -127,8 +128,8 @@ export function useUploadProductImage(id: string) {
       );
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["products"] });
     },
   });
 }
@@ -141,8 +142,8 @@ export function useDeleteProductImage(id: string) {
         `/products/${id}/images/${encodeURIComponent(publicId)}`,
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["products"] });
     },
   });
 }

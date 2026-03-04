@@ -23,6 +23,7 @@ interface TransactionsTableProps {
   totalItems: number;
   totalPages: number;
   onPageChange: (newPage: number) => void;
+  onDownloadReceipt: (id: string) => void;
 }
 
 function getPaymentIcon(method: string) {
@@ -59,6 +60,7 @@ export const TransactionsTable = ({
   totalItems,
   totalPages,
   onPageChange,
+  onDownloadReceipt,
 }: TransactionsTableProps) => {
   return (
     <div className="bg-white rounded-2xl border-none shadow-xl shadow-slate-200/50 overflow-hidden relative">
@@ -86,6 +88,9 @@ export const TransactionsTable = ({
               </th>
               <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                 Total (₦)
+              </th>
+              <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                Amount Paid
               </th>
               <th className="text-left px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                 Status
@@ -236,6 +241,19 @@ export const TransactionsTable = ({
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={cn(
+                          "font-bold text-sm",
+                          isVoid
+                            ? "text-slate-400 line-through"
+                            : "text-slate-700",
+                        )}
+                      >
+                        ₦{formatCurrency(primaryPayment?.amount || 0)}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div
                         className={cn(
                           "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
@@ -261,13 +279,28 @@ export const TransactionsTable = ({
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button className="text-[13px] font-bold text-red-600 hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
-                        {isVoid
-                          ? "Details"
-                          : txn.status === "COMPLETED"
-                            ? "Void Sale"
-                            : "Process Return"}
-                      </button>
+                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => onDownloadReceipt(txn.id)}
+                          className="text-[13px] font-bold text-primary hover:text-primary-hover flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md transition-colors"
+                        >
+                          <ReceiptText className="w-3.5 h-3.5" />
+                          Receipt
+                        </button>
+                        {isVoid ? (
+                          <button className="text-[13px] font-bold text-red-600 hover:underline">
+                            Details
+                          </button>
+                        ) : txn.status === "COMPLETED" ? (
+                          <button className="text-[13px] font-bold text-red-600 hover:underline">
+                            Void Sale
+                          </button>
+                        ) : (
+                          <button className="text-[13px] font-bold text-red-600 hover:underline">
+                            Process Return
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

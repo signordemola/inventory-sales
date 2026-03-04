@@ -26,19 +26,20 @@ export const ProductCard = ({ product, onSelect }: ProductCardProps) => {
 
   return (
     <Card
-      className={`group p-3 border-slate-200 dark:border-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-950 shadow-sm flex flex-col h-full ${
+      className={`group p-2 border-slate-200 dark:border-slate-800 transition-all cursor-pointer bg-white dark:bg-slate-950 shadow-sm flex flex-col h-full ${
         isOutOfStock
           ? "opacity-60 cursor-not-allowed"
           : "hover:border-primary hover:shadow-md"
       }`}
       onClick={() => !isOutOfStock && onSelect(product)}
     >
-      <div className="aspect-square rounded-xl bg-slate-100 dark:bg-slate-900 mb-3 overflow-hidden relative">
+      <div className="aspect-square rounded-xl bg-slate-100 dark:bg-slate-900 mb-2 overflow-hidden relative">
         {product.images?.[0] ? (
           <Image
             src={product.images[0]}
             alt={product.name}
             fill
+            sizes="(max-width: 768px) 33vw, (max-width: 1200px) 20vw, 15vw"
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
@@ -56,15 +57,15 @@ export const ProductCard = ({ product, onSelect }: ProductCardProps) => {
         )}
       </div>
 
-      <div className="space-y-1 mt-auto">
-        <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 min-h-[40px] leading-snug">
+      <div className="space-y-0.5 mt-auto">
+        <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-2 min-h-[32px] leading-tight">
           {product.name}
         </h3>
-        <p className="text-primary font-black text-base">
+        <p className="text-primary font-black text-sm">
           ₦{Number(product.sellingPrice).toLocaleString()}
         </p>
         <p
-          className={`text-xs font-semibold ${
+          className={`text-[10px] font-semibold ${
             isOutOfStock
               ? "text-red-500"
               : isLowStock

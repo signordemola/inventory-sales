@@ -72,8 +72,8 @@ export function useCreateCustomer() {
       const { data } = await apiClient.post<Customer>("/customers", payload);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["customers"] });
     },
   });
 }
@@ -89,8 +89,8 @@ export function useUpdateCustomer(id: string | undefined) {
       );
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["customers"] });
     },
   });
 }
@@ -101,8 +101,8 @@ export function useDeleteCustomer() {
     mutationFn: async (id: string) => {
       await apiClient.delete(`/customers/${id}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ["customers"] });
     },
   });
 }
@@ -125,9 +125,9 @@ export function useCreateRepayment() {
       );
       return data;
     },
-    onSuccess: () => {
-      // Invalidate customers to refresh the nested creditSales and their balances
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async () => {
+      // Refresh customer list so credit balances update immediately
+      await queryClient.refetchQueries({ queryKey: ["customers"] });
     },
   });
 }

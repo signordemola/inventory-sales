@@ -6,6 +6,16 @@ import { useCategories, useDeleteCategory } from "@/hooks/use-categories";
 import { CategoryTree } from "@/components/categories/category-tree";
 import { CategoryEditor } from "@/components/categories/category-editor";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,6 +30,7 @@ export default function CategoriesPage() {
   );
   const [isCreating, setIsCreating] = useState(false);
   const [initialParentId, setInitialParentId] = useState<string | undefined>();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleCreateNew = () => {
     setSelectedCategoryId(null);
@@ -39,15 +50,22 @@ export default function CategoriesPage() {
     setInitialParentId(undefined);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this category? Sub-categories will become top-level."))
-      return;
+  const handleDelete = (id: string) => {
+    setPendingDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
     try {
-      await deleteMutation.mutateAsync(id);
+      await deleteMutation.mutateAsync(pendingDeleteId);
       toast.success("Category deleted");
-      if (selectedCategoryId === id) setSelectedCategoryId(null);
+      if (selectedCategoryId === pendingDeleteId) setSelectedCategoryId(null);
     } catch {
-      toast.error("Failed to delete category");
+      toast.error(
+        "Failed to delete category. It may still have products assigned.",
+      );
+    } finally {
+      setPendingDeleteId(null);
     }
   };
 
@@ -56,7 +74,15 @@ export default function CategoriesPage() {
     setInitialParentId(undefined);
   };
 
-  const handleSuccess = (id: string) => {
+  // Called after CREATING a category — stay in create mode ready for next entry
+  const handleCreateSuccess = () => {
+    setIsCreating(true);
+    setSelectedCategoryId(null);
+    setInitialParentId(undefined);
+  };
+
+  // Called after UPDATING a category — stay in edit mode
+  const handleUpdateSuccess = (id: string) => {
     setSelectedCategoryId(id);
     setIsCreating(false);
     setInitialParentId(undefined);
@@ -117,14 +143,46 @@ export default function CategoriesPage() {
           onDelete={handleDelete}
         />
         <CategoryEditor
+          key={isCreating ? "__new__" : (selectedCategoryId ?? "__empty__")}
           selectedCategoryId={selectedCategoryId}
           isCreating={isCreating}
           categories={categories}
           initialParentId={initialParentId}
           onCancel={handleCancel}
-          onSuccess={handleSuccess}
+          onCreateSuccess={handleCreateSuccess}
+          onUpdateSuccess={handleUpdateSuccess}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Category?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Products in this category will
+              become uncategorised.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDeleteId(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 text-white"
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

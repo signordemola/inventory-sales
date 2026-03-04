@@ -121,7 +121,7 @@ export class SalesService {
       (acc, item) => acc + item.quantity * item.unitPrice,
       0,
     );
-    const total = subtotal - dto.discount;
+    const total = subtotal - dto.discount + dto.tax;
 
     if (dto.discount > subtotal) {
       throw new BadRequestException('Discount cannot exceed the subtotal.');
@@ -154,6 +154,7 @@ export class SalesService {
         cuid: dto.cuid,
         subtotal,
         total,
+        tax: dto.tax,
         discount: dto.discount,
         discountType: dto.discountType,
         status: dto.status,
@@ -203,6 +204,18 @@ export class SalesService {
         quantity: item.quantity,
       })),
     });
+
+    // Update the cash drawer's expected balance in real-time for cash payments
+    const cashPaymentTotal = dto.payments
+      .filter((p) => p.method === 'CASH')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    if (cashPaymentTotal > 0 && activeSession) {
+      await this.salesRepository.incrementExpectedCash(
+        activeSession.id,
+        cashPaymentTotal,
+      );
+    }
 
     // Fire-and-forget low stock check after sale completes
     this.alertsService.checkLowStockForBusiness(businessId).catch((err) => {

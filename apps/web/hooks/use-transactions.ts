@@ -62,7 +62,9 @@ export function useTransactions(filters: TransactionFilters) {
     queryKey: ["transactions", filters],
     queryFn: async () => {
       const cleanFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v != null && v !== ""),
+        Object.entries(filters).filter(
+          (entry) => entry[1] != null && entry[1] !== "",
+        ),
       );
 
       const { data } = await apiClient.get<PaginatedTransactions>("/sales", {

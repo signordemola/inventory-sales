@@ -10,6 +10,9 @@ import {
   Plus,
   ShoppingCart,
   ImageOff,
+  History,
+  Wallet,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,6 +41,8 @@ interface CartPanelProps {
   onUpdateQuantity: (productId: string, delta: number) => void;
   onClearCart: () => void;
   onCheckout: () => void;
+  onOpenDrawer: () => void;
+  onOpenHistory: () => void;
 }
 
 // Generate a stable order reference based on current date
@@ -58,6 +63,8 @@ export const CartPanel = ({
   onUpdateQuantity,
   onClearCart,
   onCheckout,
+  onOpenDrawer,
+  onOpenHistory,
 }: CartPanelProps) => {
   const subtotal = items.reduce(
     (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
@@ -71,6 +78,28 @@ export const CartPanel = ({
 
   return (
     <div className="w-full lg:w-[400px] flex flex-col bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 h-full shadow-xl z-10">
+      {/* Navigation Tabs */}
+      <div className="flex px-4 pt-4 pb-2 gap-2 border-b border-slate-100 dark:border-slate-800">
+        <button className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-50 text-blue-700 font-bold text-[13px] border border-blue-100">
+          <Receipt className="w-4 h-4" />
+          Order
+        </button>
+        <button
+          onClick={onOpenDrawer}
+          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-slate-600 hover:bg-slate-50 font-medium text-[13px] transition-colors border border-transparent"
+        >
+          <Wallet className="w-4 h-4" />
+          Drawer
+        </button>
+        <button
+          onClick={onOpenHistory}
+          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-slate-600 hover:bg-slate-50 font-medium text-[13px] transition-colors border border-transparent"
+        >
+          <History className="w-4 h-4" />
+          History
+        </button>
+      </div>
+
       {/* Header */}
       <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
         <div>

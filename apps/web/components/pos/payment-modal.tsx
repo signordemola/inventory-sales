@@ -23,6 +23,7 @@ import { CustomerPicker } from "./customer-picker";
 import { toast } from "sonner";
 import { createSaleOffline, CreateSaleOfflineInput } from "@/lib/offline/sales";
 import { PendingPaymentMethod, LocalCustomer } from "@/lib/db";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ export const PaymentModal = ({
   items,
   total,
   subtotal,
+  vat,
   onSuccess,
   userRole,
 }: PaymentModalProps) => {
@@ -56,6 +58,10 @@ export const PaymentModal = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const [localRef, setLocalRef] = useState<string | null>(null);
   const [syncedSaleId, setSyncedSaleId] = useState<string | null>(null);
+  const [amountTendered, setAmountTendered] = useState<string>("");
+  const [changeDue, setChangeDue] = useState<number>(0);
+
+  const queryClient = useQueryClient();
 
   const handleReset = () => {
     setIsSuccess(false);
@@ -68,9 +74,19 @@ export const PaymentModal = ({
     onClose();
   };
 
-  const handleDownloadReceipt = () => {
-    if (syncedSaleId) {
-      window.open(`/api/v1/sales/${syncedSaleId}/receipt`, "_blank");
+  const handleDownloadReceipt = async () => {
+    if (!syncedSaleId) return;
+    try {
+      const loadingToastId = toast.loading("Generating receipt...");
+      const apiClient = (await import("@/lib/axios")).default;
+      const res = await apiClient.post(`/sales/${syncedSaleId}/receipt/store`);
+      toast.dismiss(loadingToastId);
+      if (res.data?.url) {
+        window.open(res.data.url, "_blank");
+      }
+    } catch {
+      toast.dismiss();
+      toast.error("Failed to generate receipt");
     }
   };
 
@@ -97,6 +113,13 @@ export const PaymentModal = ({
 
     setIsProcessing(true);
 
+    // Real-world POS: record the invoice total as the payment amount.
+    // Cash tendered may be MORE than total — the difference is change, not income.
+    // Change is shown to the cashier but NOT stored as a separate payment.
+    const tenderedNum = selectedMethod === "CASH" ? Number(amountTendered) : 0;
+    const change =
+      selectedMethod === "CASH" ? Math.max(0, tenderedNum - total) : 0;
+
     const input: CreateSaleOfflineInput = {
       items: items.map((item) => ({
         productId: item.product.id,
@@ -105,13 +128,17 @@ export const PaymentModal = ({
         unitPrice: Number(item.product.sellingPrice),
         total: item.quantity * Number(item.product.sellingPrice),
       })),
+      // payment.amount = invoice total (what is owed), NOT cash tendered
       payments: [{ method: selectedMethod, amount: total }],
       subtotal,
+      tax: vat,
       total,
       discount: 0,
       customerId: selectedCustomer?.id,
       creditDueDate: creditDueDate || undefined,
     };
+
+    setChangeDue(change);
 
     try {
       const { localReference } = await createSaleOffline(input);
@@ -145,8 +172,12 @@ export const PaymentModal = ({
           });
         }
       }
-    } catch (error) {
-      console.error(error);
+
+      // Invalidate queries so that Sales History and Transactions Page update immediately
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    } catch {
       toast.error("Sale failed", {
         description:
           "There was an error recording the transaction. Please try again.",
@@ -196,6 +227,26 @@ export const PaymentModal = ({
               {localRef}
             </span>
           )}
+
+          {/* Change Due — shown prominently for the cashier to hand back */}
+          {selectedMethod === "CASH" && changeDue > 0 && (
+            <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">
+                Change Due
+              </p>
+              <p className="text-3xl font-black text-emerald-700">
+                ₦
+                {changeDue.toLocaleString("en-NG", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="text-xs text-emerald-500 mt-1">
+                Hand back to the customer
+              </p>
+            </div>
+          )}
+
           <p className="text-xs text-slate-400 italic">
             {navigator.onLine
               ? syncedSaleId
@@ -354,8 +405,25 @@ export const PaymentModal = ({
                   <Input
                     type="number"
                     placeholder="Enter amount..."
-                    className="h-12 text-lg font-bold rounded-xl border-slate-200"
+                    value={amountTendered}
+                    onChange={(e) => setAmountTendered(e.target.value)}
+                    className="h-12 text-lg font-bold rounded-xl border-slate-200 focus-visible:ring-primary/20"
                   />
+                  {amountTendered && Number(amountTendered) < total && (
+                    <p className="text-xs text-red-500 font-bold mt-2 pl-1">
+                      Insufficient amount
+                    </p>
+                  )}
+                  {amountTendered && Number(amountTendered) >= total && (
+                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-200">
+                      <span className="text-xs font-bold text-slate-500">
+                        Change Due
+                      </span>
+                      <span className="text-lg font-black text-emerald-600">
+                        ₦{(Number(amountTendered) - total).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -381,23 +449,28 @@ export const PaymentModal = ({
         {/* Footer */}
         {step !== "customer" && (
           <div className="p-6 bg-slate-50/80 border-t border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between px-8">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-green-400 uppercase tracking-widest">
               <Lock className="w-3.5 h-3.5" />
               {navigator.onLine ? "SECURE TRANSACTION" : "OFFLINE — WILL SYNC"}
             </div>
             <Button
-              className="w-full md:w-auto min-w-[200px] h-14 rounded-xl bg-primary hover:bg-primary-hover text-slate-950 font-black text-lg shadow-lg shadow-primary/20 transition-all"
+              className="w-full md:w-auto min-w-[200px] h-14 rounded-xl bg-primary hover:bg-primary-hover font-black text-lg shadow-lg shadow-primary/20 transition-all"
               onClick={handleConfirmPayment}
               disabled={
                 isProcessing ||
-                (selectedMethod === "CREDIT" && !selectedCustomer)
+                (selectedMethod === "CREDIT" && !selectedCustomer) ||
+                (selectedMethod === "CASH" &&
+                  (!amountTendered || Number(amountTendered) < total))
               }
             >
               {isProcessing
                 ? "Processing..."
                 : selectedMethod === "CREDIT" && !selectedCustomer
                   ? "Select Customer First"
-                  : "Complete Sale"}
+                  : selectedMethod === "CASH" &&
+                      (!amountTendered || Number(amountTendered) < total)
+                    ? "Insufficient Cash"
+                    : "Complete Sale"}
               {!isProcessing && <ArrowRight className="ml-2 w-5 h-5" />}
             </Button>
           </div>

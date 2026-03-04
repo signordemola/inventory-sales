@@ -55,6 +55,11 @@ enum PaymentMethod {
   CREDIT
 }
 
+enum DrawerMovementType {
+  PAID_IN
+  PAID_OUT
+}
+
 enum NotificationType {
   LOW_STOCK
   OUT_OF_STOCK
@@ -86,6 +91,7 @@ model User {
   sales          Sale[]
   notifications  Notification[]
   posSessions    PosSession[]
+  drawerMovements CashDrawerMovement[]
 
   @@index([businessId])
   @@map("user")
@@ -388,6 +394,7 @@ model Sale {
   subtotal     Decimal    @db.Decimal(10, 2)
   discount     Decimal    @default(0) @db.Decimal(10, 2)
   discountType String?
+  tax          Decimal    @default(0) @db.Decimal(10, 2)
   total        Decimal    @db.Decimal(10, 2)
   status       SaleStatus @default(PENDING)
   notes        String?
@@ -502,11 +509,28 @@ model PosSession {
   user            User          @relation(fields: [userId], references: [id])
   business        Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   sales           Sale[]
+  movements       CashDrawerMovement[]
 
   @@index([businessId])
   @@index([userId])
   @@index([status])
   @@map("pos_session")
+}
+
+model CashDrawerMovement {
+  id         String             @id @default(cuid())
+  sessionId  String
+  userId     String
+  type       DrawerMovementType
+  amount     Decimal            @db.Decimal(10, 2)
+  reason     String
+  createdAt  DateTime           @default(now())
+
+  session    PosSession         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [userId], references: [id])
+
+  @@index([sessionId])
+  @@map("cash_drawer_movement")
 }
 
 // Receipt

@@ -11,6 +11,7 @@ import { ShiftsService } from './shifts.service';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../decorators/roles.decorator';
 import { UserRole } from 'generated/prisma/enums';
+import { DrawerMovementType } from 'generated/prisma/enums';
 
 @Controller('shifts')
 @UseGuards(RolesGuard)
@@ -41,6 +42,34 @@ export class ShiftsController {
       body.actualCash,
       body.notes,
     );
+  }
+
+  @Version('1')
+  @Post('drawer-movement')
+  @Roles(UserRole.CASHIER, UserRole.MANAGER, UserRole.OWNER)
+  async recordDrawerMovement(
+    @Request() req: any,
+    @Body()
+    body: {
+      type: DrawerMovementType;
+      amount: number;
+      reason: string;
+    },
+  ) {
+    return this.shiftsService.recordDrawerMovement(
+      req.user.businessId,
+      req.user.id,
+      body.type,
+      body.amount,
+      body.reason,
+    );
+  }
+
+  @Version('1')
+  @Get('z-report')
+  @Roles(UserRole.CASHIER, UserRole.MANAGER, UserRole.OWNER)
+  async getZReport(@Request() req: any) {
+    return this.shiftsService.getZReport(req.user.businessId, req.user.id);
   }
 
   @Version('1')

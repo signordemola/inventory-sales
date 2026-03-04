@@ -132,6 +132,7 @@ export class DashboardService {
   async getCashierShift(businessId: string, cashierId: string) {
     const activeSession = await this.prisma.posSession.findFirst({
       where: { businessId, userId: cashierId, status: 'OPEN' },
+      include: { movements: true },
     });
 
     // We can still fetch low stock warnings regardless of register status
@@ -162,6 +163,7 @@ export class DashboardService {
         recentSales: [],
         lowStockItems,
         shiftDetails: null,
+        drawerMovements: { totalPaidIn: 0, totalPaidOut: 0 },
       };
     }
 
@@ -188,7 +190,18 @@ export class DashboardService {
       _sum: { amount: true },
     });
 
-    // 3. Recent Transactions (Last 5)
+    // 3. Drawer movements
+    let totalPaidIn = 0;
+    let totalPaidOut = 0;
+    activeSession.movements.forEach((m) => {
+      if (m.type === 'PAID_IN') {
+        totalPaidIn += Number(m.amount);
+      } else {
+        totalPaidOut += Number(m.amount);
+      }
+    });
+
+    // 4. Recent Transactions (Last 10)
     const recentSales = await this.prisma.sale.findMany({
       where: { businessId, posSessionId: activeSession.id },
       orderBy: { createdAt: 'desc' },
@@ -205,14 +218,14 @@ export class DashboardService {
       },
     });
 
-    // 4. Low Stock / Out of Stock List (already computed)
-
     return {
       grossSales: Number(todaySales._sum.total || 0),
       transactionCount: todaySales._count.id,
       cashDrawerExpected:
         Number(cashPayments._sum.amount || 0) +
-        Number(activeSession.startingCash),
+        Number(activeSession.startingCash) +
+        totalPaidIn -
+        totalPaidOut,
       recentSales,
       lowStockItems,
       shiftDetails: {
@@ -221,6 +234,7 @@ export class DashboardService {
         openedAt: activeSession.openedAt,
         status: activeSession.status,
       },
+      drawerMovements: { totalPaidIn, totalPaidOut },
     };
   }
 }

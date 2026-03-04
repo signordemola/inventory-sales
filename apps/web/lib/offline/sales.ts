@@ -5,6 +5,7 @@ export type CreateSaleOfflineInput = {
   items: PendingSaleItem[];
   payments: PendingPayment[];
   subtotal: number;
+  tax: number;
   discount?: number;
   total: number;
   customerId?: string;
@@ -33,6 +34,7 @@ export async function createSaleOffline(
     cuid,
     items: input.items,
     subtotal: input.subtotal,
+    tax: input.tax,
     discount: input.discount ?? 0,
     total: input.total,
     payments: input.payments,

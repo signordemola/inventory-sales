@@ -20,10 +20,10 @@ export function useCreateSupplierPayment() {
       );
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       queryClient.invalidateQueries({ queryKey: ["supplier", variables.id] });
-      queryClient.invalidateQueries({
+      await queryClient.refetchQueries({
         queryKey: ["supplier-balance", variables.id],
       });
     },
