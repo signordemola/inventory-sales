@@ -194,26 +194,26 @@ These are things a real user will notice in the first 5 minutes.
 
 ### 6.1 Security
 
-- [ ] Add rate limiting on auth endpoints (login, register, invite)
-- [ ] Lock CORS to production frontend domain
-- [ ] Disable Swagger in production (`NODE_ENV` check)
-- [ ] Ensure all API routes have proper `@Roles()` guards
-- [ ] Add request validation on all DTOs (already using class-validator)
+- [x] Add rate limiting on auth endpoints (login, register, invite)
+- [x] Lock CORS to production frontend domain
+- [x] Disable Swagger in production (`NODE_ENV` check)
+- [x] Ensure all API routes have proper `@Roles()` guards
+- [x] Add request validation on all DTOs (already using class-validator)
 
 ### 6.2 Error Handling & UX Polish
 
-- [ ] Add global error boundary component
-- [ ] Add loading skeletons on all data-fetching pages (most already have them)
-- [ ] Add empty state illustrations for zero-data pages
-- [ ] Test all forms for validation errors and display
-- [ ] Test all modals for proper close/cleanup behavior
+- [x] Add global error boundary component
+- [x] Add loading skeletons on all data-fetching pages (most already have them)
+- [x] Add empty state illustrations for zero-data pages
+- [x] Test all forms for validation errors and display
+- [x] Test all modals for proper close/cleanup behavior
 
 ### 6.3 Performance
 
-- [ ] Ensure all images use `next/image` with proper sizing
-- [ ] Lazy-load heavy components (charts, modals) with `dynamic()`
-- [ ] Verify Lighthouse score > 90 on POS and Dashboard pages
-- [ ] Test offline POS with 500+ products in IndexedDB
+- [x] Ensure all images use `next/image` with proper sizing
+- [x] Lazy-load heavy components (charts, modals) with `dynamic()`
+- [x] Verify Lighthouse score > 90 on POS and Dashboard pages
+- [x] Test offline POS with 500+ products in IndexedDB
 
 ### 6.4 Deployment
 
@@ -235,10 +235,10 @@ These are things a real user will notice in the first 5 minutes.
 | Credit sales with due dates    |     ✅     |      ⚠️       |      ❌       |    ❌    |
 | WhatsApp receipts              |     🔜     |      ❌       |      ⚠️       |    ❌    |
 | Pidgin / Yoruba / Hausa UI     |     🔜     |      ❌       |      ❌       |    ❌    |
-| Smart restock suggestions      |     🔜     |      ❌       |      ❌       |    ❌    |
+| Smart restock suggestions      |     ✅     |      ❌       |      ❌       |    ❌    |
 | Role-specific dashboards       |     ✅     |      ❌       |      ❌       |    ⚠️    |
 | Cash drawer variance tracking  |     ✅     |      ✅       |      ✅       |    ✅    |
-| Profit margin insights         |     🔜     |      ❌       |      ❌       |    ⚠️    |
+| Profit margin insights         |     ✅     |      ❌       |      ❌       |    ⚠️    |
 | Credit book SMS reminders      |     🔜     |      ❌       |      ❌       |    ❌    |
 | No hardware required           |     ✅     | ❌ (terminal) | ❌ (terminal) |    ✅    |
 | Daily digest notifications     |     🔜     |      ❌       |      ❌       |    ⚠️    |

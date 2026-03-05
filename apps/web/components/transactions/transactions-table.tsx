@@ -25,6 +25,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -122,17 +128,17 @@ export const TransactionsTable = ({
                 </tr>
               ))
             ) : transactions.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-24 text-center">
-                  <div className="inline-flex w-16 h-16 rounded-full bg-slate-50 items-center justify-center mb-4">
-                    <ReceiptText className="w-8 h-8 text-slate-300" />
-                  </div>
-                  <p className="text-sm font-bold text-slate-500">
-                    No transactions found
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Try adjusting your filters.
-                  </p>
+              <tr className="border-b-0 hover:bg-transparent cursor-default">
+                <td colSpan={8} className="px-6 py-12">
+                  <Empty>
+                    <EmptyMedia>
+                      <ReceiptText className="w-6 h-6 text-slate-400" />
+                    </EmptyMedia>
+                    <EmptyTitle>No transactions found</EmptyTitle>
+                    <EmptyDescription>
+                      Try adjusting your filters.
+                    </EmptyDescription>
+                  </Empty>
                 </td>
               </tr>
             ) : (

@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Package, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Product } from "@/hooks/use-products";
 import { cn, formatCurrency } from "@/lib/utils";
+import {
+  Empty,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 
 interface ProductsTableProps {
   products: Product[];
@@ -91,17 +97,17 @@ export const ProductsTable = ({
                   </tr>
                 ))
             ) : products.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-5 py-24 text-center">
-                  <div className="inline-flex w-16 h-16 rounded-full bg-slate-50 items-center justify-center mb-4">
-                    <Package className="w-8 h-8 text-slate-300" />
-                  </div>
-                  <p className="text-sm font-bold text-slate-500">
-                    No products found
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Try adjusting your filters or add a new product.
-                  </p>
+              <tr className="border-b-0 hover:bg-transparent cursor-default">
+                <td colSpan={6} className="px-5 py-12">
+                  <Empty>
+                    <EmptyMedia>
+                      <Package className="w-6 h-6 text-slate-400" />
+                    </EmptyMedia>
+                    <EmptyTitle>No products found</EmptyTitle>
+                    <EmptyDescription>
+                      Try adjusting your filters or add a new product.
+                    </EmptyDescription>
+                  </Empty>
                 </td>
               </tr>
             ) : (

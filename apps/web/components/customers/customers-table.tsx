@@ -10,8 +10,13 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Customer } from "@/hooks/use-customers";
+import {
+  Empty,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 
 interface CustomersTableProps {
   customers: Customer[];
@@ -73,17 +78,17 @@ export const CustomersTable = ({
                 </tr>
               ))
             ) : customers.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-24 text-center">
-                  <div className="inline-flex w-16 h-16 rounded-full bg-slate-50 items-center justify-center mb-4">
-                    <Users className="w-8 h-8 text-slate-300" />
-                  </div>
-                  <p className="text-sm font-bold text-slate-500">
-                    No customers found
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Add a new customer to get started.
-                  </p>
+              <tr className="border-b-0 hover:bg-transparent cursor-default">
+                <td colSpan={4} className="px-6 py-12">
+                  <Empty>
+                    <EmptyMedia>
+                      <Users className="w-6 h-6 text-slate-400" />
+                    </EmptyMedia>
+                    <EmptyTitle>No customers found</EmptyTitle>
+                    <EmptyDescription>
+                      Add a new customer to get started.
+                    </EmptyDescription>
+                  </Empty>
                 </td>
               </tr>
             ) : (

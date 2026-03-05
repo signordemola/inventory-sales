@@ -21,6 +21,12 @@ import {
 } from "lucide-react";
 import { User, UserRole, StaffInvite } from "@/types/staff";
 import {
+  Empty,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -82,10 +88,16 @@ export function StaffTable({
     (!pendingInvites || pendingInvites.length === 0)
   ) {
     return (
-      <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-          No staff members or pending invites found.
-        </p>
+      <div className="py-16">
+        <Empty>
+          <EmptyMedia>
+            <ShieldCheck className="w-6 h-6 text-slate-400" />
+          </EmptyMedia>
+          <EmptyTitle>No staff or invites</EmptyTitle>
+          <EmptyDescription>
+            No staff members or pending invites found.
+          </EmptyDescription>
+        </Empty>
       </div>
     );
   }

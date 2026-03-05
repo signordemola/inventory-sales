@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { StockLevel } from "@/hooks/use-inventory";
+import { Empty, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InventoryState, InventoryAction } from "./inventory-types";
 
 export function StockLevelsTable({
@@ -57,9 +58,13 @@ export function StockLevelsTable({
             </div>
           ))
         ) : filteredLevels?.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
-            <Package className="w-10 h-10 mb-3 text-slate-200" />
-            <p className="font-semibold text-sm">No products found</p>
+          <div className="py-12">
+            <Empty>
+              <EmptyMedia>
+                <Package className="w-6 h-6 text-slate-400" />
+              </EmptyMedia>
+              <EmptyTitle>No products found</EmptyTitle>
+            </Empty>
           </div>
         ) : (
           filteredLevels?.map((level) => {
