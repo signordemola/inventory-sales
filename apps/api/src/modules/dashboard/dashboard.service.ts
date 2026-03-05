@@ -334,4 +334,175 @@ export class DashboardService {
       drawerMovements: { totalPaidIn, totalPaidOut },
     };
   }
+
+  async getProfitInsights(businessId: string) {
+    const products = await this.prisma.product.findMany({
+      where: { businessId, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        buyingPrice: true,
+        sellingPrice: true,
+        saleItems: {
+          select: {
+            quantity: true,
+            total: true,
+          },
+          where: {
+            sale: { status: 'COMPLETED' },
+          },
+        },
+      },
+    });
+
+    let totalMarginSum = 0;
+    let productsWithValidMarginCount = 0;
+
+    const insights = products.map((p) => {
+      const buyPrice = Number(p.buyingPrice || 0);
+      const sellPrice = Number(p.sellingPrice || 0);
+
+      let marginPercentage = 0;
+      let profitPerUnit = 0;
+
+      if (sellPrice > 0) {
+        profitPerUnit = sellPrice - buyPrice;
+        marginPercentage = (profitPerUnit / sellPrice) * 100;
+        totalMarginSum += marginPercentage;
+        productsWithValidMarginCount++;
+      }
+
+      // Calculate total generated revenue and profit from historical sales
+      let totalRevenue = 0;
+      let totalProfit = 0;
+
+      p.saleItems.forEach((saleItem) => {
+        const itemRev = Number(saleItem.total || 0);
+        totalRevenue += itemRev;
+        // Approximation: if prices changed, historical profit might be different,
+        // but for MVP we use current profit per unit * quantity sold
+        totalProfit += profitPerUnit * saleItem.quantity;
+      });
+
+      return {
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        marginPercentage,
+        profitPerUnit,
+        totalRevenue,
+        totalProfit,
+      };
+    });
+
+    const averageMargin =
+      productsWithValidMarginCount > 0
+        ? totalMarginSum / productsWithValidMarginCount
+        : 0;
+
+    const lowMarginProducts = insights
+      .filter((p) => p.marginPercentage < 10)
+      .sort((a, b) => a.marginPercentage - b.marginPercentage)
+      .slice(0, 10);
+
+    const topProfitGenerators = [...insights]
+      .sort((a, b) => b.totalProfit - a.totalProfit)
+      .filter((p) => p.totalProfit > 0)
+      .slice(0, 5);
+
+    return {
+      averageMargin,
+      lowMarginProducts,
+      topProfitGenerators,
+    };
+  }
+
+  async getRestockSuggestions(businessId: string) {
+    // 1. Find products that are currently at or below their low stock threshold.
+    const allProducts = await this.prisma.product.findMany({
+      where: { businessId, isActive: true },
+      include: { stockRecord: true },
+    });
+
+    const lowStockItems = allProducts.filter((p) => {
+      const qs = Number(p.stockRecord?.quantity || 0);
+      return qs <= (p.lowStockThreshold || 0);
+    });
+
+    if (lowStockItems.length === 0) {
+      return [];
+    }
+
+    // 2. Calculate sales velocity over the last 30 days for these items.
+    const thirtyDaysAgo = startOfDay(subDays(new Date(), 30));
+
+    // Get sale items for completed sales in the last 30 days matching our low stock products
+    const recentSales = await this.prisma.saleItem.groupBy({
+      by: ['productId'],
+      where: {
+        productId: { in: lowStockItems.map((p) => p.id) },
+        sale: {
+          businessId,
+          status: 'COMPLETED',
+          createdAt: { gte: thirtyDaysAgo },
+        },
+      },
+      _sum: { quantity: true },
+    });
+
+    const salesMap = new Map<string, number>();
+    recentSales.forEach((s) => {
+      salesMap.set(s.productId, s._sum.quantity || 0);
+    });
+
+    // 3. Map to DTO, calculate velocity (units/day) and suggested restock (e.g., to cover 14 days of average sales)
+    const MAVERICK_RESTOCK_DAYS = 14;
+
+    const suggestions = lowStockItems.map((p) => {
+      const unitsSoldLast30Days = salesMap.get(p.id) || 0;
+      const dailyVelocity = unitsSoldLast30Days / 30;
+
+      const currentStock = Number(p.stockRecord?.quantity || 0);
+
+      // Suggest enough to cover the desired days, minus what we currently have.
+      // E.g if velocity is 2/day, and we want 14 days cover, we need 28 total.
+      // If we have 5 left, suggest 23. Minimum suggestion is 0 (or just the threshold if zero velocity).
+      let suggestedOrder = Math.ceil(
+        dailyVelocity * MAVERICK_RESTOCK_DAYS - currentStock,
+      );
+
+      // If the item hasn't sold at all recently, just recommend restocking up to the threshold + 20%
+      if (dailyVelocity === 0) {
+        suggestedOrder = Math.max(
+          0,
+          Math.ceil((p.lowStockThreshold || 5) * 1.2) - currentStock,
+        );
+      }
+
+      // Ensure some basic minimums so we don't suggest silly low numbers like 1 or 2 if threshold is higher
+      if (suggestedOrder < (p.lowStockThreshold || 0)) {
+        suggestedOrder = p.lowStockThreshold || 10;
+      }
+
+      return {
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        currentStock,
+        threshold: p.lowStockThreshold || 0,
+        unitsSoldLast30Days,
+        dailyVelocity,
+        suggestedOrder,
+      };
+    });
+
+    // Sort by highest velocity first, then by items most severely under threshold
+    return suggestions.sort((a, b) => {
+      if (b.dailyVelocity !== a.dailyVelocity) {
+        return b.dailyVelocity - a.dailyVelocity;
+      }
+      return a.currentStock - a.threshold - (b.currentStock - b.threshold);
+    });
+  }
 }

@@ -134,13 +134,12 @@ export class ShiftsService {
     return movement;
   }
 
-  async getZReport(businessId: string, userId: string) {
+  async getZReport(businessId: string, userId: string, shiftId?: string) {
     const shift = await this.prisma.posSession.findFirst({
-      where: { businessId, userId },
+      where: shiftId ? { businessId, id: shiftId } : { businessId, userId },
       orderBy: { openedAt: 'desc' },
       include: {
         sales: {
-          where: { status: 'COMPLETED' },
           include: {
             payments: true,
             items: {
@@ -159,20 +158,28 @@ export class ShiftsService {
       throw new BadRequestException('No shift found.');
     }
 
-    // Sales breakdown by payment method
+    // Sales breakdown by payment method and return/void counts
     const salesByMethod: Record<string, number> = {};
     let totalCashSales = 0;
     let totalRevenue = 0;
+    let voidsCount = 0;
+    let returnsCount = 0;
 
     shift.sales.forEach((sale) => {
-      totalRevenue += Number(sale.total);
-      sale.payments.forEach((p) => {
-        salesByMethod[p.method] =
-          (salesByMethod[p.method] || 0) + Number(p.amount);
-        if (p.method === 'CASH') {
-          totalCashSales += Number(p.amount);
-        }
-      });
+      if (sale.status === 'COMPLETED') {
+        totalRevenue += Number(sale.total);
+        sale.payments.forEach((p) => {
+          salesByMethod[p.method] =
+            (salesByMethod[p.method] || 0) + Number(p.amount);
+          if (p.method === 'CASH') {
+            totalCashSales += Number(p.amount);
+          }
+        });
+      } else if (sale.status === 'VOID') {
+        voidsCount++;
+      } else if (sale.status === 'RETURNED') {
+        returnsCount++;
+      }
     });
 
     // Drawer movements
@@ -196,7 +203,10 @@ export class ShiftsService {
       closedAt: shift.closedAt,
       startingCash: Number(shift.startingCash),
       totalRevenue,
-      transactionCount: shift.sales.length,
+      transactionCount: shift.sales.filter((s) => s.status === 'COMPLETED')
+        .length,
+      voidsCount,
+      returnsCount,
       salesByMethod,
       totalPaidIn,
       totalPaidOut,

@@ -26,4 +26,20 @@ export class DashboardController {
     const { businessId, id } = req.user;
     return this.dashboardService.getCashierShift(businessId, id);
   }
+
+  @Version('1')
+  @Get('profit-insights')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async getProfitInsights(@Request() req: any) {
+    const { businessId } = req.user;
+    return this.dashboardService.getProfitInsights(businessId);
+  }
+
+  @Version('1')
+  @Get('restock-suggestions')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async getRestockSuggestions(@Request() req: any) {
+    const { businessId } = req.user;
+    return this.dashboardService.getRestockSuggestions(businessId);
+  }
 }

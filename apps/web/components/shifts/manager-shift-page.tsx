@@ -11,8 +11,12 @@ import {
   Loader2,
   TrendingUp,
   Receipt,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { ZReportModal, ZReportData } from "./z-report-modal";
 
 type ShiftRecord = {
   id: string;
@@ -63,6 +67,10 @@ function ShiftDurationBadge({
 export function ManagerShiftPage() {
   const [shifts, setShifts] = useState<ShiftRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [reportFetchingId, setReportFetchingId] = useState<string | null>(null);
+  const [selectedZReport, setSelectedZReport] = useState<ZReportData | null>(
+    null,
+  );
 
   const fetchShifts = useCallback(async () => {
     try {
@@ -74,6 +82,18 @@ export function ManagerShiftPage() {
       setIsLoading(false);
     }
   }, []);
+
+  const handleFetchZReport = async (shiftId: string) => {
+    try {
+      setReportFetchingId(shiftId);
+      const res = await apiClient.get(`/shifts/z-report/${shiftId}`);
+      setSelectedZReport(res.data);
+    } catch {
+      toast.error("Failed to load Z-Report");
+    } finally {
+      setReportFetchingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchShifts();
@@ -292,6 +312,20 @@ export function ManagerShiftPage() {
                           </p>
                         </div>
                         <CheckCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs font-semibold text-primary shrink-0"
+                          onClick={() => handleFetchZReport(shift.id)}
+                          disabled={reportFetchingId === shift.id}
+                        >
+                          {reportFetchingId === shift.id ? (
+                            <Receipt className="h-3 w-3 mr-1 animate-ping" />
+                          ) : (
+                            <FileText className="h-3 w-3 mr-1" />
+                          )}
+                          Z-Report
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -304,6 +338,13 @@ export function ManagerShiftPage() {
 
       {/* Outstanding Credit Balances */}
       <CreditBalancesSection />
+
+      <ZReportModal
+        isOpen={selectedZReport !== null}
+        zReport={selectedZReport}
+        onDismiss={() => setSelectedZReport(null)}
+        title="Shift Z-Report"
+      />
     </div>
   );
 }

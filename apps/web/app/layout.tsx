@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 const roboto = Roboto({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -38,6 +39,7 @@ export default function RootLayout({
             {children}
             <Toaster position="top-center" />
             <ServiceWorkerRegistrar />
+            <PWAInstallPrompt />
           </TooltipProvider>
         </Providers>
       </body>

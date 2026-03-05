@@ -41,4 +41,4 @@ yarn-error.log*
 **/checklist*
 **/ofline*
 **/seed*
-**/mvp*
+# **/mvp*

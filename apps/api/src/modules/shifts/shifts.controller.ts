@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Param,
   UseGuards,
   Request,
   Version,
@@ -68,8 +69,15 @@ export class ShiftsController {
   @Version('1')
   @Get('z-report')
   @Roles(UserRole.CASHIER, UserRole.MANAGER, UserRole.OWNER)
-  async getZReport(@Request() req: any) {
+  async getLatestZReport(@Request() req: any) {
     return this.shiftsService.getZReport(req.user.businessId, req.user.id);
+  }
+
+  @Version('1')
+  @Get('z-report/:id')
+  @Roles(UserRole.CASHIER, UserRole.MANAGER, UserRole.OWNER)
+  async getZReportById(@Request() req: any, @Param('id') id: string) {
+    return this.shiftsService.getZReport(req.user.businessId, req.user.id, id);
   }
 
   @Version('1')

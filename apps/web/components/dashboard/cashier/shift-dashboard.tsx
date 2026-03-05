@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { format, intervalToDuration } from "date-fns";
 import { CloseRegisterModal } from "@/components/shifts/close-register-modal";
+import { ZReportModal, ZReportData } from "@/components/shifts/z-report-modal";
 
 const SHIFT_DURATION_HOURS = 6;
 const SHIFT_DURATION_MS = SHIFT_DURATION_HOURS * 60 * 60 * 1000;
@@ -144,6 +145,10 @@ export const CashierShiftDashboard = () => {
   const [pastSessions, setPastSessions] = useState<PastSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const [reportFetchingId, setReportFetchingId] = useState<string | null>(null);
+  const [selectedZReport, setSelectedZReport] = useState<ZReportData | null>(
+    null,
+  );
 
   const isOnline = React.useSyncExternalStore(
     React.useCallback((callback: () => void) => {
@@ -173,6 +178,19 @@ export const CashierShiftDashboard = () => {
       setIsLoading(false);
     }
   }, []);
+
+  const handleFetchZReport = async (shiftId: string) => {
+    try {
+      setReportFetchingId(shiftId);
+      const res = await apiClient.get(`/shifts/z-report/${shiftId}`);
+      setSelectedZReport(res.data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load Z-Report");
+    } finally {
+      setReportFetchingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!isOnline) {
@@ -522,6 +540,20 @@ export const CashierShiftDashboard = () => {
                           <CheckCircle className="h-3 w-3 text-green-600" />
                           Closed
                         </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs font-semibold text-primary"
+                          onClick={() => handleFetchZReport(session.id)}
+                          disabled={reportFetchingId === session.id}
+                        >
+                          {reportFetchingId === session.id ? (
+                            <Receipt className="h-3 w-3 mr-1 animate-ping" />
+                          ) : (
+                            <Receipt className="h-3 w-3 mr-1" />
+                          )}
+                          Z-Report
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -544,6 +576,13 @@ export const CashierShiftDashboard = () => {
           }}
         />
       )}
+
+      <ZReportModal
+        isOpen={selectedZReport !== null}
+        zReport={selectedZReport}
+        onDismiss={() => setSelectedZReport(null)}
+        title="Historical Z-Report"
+      />
     </div>
   );
 };

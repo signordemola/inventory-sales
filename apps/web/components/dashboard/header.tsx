@@ -16,6 +16,7 @@ import { Button } from "../ui/button";
 import { Search } from "lucide-react";
 import { formattedDate } from "@/lib/date";
 import { NotificationsDropdown } from "./notifications-dropdown";
+import { OfflineStatusBadge } from "./offline-status-badge";
 
 const Header = () => {
   const pathname = usePathname();
@@ -100,6 +101,7 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-3">
+        <OfflineStatusBadge />
         <div className="hidden md:flex items-center text-xs font-semibold text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-800">
           {formattedDate}
         </div>
