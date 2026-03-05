@@ -13,4 +13,13 @@ export interface DashboardStats {
   salesTrend: { name: string; revenue: number }[];
   grossProfit: number;
   activeStaffCount: number;
+  thisMonthRevenue: number;
+  revenueGrowth: number;
+  revenueByMethod: { name: string; value: number }[];
+  topProducts: {
+    id: string;
+    name: string;
+    quantitySold: number;
+    revenue: number;
+  }[];
 }

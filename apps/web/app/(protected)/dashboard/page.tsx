@@ -3,6 +3,8 @@ import { requireAny } from "@/lib/dal";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { OwnerStatsGrid } from "@/components/dashboard/owner/stats-grid";
+import { TopProductsWidget } from "@/components/dashboard/owner/top-products-widget";
+import { PaymentMethodsChart } from "@/components/dashboard/owner/payment-methods-chart";
 import { ManagerStatsGrid } from "@/components/dashboard/manager/stats-grid";
 import { CashierShiftDashboard } from "@/components/dashboard/cashier/shift-dashboard";
 import { ManagerShiftPage } from "@/components/shifts/manager-shift-page";
@@ -36,11 +38,18 @@ export default async function DashboardPage() {
       )}
 
       {role !== "CASHIER" && (
-        <>
-          <SalesChart />
-          <RecentTransactions />
-        </>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SalesChart />
+          </div>
+          <div className="space-y-6">
+            <TopProductsWidget />
+            <PaymentMethodsChart />
+          </div>
+        </div>
       )}
+
+      {role !== "CASHIER" && <RecentTransactions />}
     </div>
   );
 }

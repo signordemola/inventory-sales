@@ -13,8 +13,8 @@ export function OwnerStatsGrid() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {Array(4)
+      <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-5">
+        {Array(5)
           .fill(0)
           .map((_, i) => (
             <Skeleton
@@ -27,18 +27,22 @@ export function OwnerStatsGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-5">
       <StatCard
-        title="Today's Revenue"
-        value={formatCurrency(stats?.todayRevenue || 0)}
-        trend={12}
-        description="vs yesterday"
+        title="Monthly Revenue"
+        value={formatCurrency(stats?.thisMonthRevenue || 0)}
+        trend={stats?.revenueGrowth ? Math.round(stats.revenueGrowth) : 0}
+        description="vs last month"
         gradient
       />
       <StatCard
-        title="Gross Profit"
+        title="Transactions Today"
+        value={(stats?.todaySalesCount || 0).toString()}
+        description="total completed sales"
+      />
+      <StatCard
+        title="Gross Profit (Today)"
         value={formatCurrency(stats?.grossProfit || 0)}
-        trend={5}
         description="real-time margin"
       />
       <StatCard

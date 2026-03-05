@@ -12,6 +12,11 @@ export class DashboardService {
     const todayEnd = endOfDay(now);
     const sevenDaysAgo = startOfDay(subDays(now, 6));
 
+    // For MoM comparison
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
     // 1. Today's Revenue (Filtered by user if Cashier)
     const salesWhere: any = {
       businessId,
@@ -117,6 +122,93 @@ export class DashboardService {
       },
     });
 
+    // 8. MoM Revenue
+    const thisMonthSales = await this.prisma.sale.aggregate({
+      where: {
+        businessId,
+        createdAt: { gte: thisMonthStart, lte: todayEnd },
+        status: 'COMPLETED',
+        ...(user.role === 'CASHIER' && { cashierId: user.id }),
+      },
+      _sum: { total: true },
+    });
+
+    const lastMonthSales = await this.prisma.sale.aggregate({
+      where: {
+        businessId,
+        createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
+        status: 'COMPLETED',
+        ...(user.role === 'CASHIER' && { cashierId: user.id }),
+      },
+      _sum: { total: true },
+    });
+
+    const thisMonthRevenue = Number(thisMonthSales._sum.total || 0);
+    const lastMonthRevenue = Number(lastMonthSales._sum.total || 0);
+    const revenueGrowth =
+      lastMonthRevenue > 0
+        ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+        : 100;
+
+    // Workaround for Prisma's circular type inference bug with nested relational filters in groupBy:
+    // First fetch the applicable sale IDs
+    const completedSales = await this.prisma.sale.findMany({
+      where: {
+        businessId,
+        status: 'COMPLETED',
+        ...(user.role === 'CASHIER' && { cashierId: user.id }),
+      },
+      select: { id: true },
+    });
+    const completedSaleIds = completedSales.map((s) => s.id);
+
+    // 9. Revenue by Payment Method (All Time or This Month)
+    const paymentSums = await this.prisma.payment.groupBy({
+      by: ['method'],
+      where: {
+        saleId: { in: completedSaleIds },
+      },
+      _sum: { amount: true },
+    });
+
+    const revenueByMethod = paymentSums.map((p) => ({
+      name: p.method,
+      value: Number(p._sum.amount || 0),
+    }));
+
+    const allSaleItems = await this.prisma.saleItem.findMany({
+      where: { saleId: { in: completedSaleIds } },
+      select: {
+        productId: true,
+        quantity: true,
+        total: true,
+        product: {
+          select: { name: true },
+        },
+      },
+    });
+
+    const productMap: Record<
+      string,
+      { id: string; name: string; quantitySold: number; revenue: number }
+    > = {};
+    for (const item of allSaleItems) {
+      if (!productMap[item.productId]) {
+        productMap[item.productId] = {
+          id: item.productId,
+          name: item.product?.name || 'Unknown Product',
+          quantitySold: 0,
+          revenue: 0,
+        };
+      }
+      productMap[item.productId].quantitySold += item.quantity;
+      productMap[item.productId].revenue += Number(item.total || 0);
+    }
+
+    const topProducts = Object.values(productMap)
+      .sort((a, b) => b.quantitySold - a.quantitySold)
+      .slice(0, 5);
+
     return {
       todayRevenue: Number(todaySales._sum.total || 0),
       todaySalesCount: todaySales._count.id,
@@ -126,6 +218,11 @@ export class DashboardService {
       salesTrend,
       grossProfit,
       activeStaffCount,
+      // New Phase 4 stats
+      thisMonthRevenue,
+      revenueGrowth,
+      revenueByMethod,
+      topProducts,
     };
   }
 
