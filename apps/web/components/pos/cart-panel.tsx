@@ -42,6 +42,9 @@ interface CartPanelProps {
   items: CartItem[];
   onUpdateQuantity: (productId: string, delta: number) => void;
   onClearCart: () => void;
+  discount: number;
+  discountType: "PERCENTAGE" | "FLAT";
+  onUpdateDiscount: (amount: number, type: "PERCENTAGE" | "FLAT") => void;
   onCheckout: () => void;
   onOpenDrawer: () => void;
   onOpenHistory: () => void;
@@ -64,6 +67,9 @@ export const CartPanel = ({
   items,
   onUpdateQuantity,
   onClearCart,
+  discount,
+  discountType,
+  onUpdateDiscount,
   onCheckout,
   onOpenDrawer,
   onOpenHistory,
@@ -72,12 +78,22 @@ export const CartPanel = ({
     (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
     0,
   );
+
+  let discountAmount = 0;
+  if (discountType === "PERCENTAGE") {
+    discountAmount = subtotal * (discount / 100);
+  } else {
+    discountAmount = discount;
+  }
+
+  const taxableAmount = Math.max(0, subtotal - discountAmount);
+
   const settings =
     useLiveQuery(() => db.businessSettings.get("settings"), []) ?? null;
   const taxRatePercent = settings?.taxRate ?? 0;
   const vatRate = taxRatePercent / 100;
-  const vat = subtotal * vatRate;
-  const total = subtotal + vat;
+  const vat = taxableAmount * vatRate;
+  const total = taxableAmount + vat;
 
   const { ref, time } = getOrderRef();
 
@@ -237,6 +253,54 @@ export const CartPanel = ({
             <span>Subtotal</span>
             <span className="font-medium">₦{subtotal.toLocaleString()}</span>
           </div>
+
+          {/* Discount Field */}
+          <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 rounded-lg p-2 mt-1 mb-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  onUpdateDiscount(
+                    discount,
+                    discountType === "FLAT" ? "PERCENTAGE" : "FLAT",
+                  )
+                }
+                className="text-xs font-bold px-2 py-1 bg-white dark:bg-slate-800 rounded shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                title="Toggle discount type"
+              >
+                {discountType === "FLAT" ? "₦" : "%"}
+              </button>
+              <span className="text-sm text-slate-500 font-medium">
+                Discount
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              {discountType === "FLAT" && (
+                <span className="text-slate-400 text-sm">₦</span>
+              )}
+              <input
+                type="number"
+                min="0"
+                value={discount || ""}
+                onChange={(e) =>
+                  onUpdateDiscount(Number(e.target.value) || 0, discountType)
+                }
+                placeholder="0"
+                className="w-16 text-right bg-transparent border-b border-slate-200 dark:border-slate-700 outline-none text-sm font-medium text-slate-900 dark:text-white focus:border-primary transition-colors"
+              />
+              {discountType === "PERCENTAGE" && (
+                <span className="text-slate-400 text-sm">%</span>
+              )}
+            </div>
+          </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-sm text-red-500">
+              <span>Discount</span>
+              <span className="font-medium">
+                - ₦{discountAmount.toLocaleString()}
+              </span>
+            </div>
+          )}
+
           <div className="flex justify-between text-sm text-slate-500">
             <span>VAT ({taxRatePercent}%)</span>
             <span className="font-medium">₦{vat.toFixed(2)}</span>

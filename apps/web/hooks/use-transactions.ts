@@ -14,6 +14,7 @@ export interface TransactionPayment {
   id: string;
   method: "CASH" | "CARD" | "TRANSFER" | "PAYSTACK" | "CREDIT";
   amount: number;
+  reference?: string;
 }
 
 export interface TransactionItem {

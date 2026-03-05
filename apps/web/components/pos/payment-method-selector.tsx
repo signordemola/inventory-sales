@@ -20,6 +20,7 @@ export function PaymentMethodSelector({
   onMethodSelect,
   setStep,
   setAmountTendered,
+  setReference,
   setCreditDueDate,
   onClose,
 }: {
@@ -29,6 +30,7 @@ export function PaymentMethodSelector({
   onMethodSelect: (id: PendingPaymentMethod) => void;
   setStep: (step: Step) => void;
   setAmountTendered: (amount: string) => void;
+  setReference: (ref: string) => void;
   setCreditDueDate: (date: string) => void;
   onClose: () => void;
 }) {
@@ -153,6 +155,26 @@ export function PaymentMethodSelector({
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Payment Reference */}
+      {["CARD", "TRANSFER", "PAYSTACK"].includes(state.selectedMethod) && (
+        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 animate-in slide-in-from-top-2 duration-300">
+          <label
+            htmlFor="payment-reference"
+            className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1 block mb-2"
+          >
+            Payment Reference (Optional)
+          </label>
+          <Input
+            id="payment-reference"
+            type="text"
+            placeholder="e.g. POS Receipt No, Transfer Ref..."
+            value={state.reference}
+            onChange={(e) => setReference(e.target.value)}
+            className="h-12 text-sm font-semibold rounded-xl border-slate-200 focus-visible:ring-primary/20"
+          />
         </div>
       )}
 

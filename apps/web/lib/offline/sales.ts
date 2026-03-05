@@ -7,6 +7,7 @@ export type CreateSaleOfflineInput = {
   subtotal: number;
   tax: number;
   discount?: number;
+  discountType?: "PERCENTAGE" | "FLAT";
   total: number;
   customerId?: string;
   creditDueDate?: string;
@@ -36,6 +37,7 @@ export async function createSaleOffline(
     subtotal: input.subtotal,
     tax: input.tax,
     discount: input.discount ?? 0,
+    discountType: input.discountType,
     total: input.total,
     payments: input.payments,
     customerId: input.customerId,

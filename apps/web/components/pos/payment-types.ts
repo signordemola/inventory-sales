@@ -13,4 +13,5 @@ export type PaymentModalState = {
   syncedSaleId: string | null;
   amountTendered: string;
   changeDue: number;
+  reference: string;
 };

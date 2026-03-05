@@ -12,7 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Transaction } from "@/hooks/use-transactions";
 
 interface TransactionsTableProps {
@@ -43,13 +43,6 @@ function getPaymentIcon(method: string) {
 
 function getPaymentLabel(method: string) {
   return method.charAt(0) + method.slice(1).toLowerCase();
-}
-
-function formatCurrency(amount: number) {
-  return amount.toLocaleString("en-NG", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 }
 
 export const TransactionsTable = ({
@@ -210,17 +203,27 @@ export const TransactionsTable = ({
 
                     <td className="px-6 py-4 whitespace-nowrap">
                       {primaryPayment ? (
-                        <div
-                          className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border",
-                            primaryPayment.method === "CASH"
-                              ? "bg-slate-50 text-slate-600 border-slate-200"
-                              : "bg-indigo-50 text-indigo-700 border-indigo-200",
-                            isVoid && "opacity-50",
+                        <div className="flex flex-col gap-1">
+                          <div
+                            className={cn(
+                              "inline-flex w-fit items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border",
+                              primaryPayment.method === "CASH"
+                                ? "bg-slate-50 text-slate-600 border-slate-200"
+                                : "bg-indigo-50 text-indigo-700 border-indigo-200",
+                              isVoid && "opacity-50",
+                            )}
+                          >
+                            {getPaymentIcon(primaryPayment.method)}
+                            {getPaymentLabel(primaryPayment.method)}
+                          </div>
+                          {primaryPayment.reference && (
+                            <span
+                              className="text-[10px] text-slate-400 font-semibold tracking-wide truncate max-w-[150px]"
+                              title={primaryPayment.reference}
+                            >
+                              Ref: {primaryPayment.reference}
+                            </span>
                           )}
-                        >
-                          {getPaymentIcon(primaryPayment.method)}
-                          {getPaymentLabel(primaryPayment.method)}
                         </div>
                       ) : (
                         <span className="text-slate-400 text-xs">—</span>
@@ -236,7 +239,7 @@ export const TransactionsTable = ({
                             : "text-slate-900",
                         )}
                       >
-                        ₦{formatCurrency(txn.total)}
+                        {formatCurrency(txn.total)}
                       </span>
                     </td>
 
@@ -249,7 +252,7 @@ export const TransactionsTable = ({
                             : "text-slate-700",
                         )}
                       >
-                        ₦{formatCurrency(primaryPayment?.amount || 0)}
+                        {formatCurrency(primaryPayment?.amount || 0)}
                       </span>
                     </td>
 

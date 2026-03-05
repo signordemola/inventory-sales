@@ -52,6 +52,8 @@ type POSState = {
   isHistoryOpen: boolean;
   isClearCartOpen: boolean;
   isDrawerMovementOpen: boolean;
+  discount: number;
+  discountType: "PERCENTAGE" | "FLAT";
 };
 
 type POSAction =
@@ -72,6 +74,10 @@ type POSAction =
         openedAt: string | null;
         isLoading: boolean;
       };
+    }
+  | {
+      type: "SET_DISCOUNT";
+      payload: { amount: number; type: "PERCENTAGE" | "FLAT" };
     };
 
 const initialPOSState: POSState = {
@@ -83,12 +89,14 @@ const initialPOSState: POSState = {
   isHistoryOpen: false,
   isClearCartOpen: false,
   isDrawerMovementOpen: false,
+  discount: 0,
+  discountType: "FLAT",
 };
 
 function posReducer(state: POSState, action: POSAction): POSState {
   switch (action.type) {
     case "SET_CART_ITEMS":
-      return { ...state, cartItems: action.payload };
+      return { ...state, cartItems: action.payload, discount: 0 };
     case "ADD_TO_CART": {
       const existing = state.cartItems.find(
         (item) => item.product.id === action.payload.id,
@@ -149,6 +157,12 @@ function posReducer(state: POSState, action: POSAction): POSState {
         hasActiveShift: action.payload.hasActiveShift,
         shiftOpenedAt: action.payload.openedAt,
         isLoadingShift: action.payload.isLoading,
+      };
+    case "SET_DISCOUNT":
+      return {
+        ...state,
+        discount: action.payload.amount,
+        discountType: action.payload.type,
       };
     default:
       return state;
@@ -262,10 +276,17 @@ export default function POSScreen({ userRole }: POSScreenProps) {
       (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
       0,
     );
-    const vat = subtotal * vatRate;
-    const total = subtotal + vat;
-    return { subtotal, vat, total };
-  }, [state.cartItems, vatRate]);
+    let discountAmount = 0;
+    if (state.discountType === "PERCENTAGE") {
+      discountAmount = subtotal * (state.discount / 100);
+    } else {
+      discountAmount = state.discount;
+    }
+    const taxableAmount = Math.max(0, subtotal - discountAmount);
+    const vat = taxableAmount * vatRate;
+    const total = taxableAmount + vat;
+    return { subtotal, discountAmount, taxableAmount, vat, total };
+  }, [state.cartItems, vatRate, state.discount, state.discountType]);
 
   return (
     <NetworkStatusProvider>
@@ -287,6 +308,11 @@ export default function POSScreen({ userRole }: POSScreenProps) {
             onUpdateQuantity={handleUpdateQuantity}
             onClearCart={() =>
               dispatch({ type: "SET_CART_ITEMS", payload: [] })
+            }
+            discount={state.discount}
+            discountType={state.discountType}
+            onUpdateDiscount={(amount, type) =>
+              dispatch({ type: "SET_DISCOUNT", payload: { amount, type } })
             }
             onCheckout={() =>
               dispatch({
@@ -319,6 +345,8 @@ export default function POSScreen({ userRole }: POSScreenProps) {
           }
           items={state.cartItems}
           subtotal={totals.subtotal}
+          discount={totals.discountAmount}
+          discountType={state.discountType}
           vat={totals.vat}
           total={totals.total}
           onSuccess={handlePaymentSuccess}

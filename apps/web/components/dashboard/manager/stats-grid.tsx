@@ -4,17 +4,12 @@ import React from "react";
 import { StatCard } from "../stat-card";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/lib/utils";
 
 export function ManagerStatsGrid() {
   const { data: stats, isLoading } = useDashboardStats();
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  // using formatCurrency from @/lib/utils
 
   if (isLoading) {
     return (

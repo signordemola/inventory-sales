@@ -19,6 +19,8 @@ interface PaymentModalProps {
   onClose: () => void;
   items: CartItem[];
   subtotal: number;
+  discount: number;
+  discountType: "PERCENTAGE" | "FLAT";
   vat: number;
   total: number;
   onSuccess: () => void;
@@ -37,6 +39,7 @@ type PaymentModalAction =
     }
   | { type: "SET_SYNCED_ID"; payload: string }
   | { type: "SET_AMOUNT_TENDERED"; payload: string }
+  | { type: "SET_REFERENCE"; payload: string }
   | { type: "RESET" };
 
 const initialState: PaymentModalState = {
@@ -50,6 +53,7 @@ const initialState: PaymentModalState = {
   syncedSaleId: null,
   amountTendered: "",
   changeDue: 0,
+  reference: "",
 };
 
 function reducer(
@@ -78,6 +82,8 @@ function reducer(
       return { ...state, syncedSaleId: action.payload };
     case "SET_AMOUNT_TENDERED":
       return { ...state, amountTendered: action.payload };
+    case "SET_REFERENCE":
+      return { ...state, reference: action.payload };
     case "RESET":
       return initialState;
     default:
@@ -91,6 +97,8 @@ export const PaymentModal = ({
   items,
   total,
   subtotal,
+  discount,
+  discountType,
   vat,
   onSuccess,
   userRole,
@@ -158,11 +166,18 @@ export const PaymentModal = ({
         unitPrice: Number(item.product.sellingPrice),
         total: item.quantity * Number(item.product.sellingPrice),
       })),
-      payments: [{ method: state.selectedMethod, amount: total }],
+      payments: [
+        {
+          method: state.selectedMethod,
+          amount: total,
+          reference: state.reference || undefined,
+        },
+      ],
       subtotal,
       tax: vat,
       total,
-      discount: 0,
+      discount,
+      discountType,
       customerId: state.selectedCustomer?.id,
       creditDueDate: state.creditDueDate || undefined,
     };
@@ -283,6 +298,9 @@ export const PaymentModal = ({
               setStep={(s) => dispatch({ type: "SET_STEP", payload: s })}
               setAmountTendered={(a) =>
                 dispatch({ type: "SET_AMOUNT_TENDERED", payload: a })
+              }
+              setReference={(r) =>
+                dispatch({ type: "SET_REFERENCE", payload: r })
               }
               setCreditDueDate={(d) =>
                 dispatch({ type: "SET_CREDIT_DUE_DATE", payload: d })

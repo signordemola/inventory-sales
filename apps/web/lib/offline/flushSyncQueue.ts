@@ -140,6 +140,7 @@ export async function flushSyncQueue(): Promise<void> {
           })),
           payments: sale.payments,
           discount: sale.discount,
+          discountType: sale.discountType,
           tax: sale.tax,
           customerId: sale.customerId,
           creditDueDate: sale.creditDueDate,

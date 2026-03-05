@@ -3,6 +3,7 @@
 import React, { useReducer } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useStaff } from "@/hooks/use-staff";
+import { useSessionContext } from "@/lib/session-context";
 import { Download, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,13 @@ function filterReducer(
 }
 
 export function TransactionsPageView() {
-  const [state, dispatch] = useReducer(filterReducer, initialFilters);
+  const { user } = useSessionContext();
+  const isCashier = user?.role === "CASHIER";
+
+  const [state, dispatch] = useReducer(filterReducer, {
+    ...initialFilters,
+    cashierId: isCashier ? user.id : "",
+  });
 
   const { data, isLoading, isFetching } = useTransactions({
     page: state.page,
@@ -143,20 +150,22 @@ export function TransactionsPageView() {
           <option value="month">This Month</option>
         </select>
 
-        <select
-          className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 max-w-[180px] truncate"
-          value={state.cashierId}
-          onChange={(e) =>
-            dispatch({ type: "SET_CASHIER_ID", payload: e.target.value })
-          }
-        >
-          <option value="">Staff: All</option>
-          {staffData?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+        {!isCashier && (
+          <select
+            className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 max-w-[180px] truncate"
+            value={state.cashierId}
+            onChange={(e) =>
+              dispatch({ type: "SET_CASHIER_ID", payload: e.target.value })
+            }
+          >
+            <option value="">Staff: All</option>
+            {staffData?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         <select
           className="h-11 px-4 pr-8 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20"

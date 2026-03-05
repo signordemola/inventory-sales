@@ -44,6 +44,7 @@ export interface PendingSaleItem {
 export interface PendingPayment {
   method: PendingPaymentMethod;
   amount: number;
+  reference?: string;
 }
 
 export interface PendingSale {
@@ -53,6 +54,7 @@ export interface PendingSale {
   subtotal: number;
   tax: number;
   discount: number;
+  discountType?: "PERCENTAGE" | "FLAT";
   total: number;
   payments: PendingPayment[];
   customerId?: string;

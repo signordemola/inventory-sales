@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Package, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Product } from "@/hooks/use-products";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface ProductsTableProps {
   products: Product[];
@@ -30,14 +30,7 @@ export const ProductsTable = ({
 }: ProductsTableProps) => {
   const router = useRouter();
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value || 0);
-  };
+  // using formatCurrency from @/lib/utils
 
   return (
     <div className="relative">

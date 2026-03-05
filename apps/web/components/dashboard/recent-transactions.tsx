@@ -8,17 +8,12 @@ import { useRecentSales } from "@/hooks/use-recent-sales";
 import { formatDistanceToNow } from "date-fns";
 import { Sale } from "@/types/sales";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export function RecentTransactions() {
   const { data: transactions, isLoading, isError } = useRecentSales(5);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  // using formatCurrency from @/lib/utils
 
   const getStatusColor = (status: string) => {
     switch (status) {
