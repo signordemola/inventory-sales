@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Search, QrCode, WifiOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -20,20 +20,19 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<
     string | undefined
   >();
-  const [isOnline, setIsOnline] = useState(
-    typeof window !== "undefined" ? navigator.onLine : true,
-  );
 
-  useEffect(() => {
-    const up = () => setIsOnline(true);
-    const down = () => setIsOnline(false);
-    window.addEventListener("online", up);
-    window.addEventListener("offline", down);
-    return () => {
-      window.removeEventListener("online", up);
-      window.removeEventListener("offline", down);
-    };
-  }, []);
+  const isOnline = React.useSyncExternalStore(
+    React.useCallback((callback: () => void) => {
+      window.addEventListener("online", callback);
+      window.addEventListener("offline", callback);
+      return () => {
+        window.removeEventListener("online", callback);
+        window.removeEventListener("offline", callback);
+      };
+    }, []),
+    () => navigator.onLine,
+    () => true,
+  );
 
   // Reactive product query from IndexedDB — updates instantly, no network
   const products = useLiveQuery(async (): Promise<Product[]> => {
@@ -135,9 +134,9 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
               gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
             }}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
               <div
-                key={`prod-skel-${i}`}
+                key={`prod-skel-${n}`}
                 className="p-3 border rounded-xl bg-white space-y-3"
               >
                 <Skeleton className="aspect-square w-full rounded-lg" />

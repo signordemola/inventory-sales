@@ -1,5 +1,8 @@
 "use client";
 
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db";
+
 import React, {
   useCallback,
   useMemo,
@@ -14,6 +17,7 @@ import { OpenRegisterModal } from "@/components/pos/open-register-modal";
 import { SyncStatusBar } from "@/components/pos/sync-status-bar";
 import { SalesHistoryModal } from "@/components/pos/sales-history-modal";
 import { ShiftDurationWarning } from "@/components/pos/shift-duration-warning";
+import { OfflineBanner } from "@/components/pos/offline-banner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +34,9 @@ import { UserRoleType } from "@/types";
 import { toast } from "sonner";
 import { seedOfflineData } from "@/lib/offline/seed";
 import { flushSyncQueue } from "@/lib/offline/flushSyncQueue";
+import { cacheShift, getActiveShiftLocal } from "@/lib/offline/shifts";
 import { DrawerMovementModal } from "@/components/shifts/drawer-movement-modal";
+import { NetworkStatusProvider } from "@/hooks/use-network-status";
 
 interface POSScreenProps {
   userRole: UserRoleType;
@@ -164,6 +170,12 @@ export default function POSScreen({ userRole }: POSScreenProps) {
         try {
           const response = await apiClient.get("/shifts/current");
           const shift = response.data;
+
+          // Cache the shift locally for offline fallback
+          if (shift) {
+            await cacheShift(shift);
+          }
+
           dispatch({
             type: "SET_SHIFT_STATUS",
             payload: {
@@ -173,11 +185,14 @@ export default function POSScreen({ userRole }: POSScreenProps) {
             },
           });
         } catch {
+          // Whether the browser says we're offline or the API throws a 5xx/network error,
+          // ALWAYS fall back to the locally cached shift so the cashier can keep working.
+          const cachedShift = await getActiveShiftLocal();
           dispatch({
             type: "SET_SHIFT_STATUS",
             payload: {
-              hasActiveShift: false,
-              openedAt: null,
+              hasActiveShift: !!cachedShift,
+              openedAt: cachedShift?.openedAt || null,
               isLoading: false,
             },
           });
@@ -238,154 +253,163 @@ export default function POSScreen({ userRole }: POSScreenProps) {
     toast.success("Transaction recorded");
   }, []);
 
+  const settings =
+    useLiveQuery(() => db.businessSettings.get("settings"), []) ?? null;
+  const vatRate = settings ? settings.taxRate / 100 : 0;
+
   const totals = useMemo(() => {
     const subtotal = state.cartItems.reduce(
       (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
       0,
     );
-    const vatRate = 0.075;
     const vat = subtotal * vatRate;
     const total = subtotal + vat;
     return { subtotal, vat, total };
-  }, [state.cartItems]);
+  }, [state.cartItems, vatRate]);
 
   return (
-    <div
-      className="flex flex-col overflow-hidden bg-white"
-      style={{ height: "calc(100dvh - 64px)" }}
-    >
-      {state.shiftOpenedAt && (
-        <ShiftDurationWarning shiftOpenedAt={state.shiftOpenedAt} />
-      )}
-
-      <div className="flex flex-1 min-h-0 min-w-0">
-        <ProductBrowser onSelectProduct={handleSelectProduct} />
-
-        <CartPanel
-          items={state.cartItems}
-          onUpdateQuantity={handleUpdateQuantity}
-          onClearCart={() => dispatch({ type: "SET_CART_ITEMS", payload: [] })}
-          onCheckout={() =>
-            dispatch({
-              type: "SET_MODAL_OPEN",
-              payload: { modal: "payment", isOpen: true },
-            })
-          }
-          onOpenDrawer={() =>
-            dispatch({
-              type: "SET_MODAL_OPEN",
-              payload: { modal: "drawerMovement", isOpen: true },
-            })
-          }
-          onOpenHistory={() =>
-            dispatch({
-              type: "SET_MODAL_OPEN",
-              payload: { modal: "history", isOpen: true },
-            })
-          }
-        />
-      </div>
-
-      <PaymentModal
-        isOpen={state.isPaymentModalOpen}
-        onClose={() =>
-          dispatch({
-            type: "SET_MODAL_OPEN",
-            payload: { modal: "payment", isOpen: false },
-          })
-        }
-        items={state.cartItems}
-        subtotal={totals.subtotal}
-        vat={totals.vat}
-        total={totals.total}
-        onSuccess={handlePaymentSuccess}
-        userRole={userRole}
-      />
-
-      <SyncStatusBar />
-
-      <DrawerMovementModal
-        isOpen={state.isDrawerMovementOpen}
-        onClose={() =>
-          dispatch({
-            type: "SET_MODAL_OPEN",
-            payload: { modal: "drawerMovement", isOpen: false },
-          })
-        }
-        onSuccess={() => {}}
-      />
-
-      <SalesHistoryModal
-        isOpen={state.isHistoryOpen}
-        onClose={() =>
-          dispatch({
-            type: "SET_MODAL_OPEN",
-            payload: { modal: "history", isOpen: false },
-          })
-        }
-      />
-
-      <AlertDialog
-        open={state.isClearCartOpen}
-        onOpenChange={(isOpen) =>
-          dispatch({
-            type: "SET_MODAL_OPEN",
-            payload: { modal: "clearCart", isOpen },
-          })
-        }
+    <NetworkStatusProvider>
+      <div
+        className="flex flex-col overflow-hidden bg-white"
+        style={{ height: "calc(100dvh - 64px)" }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear cart?</AlertDialogTitle>
-            <AlertDialogDescription>
-              All {state.cartItems.length} item
-              {state.cartItems.length !== 1 ? "s" : ""} will be removed from the
-              cart.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() =>
-                dispatch({
-                  type: "SET_MODAL_OPEN",
-                  payload: { modal: "clearCart", isOpen: false },
-                })
-              }
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600 text-white"
-              onClick={() => {
-                dispatch({ type: "SET_CART_ITEMS", payload: [] });
-                dispatch({
-                  type: "SET_MODAL_OPEN",
-                  payload: { modal: "clearCart", isOpen: false },
-                });
-                toast("Cart cleared");
-              }}
-            >
-              Clear Cart
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <OfflineBanner />
 
-      {!state.isLoadingShift && (
-        <OpenRegisterModal
-          isOpen={!state.hasActiveShift}
-          onSuccess={() =>
+        {state.shiftOpenedAt && (
+          <ShiftDurationWarning shiftOpenedAt={state.shiftOpenedAt} />
+        )}
+
+        <div className="flex flex-1 min-h-0 min-w-0">
+          <ProductBrowser onSelectProduct={handleSelectProduct} />
+
+          <CartPanel
+            items={state.cartItems}
+            onUpdateQuantity={handleUpdateQuantity}
+            onClearCart={() =>
+              dispatch({ type: "SET_CART_ITEMS", payload: [] })
+            }
+            onCheckout={() =>
+              dispatch({
+                type: "SET_MODAL_OPEN",
+                payload: { modal: "payment", isOpen: true },
+              })
+            }
+            onOpenDrawer={() =>
+              dispatch({
+                type: "SET_MODAL_OPEN",
+                payload: { modal: "drawerMovement", isOpen: true },
+              })
+            }
+            onOpenHistory={() =>
+              dispatch({
+                type: "SET_MODAL_OPEN",
+                payload: { modal: "history", isOpen: true },
+              })
+            }
+          />
+        </div>
+
+        <PaymentModal
+          isOpen={state.isPaymentModalOpen}
+          onClose={() =>
             dispatch({
-              type: "SET_SHIFT_STATUS",
-              payload: {
-                hasActiveShift: true,
-                openedAt: state.shiftOpenedAt,
-                isLoading: false,
-              },
+              type: "SET_MODAL_OPEN",
+              payload: { modal: "payment", isOpen: false },
+            })
+          }
+          items={state.cartItems}
+          subtotal={totals.subtotal}
+          vat={totals.vat}
+          total={totals.total}
+          onSuccess={handlePaymentSuccess}
+          userRole={userRole}
+        />
+
+        <SyncStatusBar />
+
+        <DrawerMovementModal
+          isOpen={state.isDrawerMovementOpen}
+          onClose={() =>
+            dispatch({
+              type: "SET_MODAL_OPEN",
+              payload: { modal: "drawerMovement", isOpen: false },
+            })
+          }
+          onSuccess={() => {}}
+        />
+
+        <SalesHistoryModal
+          isOpen={state.isHistoryOpen}
+          onClose={() =>
+            dispatch({
+              type: "SET_MODAL_OPEN",
+              payload: { modal: "history", isOpen: false },
             })
           }
         />
-      )}
-    </div>
+
+        <AlertDialog
+          open={state.isClearCartOpen}
+          onOpenChange={(isOpen) =>
+            dispatch({
+              type: "SET_MODAL_OPEN",
+              payload: { modal: "clearCart", isOpen },
+            })
+          }
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear cart?</AlertDialogTitle>
+              <AlertDialogDescription>
+                All {state.cartItems.length} item
+                {state.cartItems.length !== 1 ? "s" : ""} will be removed from
+                the cart.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() =>
+                  dispatch({
+                    type: "SET_MODAL_OPEN",
+                    payload: { modal: "clearCart", isOpen: false },
+                  })
+                }
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-500 hover:bg-red-600 text-white"
+                onClick={() => {
+                  dispatch({ type: "SET_CART_ITEMS", payload: [] });
+                  dispatch({
+                    type: "SET_MODAL_OPEN",
+                    payload: { modal: "clearCart", isOpen: false },
+                  });
+                  toast("Cart cleared");
+                }}
+              >
+                Clear Cart
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {!state.isLoadingShift && (
+          <OpenRegisterModal
+            isOpen={!state.hasActiveShift}
+            onSuccess={() =>
+              dispatch({
+                type: "SET_SHIFT_STATUS",
+                payload: {
+                  hasActiveShift: true,
+                  openedAt: state.shiftOpenedAt,
+                  isLoading: false,
+                },
+              })
+            }
+          />
+        )}
+      </div>
+    </NetworkStatusProvider>
   );
 }

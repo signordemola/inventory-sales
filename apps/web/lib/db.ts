@@ -66,6 +66,25 @@ export interface PendingSale {
   createdAt: number;
 }
 
+// ─── Shift Types ──────────────────────────────────────────────────────────────
+
+export interface LocalShift {
+  id: string; // server ID or local CUID
+  status: "OPEN" | "CLOSED";
+  openedAt: string; // ISO timestamp
+  startingCash: number;
+  syncStatus: "SYNCED" | "PENDING" | "FAILED";
+  syncError?: string;
+  lastSyncedAt: number;
+}
+
+// ─── Business Settings ─────────────────────────────────────────────────────────
+
+export interface LocalBusinessSettings {
+  id: string; // "settings"
+  taxRate: number;
+}
+
 // ─── Database ─────────────────────────────────────────────────────────────────
 
 class NaijaStockDB extends Dexie {
@@ -75,6 +94,8 @@ class NaijaStockDB extends Dexie {
   customers!: Table<LocalCustomer, string>;
   pendingSales!: Table<PendingSale, number>;
   seedMeta!: Table<LocalSeedMeta, string>;
+  activeShift!: Table<LocalShift, string>;
+  businessSettings!: Table<LocalBusinessSettings, string>;
 
   constructor() {
     super("NaijaStockDB");
@@ -85,6 +106,27 @@ class NaijaStockDB extends Dexie {
       customers: "&id, name, phone",
       pendingSales: "++localId, &cuid, syncStatus, createdAt",
       seedMeta: "&key",
+    });
+
+    this.version(3).stores({
+      products: "&id, name, sku, barcode, categoryId",
+      categories: "&id",
+      stockLevels: "&productId",
+      customers: "&id, name, phone",
+      pendingSales: "++localId, &cuid, syncStatus, createdAt",
+      seedMeta: "&key",
+      activeShift: "&id, status, syncStatus",
+    });
+
+    this.version(4).stores({
+      products: "&id, name, sku, barcode, categoryId",
+      categories: "&id",
+      stockLevels: "&productId",
+      customers: "&id, name, phone",
+      pendingSales: "++localId, &cuid, syncStatus, createdAt",
+      seedMeta: "&key",
+      activeShift: "&id, status, syncStatus",
+      businessSettings: "&id",
     });
   }
 }

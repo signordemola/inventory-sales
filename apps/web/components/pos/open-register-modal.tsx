@@ -23,6 +23,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Calculator } from "lucide-react";
 import apiClient from "@/lib/axios";
+import { cacheShift, openShiftOffline } from "@/lib/offline/shifts";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
@@ -49,10 +50,18 @@ export function OpenRegisterModal({
     setError("");
     startTransition(async () => {
       try {
-        await apiClient.post("/shifts/open", {
-          startingCash: values.startingCash,
-        });
-        toast.success("Register opened successfully!");
+        if (navigator.onLine) {
+          // Online: open shift on server and cache locally
+          const response = await apiClient.post("/shifts/open", {
+            startingCash: values.startingCash,
+          });
+          await cacheShift(response.data);
+          toast.success("Register opened successfully!");
+        } else {
+          // Offline: create a local shift, will sync when back online
+          await openShiftOffline(values.startingCash);
+          toast.success("Register opened offline — will sync when back online");
+        }
         onSuccess();
       } catch (err) {
         const e = err as AxiosError<{ message: string }>;

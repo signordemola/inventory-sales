@@ -11,6 +11,7 @@ import {
   Receipt,
   CheckCircle,
   Timer,
+  WifiOff,
 } from "lucide-react";
 import {
   Card,
@@ -144,6 +145,19 @@ export const CashierShiftDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
+  const isOnline = React.useSyncExternalStore(
+    React.useCallback((callback: () => void) => {
+      window.addEventListener("online", callback);
+      window.addEventListener("offline", callback);
+      return () => {
+        window.removeEventListener("online", callback);
+        window.removeEventListener("offline", callback);
+      };
+    }, []),
+    () => navigator.onLine,
+    () => true,
+  );
+
   const fetchData = useCallback(async () => {
     try {
       const [metricsRes, historyRes] = await Promise.all([
@@ -161,13 +175,29 @@ export const CashierShiftDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (!isOnline) {
+      setIsLoading(false);
+      return;
+    }
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, isOnline]);
 
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!isOnline) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3 text-center">
+        <WifiOff className="h-10 w-10 text-muted-foreground" />
+        <p className="font-semibold text-muted-foreground">You're offline</p>
+        <p className="text-sm text-muted-foreground">
+          Shift metrics are not available without a connection.
+        </p>
       </div>
     );
   }

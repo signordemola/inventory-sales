@@ -1,12 +1,7 @@
 "use client";
 
 import { useReducer } from "react";
-import {
-  X,
-  Lock,
-  ArrowRight,
-  ChevronLeft,
-} from "lucide-react";
+import { X, Lock, ArrowRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CartItem } from "./cart-panel";
@@ -179,36 +174,32 @@ export const PaymentModal = ({
         payload: { localRef: localReference, changeDue: change },
       });
 
-      const syncAndGetDb = async () => {
-        const [{ flushSyncQueue }, { db }] = await Promise.all([
-          import("@/lib/offline/flushSyncQueue"),
-          import("@/lib/db"),
-        ]);
-        await flushSyncQueue();
-        return db;
-      };
+      // Try to sync immediately, but silently swallow errors —
+      // the SyncStatusBar + flushSyncQueue will retry later.
+      try {
+        if (navigator.onLine) {
+          const [{ flushSyncQueue }, { db }] = await Promise.all([
+            import("@/lib/offline/flushSyncQueue"),
+            import("@/lib/db"),
+          ]);
+          await flushSyncQueue();
 
-      if (navigator.onLine) {
-        const db = await syncAndGetDb();
+          const synced = await db.pendingSales
+            .filter((s) => s.localReference === localReference)
+            .first();
 
-        const synced = await db.pendingSales
-          .filter((s) => s.localReference === localReference)
-          .first();
+          if (synced?.serverId) {
+            dispatch({ type: "SET_SYNCED_ID", payload: synced.serverId });
 
-        if (synced?.serverId) {
-          dispatch({ type: "SET_SYNCED_ID", payload: synced.serverId });
-
-          import("@/lib/axios").then(({ default: apiClient }) => {
-            apiClient
-              .post(`/sales/${synced.serverId}/receipt/store`)
-              .catch((err: unknown) => {
-                console.error(
-                  "Failed to automatically store receipt to Cloudinary:",
-                  err,
-                );
-              });
-          });
+            import("@/lib/axios").then(({ default: apiClient }) => {
+              apiClient
+                .post(`/sales/${synced.serverId}/receipt/store`)
+                .catch(() => {}); // Silent — receipt can be generated later
+            });
+          }
         }
+      } catch {
+        // Sync will be retried automatically when back online
       }
 
       queryClient.invalidateQueries({ queryKey: ["transactions"] });

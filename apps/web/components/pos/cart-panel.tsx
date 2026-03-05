@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db";
 import {
   Trash2,
   UserPlus,
@@ -70,7 +72,10 @@ export const CartPanel = ({
     (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
     0,
   );
-  const vatRate = 0.075;
+  const settings =
+    useLiveQuery(() => db.businessSettings.get("settings"), []) ?? null;
+  const taxRatePercent = settings?.taxRate ?? 0;
+  const vatRate = taxRatePercent / 100;
   const vat = subtotal * vatRate;
   const total = subtotal + vat;
 
@@ -233,7 +238,7 @@ export const CartPanel = ({
             <span className="font-medium">₦{subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm text-slate-500">
-            <span>VAT (7.5%)</span>
+            <span>VAT ({taxRatePercent}%)</span>
             <span className="font-medium">₦{vat.toFixed(2)}</span>
           </div>
           <Separator className="my-2 bg-slate-100 dark:bg-slate-800" />

@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircle2, Download } from "lucide-react";
+import { CheckCircle2, Download, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PaymentModalState } from "./payment-types";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 
 export function PaymentSuccessView({
   state,
@@ -14,6 +15,8 @@ export function PaymentSuccessView({
   onReset: () => void;
   onDownloadReceipt: () => void;
 }) {
+  const { isOnline } = useNetworkStatus();
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300">
       <Card className="w-full max-w-md p-10 flex flex-col items-center text-center space-y-4 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
@@ -56,13 +59,16 @@ export function PaymentSuccessView({
           </div>
         )}
 
-        <p className="text-xs text-slate-400 italic">
-          {typeof window !== "undefined" && navigator.onLine
-            ? state.syncedSaleId
-              ? "Synced to server ✓"
-              : "Syncing to server..."
-            : "Will sync when back online."}
-        </p>
+        {isOnline ? (
+          <p className="text-xs text-slate-400 italic">
+            {state.syncedSaleId ? "Synced to server ✓" : "Syncing to server..."}
+          </p>
+        ) : (
+          <div className="flex items-center gap-1.5 text-xs text-orange-500 font-semibold">
+            <WifiOff className="w-3.5 h-3.5" />
+            <span>Saved offline — will sync when back online</span>
+          </div>
+        )}
 
         <div className="w-full space-y-2 pt-2">
           {state.syncedSaleId && (

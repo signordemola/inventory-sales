@@ -14,22 +14,24 @@ export async function seedOfflineData(): Promise<void> {
   console.log("[NaijaStock] Seeding offline data...");
 
   try {
-    const [productsRes, categoriesRes, customersRes] = await Promise.all([
-      apiClient.get<{ items: Product[] }>("/products", {
-        params: { limit: 5000, isActive: true },
-      }),
-      apiClient.get<Category[]>("/categories"),
-      apiClient.get<
-        Array<{
-          id: string;
-          name: string;
-          phone?: string;
-          email?: string;
-          businessId: string;
-          creditSales?: Array<{ balance: number }>;
-        }>
-      >("/customers"),
-    ]);
+    const [productsRes, categoriesRes, customersRes, businessRes] =
+      await Promise.all([
+        apiClient.get<{ items: Product[] }>("/products", {
+          params: { limit: 5000, isActive: true },
+        }),
+        apiClient.get<Category[]>("/categories"),
+        apiClient.get<
+          Array<{
+            id: string;
+            name: string;
+            phone?: string;
+            email?: string;
+            businessId: string;
+            creditSales?: Array<{ balance: number }>;
+          }>
+        >("/customers"),
+        apiClient.get<{ taxRate?: number }>("/business/me"),
+      ]);
 
     const products = productsRes.data.items ?? [];
     const categories = categoriesRes.data ?? [];
@@ -61,6 +63,14 @@ export async function seedOfflineData(): Promise<void> {
         lastSyncedAt: now,
       })),
     );
+
+    if (businessRes.data) {
+      await db.businessSettings.put({
+        id: "settings",
+        taxRate: Number(businessRes.data.taxRate ?? 0),
+      });
+    }
+
     await db.seedMeta.put({ key: "lastSeededAt", value: now });
 
     console.log(
