@@ -9,6 +9,7 @@ import {
   Settings,
   HelpCircle,
   Truck,
+  Clock,
 } from "lucide-react";
 
 export const UserRole = {
@@ -74,6 +75,12 @@ export const menuItems: MenuItem[] = [
     icon: ShieldCheck,
     label: "Staff / Access",
     roles: ["OWNER"],
+  },
+  {
+    href: "/shifts",
+    icon: Clock,
+    label: "Shifts",
+    roles: ["OWNER", "MANAGER"],
   },
 ];
 
