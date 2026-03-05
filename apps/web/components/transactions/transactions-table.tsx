@@ -10,10 +10,21 @@ import {
   SmartphoneNfc,
   ChevronLeft,
   ChevronRight,
+  MoreHorizontal,
+  Download,
+  Ban,
+  RefreshCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Transaction } from "@/hooks/use-transactions";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -128,7 +139,10 @@ export const TransactionsTable = ({
               transactions.map((txn) => {
                 const date = new Date(txn.createdAt);
                 const isVoid = txn.status === "VOID";
-                const primaryPayment = txn.payments[0];
+                const amountPaid = txn.payments.reduce(
+                  (sum, p) => sum + Number(p.amount),
+                  0,
+                );
 
                 const initials = txn.cashier?.name
                   ? txn.cashier.name
@@ -208,28 +222,37 @@ export const TransactionsTable = ({
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {primaryPayment ? (
+                      {txn.payments.length > 0 ? (
                         <div className="flex flex-col gap-1">
-                          <div
-                            className={cn(
-                              "inline-flex w-fit items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border",
-                              primaryPayment.method === "CASH"
-                                ? "bg-slate-50 text-slate-600 border-slate-200"
-                                : "bg-indigo-50 text-indigo-700 border-indigo-200",
-                              isVoid && "opacity-50",
-                            )}
-                          >
-                            {getPaymentIcon(primaryPayment.method)}
-                            {getPaymentLabel(primaryPayment.method)}
-                          </div>
-                          {primaryPayment.reference && (
-                            <span
-                              className="text-[10px] text-slate-400 font-semibold tracking-wide truncate max-w-[150px]"
-                              title={primaryPayment.reference}
-                            >
-                              Ref: {primaryPayment.reference}
-                            </span>
-                          )}
+                          {txn.payments.map((pmt, idx) => (
+                            <div key={idx} className="flex flex-col gap-0.5">
+                              <div
+                                className={cn(
+                                  "inline-flex w-fit items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border",
+                                  pmt.method === "CASH"
+                                    ? "bg-slate-50 text-slate-600 border-slate-200"
+                                    : "bg-indigo-50 text-indigo-700 border-indigo-200",
+                                  isVoid && "opacity-50",
+                                )}
+                              >
+                                {getPaymentIcon(pmt.method)}
+                                {getPaymentLabel(pmt.method)}
+                                {txn.payments.length > 1 && (
+                                  <span className="text-[10px] opacity-70 ml-0.5">
+                                    {formatCurrency(pmt.amount)}
+                                  </span>
+                                )}
+                              </div>
+                              {pmt.reference && (
+                                <span
+                                  className="text-[10px] text-slate-400 font-semibold tracking-wide truncate max-w-[150px]"
+                                  title={pmt.reference}
+                                >
+                                  Ref: {pmt.reference}
+                                </span>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <span className="text-slate-400 text-xs">—</span>
@@ -258,7 +281,7 @@ export const TransactionsTable = ({
                             : "text-slate-700",
                         )}
                       >
-                        {formatCurrency(primaryPayment?.amount || 0)}
+                        {formatCurrency(amountPaid)}
                       </span>
                     </td>
 
@@ -288,49 +311,72 @@ export const TransactionsTable = ({
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => onDownloadReceipt(txn.id)}
-                          className="text-[13px] font-bold text-primary hover:text-primary-hover flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md transition-colors"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          side="bottom"
+                          className="w-48"
                         >
-                          <ReceiptText className="w-3.5 h-3.5" />
-                          Receipt
-                        </button>
-                        {!isCashier && (
-                          <>
-                            {isVoid ? (
-                              <button className="text-[13px] font-bold text-slate-400 cursor-not-allowed">
-                                Voided
-                              </button>
-                            ) : txn.status === "COMPLETED" ? (
-                              <button
-                                onClick={() => onVoidClick(txn)}
-                                className="text-[13px] font-bold text-red-600 hover:underline"
-                              >
-                                Void Sale
-                              </button>
-                            ) : txn.status === "PARTIALLY_RETURNED" ? (
-                              <button
-                                onClick={() => onReturnClick(txn)}
-                                className="text-[13px] font-bold text-amber-600 hover:underline"
-                              >
-                                Return More
-                              </button>
-                            ) : txn.status === "RETURNED" ? (
-                              <button className="text-[13px] font-bold text-slate-400 cursor-not-allowed">
-                                Fully Returned
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => onReturnClick(txn)}
-                                className="text-[13px] font-bold text-red-600 hover:underline"
-                              >
-                                Process Return
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                          <DropdownMenuItem
+                            onClick={() => onDownloadReceipt(txn.id)}
+                            className="cursor-pointer gap-2"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download Receipt
+                          </DropdownMenuItem>
+
+                          {!isCashier && (
+                            <>
+                              <DropdownMenuSeparator />
+                              {isVoid ? (
+                                <DropdownMenuItem
+                                  disabled
+                                  className="gap-2 opacity-40"
+                                >
+                                  <Ban className="w-4 h-4" />
+                                  Voided
+                                </DropdownMenuItem>
+                              ) : txn.status === "COMPLETED" ? (
+                                <DropdownMenuItem
+                                  onClick={() => onVoidClick(txn)}
+                                  variant="destructive"
+                                  className="cursor-pointer gap-2"
+                                >
+                                  <Ban className="w-4 h-4" />
+                                  Void Sale
+                                </DropdownMenuItem>
+                              ) : txn.status === "PARTIALLY_RETURNED" ? (
+                                <DropdownMenuItem
+                                  onClick={() => onReturnClick(txn)}
+                                  className="cursor-pointer gap-2 text-amber-600"
+                                >
+                                  <RefreshCcw className="w-4 h-4" />
+                                  Return More
+                                </DropdownMenuItem>
+                              ) : txn.status === "RETURNED" ? (
+                                <DropdownMenuItem
+                                  disabled
+                                  className="gap-2 opacity-40"
+                                >
+                                  <RefreshCcw className="w-4 h-4" />
+                                  Fully Returned
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() => onReturnClick(txn)}
+                                  className="cursor-pointer gap-2"
+                                >
+                                  <RefreshCcw className="w-4 h-4" />
+                                  Process Return
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );

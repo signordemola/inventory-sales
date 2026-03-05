@@ -1,9 +1,17 @@
 import { LocalCustomer, PendingPaymentMethod } from "@/lib/db";
 
-export type Step = "method" | "customer" | "confirm";
+export type Step = "payment" | "customer" | "confirm";
+
+/** A single row in a split-payment breakdown */
+export interface SplitPaymentRow {
+  id: string;
+  method: PendingPaymentMethod;
+  amount: string; // string so empty input works naturally
+  reference: string;
+}
 
 export type PaymentModalState = {
-  selectedMethod: PendingPaymentMethod;
+  payments: SplitPaymentRow[];
   step: Step;
   selectedCustomer: LocalCustomer | null;
   creditDueDate: string;
@@ -11,7 +19,5 @@ export type PaymentModalState = {
   isSuccess: boolean;
   localRef: string | null;
   syncedSaleId: string | null;
-  amountTendered: string;
   changeDue: number;
-  reference: string;
 };

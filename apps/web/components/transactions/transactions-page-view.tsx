@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useReducer, useState } from "react";
+import React, { useReducer, useState, useCallback } from "react";
 import { useTransactions, Transaction } from "@/hooks/use-transactions";
 import { useStaff } from "@/hooks/use-staff";
 import { useSessionContext } from "@/lib/session-context";
@@ -85,6 +85,89 @@ export function TransactionsPageView() {
 
   const { data: staffData } = useStaff();
 
+  // ─── Export CSV ────────────────────────────────────────────────────────────
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportCSV = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      const cleanFilters = Object.fromEntries(
+        Object.entries({
+          search: state.search.length >= 3 ? state.search : undefined,
+          status: state.status,
+          paymentMethod: state.paymentMethod,
+          cashierId: state.cashierId,
+        }).filter(([, v]) => v != null && v !== ""),
+      );
+
+      const { data: res } = await apiClient.get<{
+        items: Transaction[];
+        meta: { total: number };
+      }>("/sales", { params: { page: 1, limit: 10000, ...cleanFilters } });
+
+      const rows = res.items;
+      if (!rows.length) {
+        toast.info("No transactions to export.");
+        return;
+      }
+
+      const headers = [
+        "Reference",
+        "Date",
+        "Status",
+        "Payment Method",
+        "Subtotal (₦)",
+        "Discount (₦)",
+        "Total (₦)",
+        "Cashier",
+        "Customer",
+      ];
+
+      const escape = (v: string | number | null | undefined) => {
+        const s = String(v ?? "");
+        return s.includes(",") || s.includes('"') || s.includes("\n")
+          ? `"${s.replace(/"/g, '""')}"`
+          : s;
+      };
+
+      const csvLines = [
+        headers.join(","),
+        ...rows.map((t) =>
+          [
+            escape(t.reference),
+            escape(new Date(t.createdAt).toLocaleString("en-NG")),
+            escape(t.status),
+            escape(t.payments.map((p) => p.method).join(" + ")),
+            escape(Number(t.subtotal).toFixed(2)),
+            escape(Number(t.discount).toFixed(2)),
+            escape(Number(t.total).toFixed(2)),
+            escape(t.cashier?.name ?? "—"),
+            escape(t.customer?.name ?? "Walk-in"),
+          ].join(","),
+        ),
+      ];
+
+      const blob = new Blob([csvLines.join("\n")], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const today = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `transactions-${today}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast.success(
+        `Exported ${rows.length} transaction${rows.length !== 1 ? "s" : ""}.`,
+      );
+    } catch {
+      toast.error("Failed to export transactions.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [state.search, state.status, state.paymentMethod, state.cashierId]);
+
   const handleDownloadReceipt = async (id: string) => {
     try {
       const loadingToastId = toast.loading("Generating receipt...");
@@ -113,9 +196,14 @@ export function TransactionsPageView() {
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            className="h-11 px-5 rounded-xl font-bold bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50"
+            className="h-11 px-5 rounded-xl font-bold bg-white text-slate-700 border-slate-200 shadow-sm hover:bg-slate-50 disabled:opacity-60"
+            onClick={handleExportCSV}
+            disabled={isExporting}
           >
-            <Download className="w-4 h-4 mr-2 text-slate-400" /> Export CSV
+            <Download
+              className={`w-4 h-4 mr-2 text-slate-400 ${isExporting ? "animate-bounce" : ""}`}
+            />
+            {isExporting ? "Exporting…" : "Export CSV"}
           </Button>
           <Button className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all active:scale-95">
             + New Sale
