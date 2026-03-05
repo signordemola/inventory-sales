@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer } from "react";
+import { useReducer, useEffect } from "react";
 import { X, Lock, ArrowRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PaymentModalState, Step } from "./payment-types";
 import { PaymentSuccessView } from "./payment-success-view";
 import { PaymentMethodSelector } from "./payment-method-selector";
+import { Customer } from "@/hooks/use-customers";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface PaymentModalProps {
   total: number;
   onSuccess: () => void;
   userRole?: string;
+  preSelectedCustomer?: Customer | null;
 }
 
 type PaymentModalAction =
@@ -102,9 +104,32 @@ export const PaymentModal = ({
   vat,
   onSuccess,
   userRole,
+  preSelectedCustomer,
 }: PaymentModalProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const queryClient = useQueryClient();
+
+  // Sync pre-selected customer when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (preSelectedCustomer) {
+        dispatch({
+          type: "SET_CUSTOMER",
+          payload: {
+            id: preSelectedCustomer.id,
+            name: preSelectedCustomer.name,
+            phone: preSelectedCustomer.phone || undefined,
+            email: preSelectedCustomer.email || undefined,
+            businessId: preSelectedCustomer.businessId,
+            creditBalance: 0,
+            lastSyncedAt: Date.now(),
+          },
+        });
+      } else {
+        dispatch({ type: "SET_CUSTOMER", payload: null });
+      }
+    }
+  }, [isOpen, preSelectedCustomer]);
 
   const handleReset = () => {
     dispatch({ type: "RESET" });

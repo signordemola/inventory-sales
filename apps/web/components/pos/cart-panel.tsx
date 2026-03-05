@@ -5,8 +5,6 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import {
   Trash2,
-  UserPlus,
-  ChevronRight,
   ArrowRight,
   Minus,
   Plus,
@@ -32,6 +30,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { CustomerSelector } from "@/components/pos/customer-selector";
+import { Customer } from "@/hooks/use-customers";
 
 export interface CartItem {
   product: Product;
@@ -48,6 +48,8 @@ interface CartPanelProps {
   onCheckout: () => void;
   onOpenDrawer: () => void;
   onOpenHistory: () => void;
+  selectedCustomer: Customer | null;
+  onSelectCustomer: (customer: Customer | null) => void;
 }
 
 // Generate a stable order reference based on current date
@@ -73,6 +75,8 @@ export const CartPanel = ({
   onCheckout,
   onOpenDrawer,
   onOpenHistory,
+  selectedCustomer,
+  onSelectCustomer,
 }: CartPanelProps) => {
   const subtotal = items.reduce(
     (sum, item) => sum + Number(item.product.sellingPrice) * item.quantity,
@@ -321,25 +325,10 @@ export const CartPanel = ({
         </div>
 
         {/* Customer Selector */}
-        <Button
-          variant="outline"
-          className="w-full flex justify-between h-12 px-4 rounded-xl border-slate-200 hover:bg-slate-50 group transition-all mb-3"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-500 flex items-center justify-center">
-              <UserPlus className="w-4 h-4" />
-            </div>
-            <div className="text-left">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                Customer (Optional)
-              </p>
-              <p className="text-sm font-semibold text-slate-700 dark:text-white">
-                Walk-in Customer
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
-        </Button>
+        <CustomerSelector
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={onSelectCustomer}
+        />
 
         {/* Checkout */}
         <Button

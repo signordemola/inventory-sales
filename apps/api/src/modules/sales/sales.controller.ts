@@ -72,6 +72,14 @@ export class SalesController {
     return this.salesService.returnSale(id, businessId, dto, userId);
   }
 
+  @Post(':id/void')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async voidSale(@Param('id') id: string, @Req() req: Request) {
+    const businessId = req.user?.businessId!;
+    const userId = req.user?.id!;
+    return this.salesService.voidSale(id, businessId, userId);
+  }
+
   @Post(':id/credit/repay')
   async recordCreditRepayment(
     @Param('id') creditSaleId: string,

@@ -194,7 +194,9 @@ export const CashierShiftDashboard = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-center">
         <WifiOff className="h-10 w-10 text-muted-foreground" />
-        <p className="font-semibold text-muted-foreground">You're offline</p>
+        <p className="font-semibold text-muted-foreground">
+          You&apos;re offline
+        </p>
         <p className="text-sm text-muted-foreground">
           Shift metrics are not available without a connection.
         </p>

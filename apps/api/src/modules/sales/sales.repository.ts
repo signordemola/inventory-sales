@@ -250,6 +250,84 @@ export class SalesRepository {
     });
   }
 
+  async processVoid(saleId: string, userId: string): Promise<Sale> {
+    return this.prisma.$transaction(async (tx) => {
+      // Get the sale with items and payments
+      const sale = await tx.sale.findUnique({
+        where: { id: saleId },
+        include: {
+          items: true,
+          payments: true,
+        },
+      });
+
+      if (!sale) throw new Error('Sale not found');
+
+      let totalRefundValue = 0;
+
+      // Restock all items and log movements
+      for (const item of sale.items) {
+        // Skip items that have already been fully returned
+        const remainingQuantity = item.quantity - item.returned;
+        if (remainingQuantity <= 0) continue;
+
+        const refundedAmount = Number(item.unitPrice) * remainingQuantity;
+        totalRefundValue += refundedAmount;
+
+        const stockRecordWhere = item.variantId
+          ? { variantId: item.variantId }
+          : { productId: item.productId };
+
+        await tx.stockRecord.update({
+          where: stockRecordWhere,
+          data: { quantity: { increment: remainingQuantity } },
+        });
+
+        await tx.stockMovement.create({
+          data: {
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: remainingQuantity,
+            type: StockMovementType.IN,
+            reason: `Void: ${sale.reference}`,
+            userId,
+          },
+        });
+
+        // Update SaleItem 'returned' to match quantity
+        await tx.saleItem.update({
+          where: { id: item.id },
+          data: { returned: item.quantity },
+        });
+      }
+
+      // Add a negative payment if necessary to balance the ledger
+      if (totalRefundValue > 0) {
+        await tx.payment.create({
+          data: {
+            saleId,
+            // Use the first payment method or default to CASH
+            method: sale.payments.length > 0 ? sale.payments[0].method : 'CASH',
+            amount: -totalRefundValue,
+            confirmed: true,
+          },
+        });
+      }
+
+      // Update sale status to VOID
+      return tx.sale.update({
+        where: { id: saleId },
+        data: { status: 'VOID' },
+        include: {
+          items: { include: { product: true, variant: true } },
+          customer: true,
+          cashier: true,
+          payments: true,
+        },
+      });
+    });
+  }
+
   async getOutstandingCredit(businessId: string, skip: number, take: number) {
     const where = {
       sale: { businessId },

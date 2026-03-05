@@ -37,6 +37,7 @@ import { flushSyncQueue } from "@/lib/offline/flushSyncQueue";
 import { cacheShift, getActiveShiftLocal } from "@/lib/offline/shifts";
 import { DrawerMovementModal } from "@/components/shifts/drawer-movement-modal";
 import { NetworkStatusProvider } from "@/hooks/use-network-status";
+import { Customer } from "@/hooks/use-customers";
 
 interface POSScreenProps {
   userRole: UserRoleType;
@@ -54,6 +55,7 @@ type POSState = {
   isDrawerMovementOpen: boolean;
   discount: number;
   discountType: "PERCENTAGE" | "FLAT";
+  selectedCustomer: Customer | null;
 };
 
 type POSAction =
@@ -78,7 +80,8 @@ type POSAction =
   | {
       type: "SET_DISCOUNT";
       payload: { amount: number; type: "PERCENTAGE" | "FLAT" };
-    };
+    }
+  | { type: "SET_CUSTOMER"; payload: Customer | null };
 
 const initialPOSState: POSState = {
   cartItems: [],
@@ -91,6 +94,7 @@ const initialPOSState: POSState = {
   isDrawerMovementOpen: false,
   discount: 0,
   discountType: "FLAT",
+  selectedCustomer: null,
 };
 
 function posReducer(state: POSState, action: POSAction): POSState {
@@ -164,6 +168,8 @@ function posReducer(state: POSState, action: POSAction): POSState {
         discount: action.payload.amount,
         discountType: action.payload.type,
       };
+    case "SET_CUSTOMER":
+      return { ...state, selectedCustomer: action.payload };
     default:
       return state;
   }
@@ -264,6 +270,7 @@ export default function POSScreen({ userRole }: POSScreenProps) {
 
   const handlePaymentSuccess = useCallback(() => {
     dispatch({ type: "SET_CART_ITEMS", payload: [] });
+    dispatch({ type: "SET_CUSTOMER", payload: null });
     toast.success("Transaction recorded");
   }, []);
 
@@ -332,6 +339,10 @@ export default function POSScreen({ userRole }: POSScreenProps) {
                 payload: { modal: "history", isOpen: true },
               })
             }
+            selectedCustomer={state.selectedCustomer}
+            onSelectCustomer={(customer) =>
+              dispatch({ type: "SET_CUSTOMER", payload: customer })
+            }
           />
         </div>
 
@@ -351,6 +362,7 @@ export default function POSScreen({ userRole }: POSScreenProps) {
           total={totals.total}
           onSuccess={handlePaymentSuccess}
           userRole={userRole}
+          preSelectedCustomer={state.selectedCustomer}
         />
 
         <SyncStatusBar />
@@ -409,6 +421,7 @@ export default function POSScreen({ userRole }: POSScreenProps) {
                 className="bg-red-500 hover:bg-red-600 text-white"
                 onClick={() => {
                   dispatch({ type: "SET_CART_ITEMS", payload: [] });
+                  dispatch({ type: "SET_CUSTOMER", payload: null });
                   dispatch({
                     type: "SET_MODAL_OPEN",
                     payload: { modal: "clearCart", isOpen: false },

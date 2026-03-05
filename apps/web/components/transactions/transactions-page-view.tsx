@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useReducer } from "react";
-import { useTransactions } from "@/hooks/use-transactions";
+import React, { useReducer, useState } from "react";
+import { useTransactions, Transaction } from "@/hooks/use-transactions";
 import { useStaff } from "@/hooks/use-staff";
 import { useSessionContext } from "@/lib/session-context";
 import { Download, Filter, Search } from "lucide-react";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { TransactionsTable } from "@/components/transactions/transactions-table";
 import apiClient from "@/lib/axios";
 import { toast } from "sonner";
+import { ConfirmVoidModal } from "./confirm-void-modal";
+import { ReturnSaleModal } from "./return-sale-modal";
 
 // --- State Management ---
 type FiltersState = {
@@ -68,6 +70,9 @@ export function TransactionsPageView() {
     ...initialFilters,
     cashierId: isCashier ? user.id : "",
   });
+
+  const [voidTxn, setVoidTxn] = useState<Transaction | null>(null);
+  const [returnTxn, setReturnTxn] = useState<Transaction | null>(null);
 
   const { data, isLoading, isFetching } = useTransactions({
     page: state.page,
@@ -204,8 +209,20 @@ export function TransactionsPageView() {
           totalPages={data?.meta.totalPages || 0}
           onPageChange={(p) => dispatch({ type: "SET_PAGE", payload: p })}
           onDownloadReceipt={handleDownloadReceipt}
+          isCashier={isCashier}
+          onVoidClick={setVoidTxn}
+          onReturnClick={setReturnTxn}
         />
       </div>
+
+      <ConfirmVoidModal
+        transaction={voidTxn}
+        onClose={() => setVoidTxn(null)}
+      />
+      <ReturnSaleModal
+        transaction={returnTxn}
+        onClose={() => setReturnTxn(null)}
+      />
     </div>
   );
 }

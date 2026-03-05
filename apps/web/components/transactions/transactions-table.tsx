@@ -24,6 +24,9 @@ interface TransactionsTableProps {
   totalPages: number;
   onPageChange: (newPage: number) => void;
   onDownloadReceipt: (id: string) => void;
+  isCashier: boolean;
+  onVoidClick: (txn: Transaction) => void;
+  onReturnClick: (txn: Transaction) => void;
 }
 
 function getPaymentIcon(method: string) {
@@ -54,6 +57,9 @@ export const TransactionsTable = ({
   totalPages,
   onPageChange,
   onDownloadReceipt,
+  isCashier,
+  onVoidClick,
+  onReturnClick,
 }: TransactionsTableProps) => {
   return (
     <div className="bg-white rounded-2xl border-none shadow-xl shadow-slate-200/50 overflow-hidden relative">
@@ -290,18 +296,39 @@ export const TransactionsTable = ({
                           <ReceiptText className="w-3.5 h-3.5" />
                           Receipt
                         </button>
-                        {isVoid ? (
-                          <button className="text-[13px] font-bold text-red-600 hover:underline">
-                            Details
-                          </button>
-                        ) : txn.status === "COMPLETED" ? (
-                          <button className="text-[13px] font-bold text-red-600 hover:underline">
-                            Void Sale
-                          </button>
-                        ) : (
-                          <button className="text-[13px] font-bold text-red-600 hover:underline">
-                            Process Return
-                          </button>
+                        {!isCashier && (
+                          <>
+                            {isVoid ? (
+                              <button className="text-[13px] font-bold text-slate-400 cursor-not-allowed">
+                                Voided
+                              </button>
+                            ) : txn.status === "COMPLETED" ? (
+                              <button
+                                onClick={() => onVoidClick(txn)}
+                                className="text-[13px] font-bold text-red-600 hover:underline"
+                              >
+                                Void Sale
+                              </button>
+                            ) : txn.status === "PARTIALLY_RETURNED" ? (
+                              <button
+                                onClick={() => onReturnClick(txn)}
+                                className="text-[13px] font-bold text-amber-600 hover:underline"
+                              >
+                                Return More
+                              </button>
+                            ) : txn.status === "RETURNED" ? (
+                              <button className="text-[13px] font-bold text-slate-400 cursor-not-allowed">
+                                Fully Returned
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => onReturnClick(txn)}
+                                className="text-[13px] font-bold text-red-600 hover:underline"
+                              >
+                                Process Return
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>

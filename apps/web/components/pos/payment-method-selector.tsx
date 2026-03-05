@@ -10,6 +10,7 @@ import {
   User,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { PendingPaymentMethod } from "@/lib/db";
 import { PaymentModalState, Step } from "./payment-types";
 
@@ -138,8 +139,30 @@ export function PaymentMethodSelector({
             placeholder="Enter amount..."
             value={state.amountTendered}
             onChange={(e) => setAmountTendered(e.target.value)}
-            className="h-12 text-lg font-bold rounded-xl border-slate-200 focus-visible:ring-primary/20"
+            className="h-12 text-lg font-bold rounded-xl border-slate-200 focus-visible:ring-primary/20 mb-3"
           />
+
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {[500, 1000, 2000, 5000, 10000].map((amount) => (
+              <Button
+                key={amount}
+                variant="outline"
+                size="sm"
+                className="h-9 font-bold text-slate-600 rounded-lg hover:border-primary/50 hover:bg-primary/5"
+                onClick={() => setAmountTendered(amount.toString())}
+              >
+                ₦{amount.toLocaleString()}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 font-bold text-primary border-primary/20 rounded-lg hover:bg-primary hover:text-white transition-colors"
+              onClick={() => setAmountTendered(total.toString())}
+            >
+              Exact
+            </Button>
+          </div>
           {state.amountTendered && Number(state.amountTendered) < total && (
             <p className="text-xs text-red-500 font-bold mt-2 pl-1">
               Insufficient amount

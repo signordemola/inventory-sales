@@ -264,6 +264,20 @@ export class SalesService {
     return this.salesRepository.processReturn(saleId, dto.items, userId);
   }
 
+  async voidSale(
+    saleId: string,
+    businessId: string,
+    userId: string,
+  ): Promise<Sale> {
+    const sale = await this.findOne(saleId, businessId);
+
+    if (sale.status === 'VOID') {
+      throw new BadRequestException('Sale is already voided');
+    }
+
+    return this.salesRepository.processVoid(saleId, userId);
+  }
+
   async getOutstandingCredit(businessId: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const { items, total } = await this.salesRepository.getOutstandingCredit(

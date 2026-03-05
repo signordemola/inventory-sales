@@ -11,8 +11,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useReceivePurchaseOrder } from "@/hooks/use-purchase-orders";
-import { PurchaseOrder, PurchaseOrderItem } from "@/types/suppliers";
+import { PurchaseOrder } from "@/types/suppliers";
 import { toast } from "sonner";
 import { Loader2, PackageCheck } from "lucide-react";
 
@@ -35,9 +43,7 @@ export function ReceivePOModal({
   useEffect(() => {
     if (isOpen && purchaseOrder) {
       const initialQuantities: Record<string, number> = {};
-      purchaseOrder.items?.forEach((item) => {
-        initialQuantities[item.id] = 0; // Default to 0 received in this batch
-      });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReceiveQuantities(initialQuantities);
     }
   }, [isOpen, purchaseOrder]);
@@ -95,8 +101,12 @@ export function ReceivePOModal({
           toast.success("Stock received successfully!");
           handleClose();
         },
-        onError: (err: any) => {
-          const msg = err.response?.data?.message || "Failed to receive stock.";
+        onError: (err) => {
+          const error = err as Error & {
+            response?: { data?: { message?: string | string[] } };
+          };
+          const msg =
+            error.response?.data?.message || "Failed to receive stock.";
           toast.error(typeof msg === "string" ? msg : msg[0]);
         },
       },
@@ -140,50 +150,54 @@ export function ReceivePOModal({
           </div>
 
           <div className="border rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left font-bold text-xs uppercase text-slate-500">
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead className="font-bold text-xs uppercase text-slate-500">
                     Product
-                  </th>
-                  <th className="px-4 py-3 text-right font-bold text-xs uppercase text-slate-500">
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-xs uppercase text-slate-500">
                     Ordered
-                  </th>
-                  <th className="px-4 py-3 text-right font-bold text-xs uppercase text-slate-500">
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-xs uppercase text-slate-500">
                     Received
-                  </th>
-                  <th className="px-4 py-3 text-right font-bold text-xs uppercase text-slate-500 text-primary">
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-xs uppercase text-primary">
                     Receive Now
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {purchaseOrder.items?.map((item) => {
                   const remaining = item.quantity - item.received;
                   const isFullyReceived = remaining === 0;
 
                   return (
-                    <tr
+                    <TableRow
                       key={item.id}
-                      className={`border-b last:border-0 ${isFullyReceived ? "bg-slate-50/50 opacity-60" : ""}`}
+                      className={
+                        isFullyReceived
+                          ? "bg-slate-50/50 opacity-60 hover:bg-slate-50/50"
+                          : ""
+                      }
                     >
-                      <td className="px-4 py-3">
+                      <TableCell>
                         <p className="font-bold text-slate-900">
                           {item.product?.name || "Unknown Product"}
                         </p>
                         <p className="text-xs text-slate-500">
                           {item.product?.sku}
                         </p>
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium">
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
                         {item.quantity}
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold">
                           {item.received}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         {isFullyReceived ? (
                           <span className="text-xs font-bold text-slate-400 italic">
                             Completed
@@ -209,12 +223,12 @@ export function ReceivePOModal({
                             />
                           </div>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
 
