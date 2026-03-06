@@ -18,21 +18,21 @@ export function RecentTransactions() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PAID":
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+        return "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400";
       case "PENDING":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
+        return "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400";
       case "CANCELLED":
       case "REFUNDED":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+        return "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400";
       default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400";
+        return "bg-slate-500/10 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400";
     }
   };
 
   if (isLoading) {
     return (
-      <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <CardHeader className="border-b border-gray-50 bg-gray-50/30">
+      <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-transparent">
           <Skeleton className="h-5 w-40" />
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
@@ -55,8 +55,8 @@ export function RecentTransactions() {
 
   if (isError) {
     return (
-      <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <CardHeader className="border-b border-gray-50 bg-gray-50/30">
+      <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-transparent">
           <CardTitle className="text-sm font-bold text-foreground tracking-tight uppercase">
             Recent Transactions
           </CardTitle>
@@ -69,8 +69,8 @@ export function RecentTransactions() {
   }
 
   return (
-    <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-      <CardHeader className="border-b border-gray-50 bg-gray-50/30 flex flex-row items-center justify-between space-y-0">
+    <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
+      <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-transparent flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm font-bold text-foreground tracking-tight uppercase">
           Recent Transactions
         </CardTitle>

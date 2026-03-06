@@ -12,15 +12,15 @@ const PaymentMethodsClient = dynamic(() => import("./payment-methods-client"), {
   loading: () => <Skeleton className="h-full w-full rounded-full" />,
 });
 
-const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"];
+const COLORS = ["#059669", "#f97316", "#0ea5e9", "#eab308", "#8b5cf6"];
 
 export const PaymentMethodsChart = () => {
   const { data: stats, isLoading, isError } = useDashboardStats();
 
   if (isLoading) {
     return (
-      <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden h-[380px]">
-        <CardHeader className="border-b border-gray-50 bg-gray-50/30">
+      <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden flex flex-col h-[380px]">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-transparent py-4">
           <Skeleton className="h-5 w-40" />
         </CardHeader>
         <CardContent className="h-full pt-6 flex items-center justify-center">
@@ -32,8 +32,8 @@ export const PaymentMethodsChart = () => {
 
   if (isError) {
     return (
-      <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden h-[380px]">
-        <CardHeader className="border-b border-gray-50 bg-gray-50/30">
+      <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden flex flex-col h-[380px]">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-transparent py-4">
           <CardTitle className="text-sm font-bold text-foreground tracking-tight uppercase">
             Revenue by Payment Method
           </CardTitle>
@@ -50,8 +50,8 @@ export const PaymentMethodsChart = () => {
   const chartData = stats?.revenueByMethod || [];
 
   return (
-    <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden flex flex-col h-[380px]">
-      <CardHeader className="border-b border-gray-50 bg-gray-50/30 flex flex-row items-center gap-2 py-4">
+    <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden flex flex-col h-[380px]">
+      <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-transparent flex flex-row items-center gap-2 py-4">
         <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
           <PieChartIcon className="w-4 h-4" />
         </div>

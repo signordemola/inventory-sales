@@ -58,9 +58,9 @@ export function ProfitInsightsWidget() {
   return (
     <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Low Margin Alerts */}
-      <Card className="border-amber-200 shadow-sm bg-amber-50/10">
-        <CardHeader className="pb-3 border-b border-amber-100 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800">
+      <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
+        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800/50 bg-transparent flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-600 dark:text-amber-500">
             <AlertTriangle className="h-4 w-4" />
             Low Margin Alerts (&lt; 10%)
           </CardTitle>
@@ -102,9 +102,9 @@ export function ProfitInsightsWidget() {
       </Card>
 
       {/* Top Profit Generators */}
-      <Card className="border-emerald-200 shadow-sm bg-emerald-50/10">
-        <CardHeader className="pb-3 border-b border-emerald-100">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-800">
+      <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
+        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800/50 bg-transparent">
+          <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-500">
             <TrendingUp className="h-4 w-4" />
             Top Profit Generators
           </CardTitle>

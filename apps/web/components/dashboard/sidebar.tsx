@@ -36,16 +36,16 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
   return (
     <Sidebar
       collapsible="offcanvas"
-      className="lg:border-r-0! p-0 bg-white/80 backdrop-blur-xl dark:bg-slate-950/80"
+      className="border-r border-slate-100 p-0 bg-white shadow-sm"
       {...props}
     >
-      <SidebarHeader className="flex items-center py-3 border-b border-slate-100 dark:border-slate-800">
+      <SidebarHeader className="flex items-center py-5">
         <Link href="/dashboard">
           <Logo />
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-3.5 py-4">
+      <SidebarContent className="px-3.5 py-2">
         <SidebarGroup className="p-0">
           <SidebarHeader className="px-4 pb-2">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -66,12 +66,12 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
                     href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                       isActive
-                        ? "bg-primary text-white shadow-md shadow-primary/20"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-primary/10 text-primary dark:bg-primary/20"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"}`}
+                      className={`w-5 h-5 ${isActive ? "text-primary dark:text-primary-foreground" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"}`}
                     />
                     <span className="font-semibold text-sm">{item.label}</span>
                   </Link>
@@ -103,12 +103,12 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
                     href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                       isActive
-                        ? "bg-primary text-white shadow-md shadow-primary/20"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-primary/10 text-primary dark:bg-primary/20"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"}`}
+                      className={`w-5 h-5 ${isActive ? "text-primary dark:text-primary-foreground" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200"}`}
                     />
                     <span className="font-semibold text-sm">{item.label}</span>
                   </Link>
@@ -120,8 +120,8 @@ const DashboardSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 p-2.5 border border-slate-100 dark:border-slate-800">
-          <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-3 rounded-xl bg-transparent hover:bg-slate-50 dark:hover:bg-slate-900 border-none transition-colors p-2.5">
+          <Avatar className="h-10 w-10 border-2 border-slate-100 dark:border-slate-800 shadow-sm">
             <AvatarImage src={user.image ?? ""} alt={user.name} />
             <AvatarFallback className="bg-primary/10 text-primary font-bold">
               {user.name?.charAt(0)}

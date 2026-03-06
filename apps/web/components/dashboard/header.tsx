@@ -52,7 +52,7 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center border-b bg-white dark:bg-slate-900 px-6">
+    <header className="sticky top-0 z-50 w-full flex h-20 shrink-0 items-center border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 px-6 shadow-sm">
       <div className="flex-1 flex items-center gap-4">
         <SidebarTrigger className="-ml-2 cursor-pointer text-slate-500 hover:text-slate-900 dark:hover:text-white" />
 
@@ -81,7 +81,7 @@ const Header = () => {
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     {isLast ? (
-                      <BreadcrumbPage className="text-sm font-bold text-slate-900 dark:text-white capitalize">
+                      <BreadcrumbPage className="tracking-wider font-medium text-emerald-600 dark:text-white capitalize">
                         {getLabel(segment)}
                       </BreadcrumbPage>
                     ) : (
@@ -102,7 +102,7 @@ const Header = () => {
 
       <div className="flex items-center gap-3">
         <OfflineStatusBadge />
-        <div className="hidden md:flex items-center text-xs font-semibold text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-800">
+        <div className="hidden md:flex items-center text-xs font-semibold text-slate-400 bg-white dark:bg-slate-900 shadow-xs border border-slate-200/50 dark:border-slate-800 px-3 py-1.5 rounded-full">
           {formattedDate}
         </div>
 
@@ -110,7 +110,7 @@ const Header = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 shadow-none transition-colors"
+            className="rounded-full bg-white dark:bg-slate-900 shadow-xs border border-transparent hover:border-slate-200/50 text-slate-500 hover:text-slate-900 dark:hover:bg-slate-800 transition-colors"
           >
             <Search className="size-5" />
           </Button>

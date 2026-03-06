@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const role = session.user.role;
 
   return (
-    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950">
       {role === "OWNER" && (
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -40,10 +40,11 @@ export default async function DashboardPage() {
 
       {role !== "CASHIER" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 flex flex-col gap-6">
             <SalesChart />
+            <RecentTransactions />
           </div>
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6">
             <TopProductsWidget />
             <PaymentMethodsChart />
           </div>
@@ -51,8 +52,6 @@ export default async function DashboardPage() {
       )}
 
       {role === "OWNER" && <ProfitInsightsWidget />}
-
-      {role !== "CASHIER" && <RecentTransactions />}
     </div>
   );
 }

@@ -20,8 +20,8 @@ export default function SalesChartClient({ chartData }: { chartData: any[] }) {
       >
         <defs>
           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#137fec" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#137fec" stopOpacity={0} />
+            <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="#059669" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid
@@ -51,12 +51,12 @@ export default function SalesChartClient({ chartData }: { chartData: any[] }) {
             fontSize: "11px",
             fontWeight: "700",
           }}
-          cursor={{ stroke: "#137fec", strokeWidth: 1 }}
+          cursor={{ stroke: "#059669", strokeWidth: 1 }}
         />
         <Area
           type="monotone"
           dataKey="revenue"
-          stroke="#137fec"
+          stroke="#059669"
           strokeWidth={3}
           fillOpacity={1}
           fill="url(#colorRevenue)"

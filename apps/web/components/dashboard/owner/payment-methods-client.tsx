@@ -2,7 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
-const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"];
+const COLORS = ["#059669", "#f97316", "#0ea5e9", "#eab308", "#8b5cf6"];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function PaymentMethodsClient({ data }: { data: any[] }) {

@@ -52,8 +52,8 @@ export const TopProductsWidget = () => {
   const maxQty = Math.max(...topProducts.map((p) => p.quantitySold), 1);
 
   return (
-    <Card className="bg-white rounded-xl border border-border shadow-sm overflow-hidden h-[380px] flex flex-col">
-      <CardHeader className="border-b border-gray-50 bg-gray-50/30 flex flex-row items-center gap-2 py-4">
+    <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden h-[380px] flex flex-col">
+      <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-transparent flex flex-row items-center gap-2 py-4">
         <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
           <Trophy className="w-4 h-4" />
         </div>
@@ -82,7 +82,7 @@ export const TopProductsWidget = () => {
                       <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 shrink-0">
                         #{index + 1}
                       </div>
-                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-primary transition-colors">
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-emerald-600 transition-colors">
                         {product.name}
                       </span>
                     </div>

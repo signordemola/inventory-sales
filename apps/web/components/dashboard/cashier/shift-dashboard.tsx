@@ -289,53 +289,81 @@ export const CashierShiftDashboard = () => {
 
               {/* Metrics Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="rounded-xl bg-background border p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <TrendingUp className="h-4 w-4" />
-                    <p className="text-xs font-medium">Gross Sales</p>
+                <div className="rounded-xl bg-white border border-slate-200 dark:border-slate-800 p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                      <TrendingUp className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Gross Sales
+                      </p>
+                      <p className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter mt-0.5">
+                        {formatCurrency(metrics.grossSales)}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(metrics.grossSales)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground relative z-10">
                     This shift only
                   </p>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-blue-500 to-blue-500/30"></div>
                 </div>
-                <div className="rounded-xl bg-background border p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Receipt className="h-4 w-4" />
-                    <p className="text-xs font-medium">Transactions</p>
+                <div className="rounded-xl bg-white border border-slate-200 dark:border-slate-800 p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                      <Receipt className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Transactions
+                      </p>
+                      <p className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter mt-0.5">
+                        {metrics.transactionCount}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold">
-                    {metrics.transactionCount}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground relative z-10">
                     Completed sales
                   </p>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-orange-500 to-orange-500/30"></div>
                 </div>
-                <div className="rounded-xl bg-background border p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Banknote className="h-4 w-4" />
-                    <p className="text-xs font-medium">Cash in Drawer</p>
+                <div className="rounded-xl bg-white border border-slate-200 dark:border-slate-800 p-4 hover:bg-slate-50 transition-colors relative overflow-hidden">
+                  <div className="flex items-center gap-3 mb-3 relative z-10">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <Banknote className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Cash in Drawer
+                      </p>
+                      <p className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter mt-0.5">
+                        {formatCurrency(metrics.cashDrawerExpected)}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(metrics.cashDrawerExpected)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground relative z-10">
                     Float + cash sales
                   </p>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-emerald-500 to-emerald-500/30"></div>
                 </div>
-                <div className="rounded-xl bg-background border p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                    <Activity className="h-4 w-4" />
-                    <p className="text-xs font-medium">Starting Float</p>
+                <div className="rounded-xl bg-white border border-slate-200 dark:border-slate-800 p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                      <Activity className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Starting Float
+                      </p>
+                      <p className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter mt-0.5">
+                        {formatCurrency(metrics.shiftDetails.startingCash)}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(metrics.shiftDetails.startingCash)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground relative z-10">
                     Opening cash
                   </p>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-violet-500 to-violet-500/30"></div>
                 </div>
               </div>
             </div>
