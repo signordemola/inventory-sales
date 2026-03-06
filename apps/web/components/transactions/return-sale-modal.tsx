@@ -111,7 +111,7 @@ export function ReturnSaleModal({
               >
                 <div>
                   <p className="font-semibold text-slate-900 text-sm">
-                    {item.product.name}
+                    {item.product?.name || "Unknown Product"}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
                     {formatCurrency(item.unitPrice)} each · Max: {remaining}

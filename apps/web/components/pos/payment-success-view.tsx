@@ -1,20 +1,21 @@
 "use client";
 
-import { CheckCircle2, Download, WifiOff } from "lucide-react";
+import { CheckCircle2, Download, WifiOff, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PaymentModalState } from "./payment-types";
 import { useNetworkStatus } from "@/hooks/use-network-status";
+import { ReceiptTemplate } from "../transactions/receipt-template";
+import { useDownloadReceipt } from "@/hooks/use-download-receipt";
 
 export function PaymentSuccessView({
   state,
   onReset,
-  onDownloadReceipt,
 }: {
   state: PaymentModalState;
   onReset: () => void;
-  onDownloadReceipt: () => void;
 }) {
+  const { downloadReceipt } = useDownloadReceipt();
   const { isOnline } = useNetworkStatus();
 
   const isCreditOnly =
@@ -23,8 +24,8 @@ export function PaymentSuccessView({
   const hasCash = state.payments.some((p) => p.method === "CASH");
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300">
-      <Card className="w-full max-w-md p-10 flex flex-col items-center text-center space-y-4 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300 print:bg-white print:static print:h-auto print:block">
+      <Card className="w-full max-w-md p-10 flex flex-col items-center text-center space-y-4 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300 print:hidden">
         <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
           <CheckCircle2 className="w-10 h-10" />
         </div>
@@ -74,14 +75,24 @@ export function PaymentSuccessView({
         )}
 
         <div className="w-full space-y-2 pt-2">
-          {state.syncedSaleId && (
+          <Button
+            onClick={() =>
+              state.receiptData && downloadReceipt(state.receiptData)
+            }
+            variant="outline"
+            className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download Receipt
+          </Button>
+          {state.receiptData && (
             <Button
-              onClick={onDownloadReceipt}
+              onClick={() => window.print()}
               variant="outline"
               className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Download Receipt
+              <Printer className="w-4 h-4 mr-2" />
+              Print Receipt
             </Button>
           )}
           <Button
@@ -92,6 +103,9 @@ export function PaymentSuccessView({
           </Button>
         </div>
       </Card>
+
+      {/* Hidden print payload injected here */}
+      {state.receiptData && <ReceiptTemplate transaction={state.receiptData} />}
     </div>
   );
 }

@@ -6,7 +6,6 @@ import { OwnerStatsGrid } from "@/components/dashboard/owner/stats-grid";
 import { TopProductsWidget } from "@/components/dashboard/owner/top-products-widget";
 import { PaymentMethodsChart } from "@/components/dashboard/owner/payment-methods-chart";
 import { ProfitInsightsWidget } from "@/components/dashboard/owner/profit-insights-widget";
-import { RestockSuggestionsWidget } from "@/components/dashboard/owner/restock-suggestions-widget";
 import { ManagerStatsGrid } from "@/components/dashboard/manager/stats-grid";
 import { CashierShiftDashboard } from "@/components/dashboard/cashier/shift-dashboard";
 import { ManagerShiftPage } from "@/components/shifts/manager-shift-page";

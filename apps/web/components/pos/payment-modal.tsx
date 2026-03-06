@@ -22,7 +22,12 @@ import { toast } from "sonner";
 import { createSaleOffline, CreateSaleOfflineInput } from "@/lib/offline/sales";
 import { PendingPaymentMethod, LocalCustomer } from "@/lib/db";
 import { useQueryClient } from "@tanstack/react-query";
-import { PaymentModalState, SplitPaymentRow, Step } from "./payment-types";
+import {
+  PaymentModalState,
+  ReceiptData,
+  SplitPaymentRow,
+  Step,
+} from "./payment-types";
 import { PaymentSuccessView } from "./payment-success-view";
 import { Customer } from "@/hooks/use-customers";
 import { createId } from "@paralleldrive/cuid2";
@@ -103,7 +108,14 @@ type Action =
   | { type: "SET_CUSTOMER"; payload: LocalCustomer | null }
   | { type: "SET_CREDIT_DUE_DATE"; payload: string }
   | { type: "SET_PROCESSING"; payload: boolean }
-  | { type: "SET_SUCCESS"; payload: { localRef: string; changeDue: number } }
+  | {
+      type: "SET_SUCCESS";
+      payload: {
+        localRef: string;
+        changeDue: number;
+        receiptData?: ReceiptData;
+      };
+    }
   | { type: "SET_SYNCED_ID"; payload: string }
   | { type: "RESET" };
 
@@ -149,6 +161,7 @@ function reducer(state: PaymentModalState, action: Action): PaymentModalState {
         isSuccess: true,
         localRef: action.payload.localRef,
         changeDue: action.payload.changeDue,
+        receiptData: action.payload.receiptData,
       };
     case "SET_SYNCED_ID":
       return { ...state, syncedSaleId: action.payload };
@@ -236,22 +249,6 @@ export const PaymentModal = ({
     onClose();
   };
 
-  const handleDownloadReceipt = async () => {
-    if (!state.syncedSaleId) return;
-    try {
-      const loadingToastId = toast.loading("Generating receipt...");
-      const apiClient = (await import("@/lib/axios")).default;
-      const res = await apiClient.post(
-        `/sales/${state.syncedSaleId}/receipt/store`,
-      );
-      toast.dismiss(loadingToastId);
-      if (res.data?.url) window.open(res.data.url, "_blank");
-    } catch {
-      toast.dismiss();
-      toast.error("Failed to generate receipt");
-    }
-  };
-
   const handleConfirmPayment = async () => {
     if (creditNeedsCustomer) {
       toast.error("Select a customer for credit sales");
@@ -292,9 +289,32 @@ export const PaymentModal = ({
 
     try {
       const { localReference } = await createSaleOffline(input);
+
+      // Synthesize receipt data to pass to the success screen
+      const receiptData = {
+        id: localReference,
+        reference: localReference,
+        createdAt: new Date().toISOString(),
+        cashier: { name: "Cashier" }, // ideally from session, but "System" will fallback
+        customer: state.selectedCustomer || undefined,
+        items: input.items,
+        subtotal: input.subtotal,
+        tax: input.tax,
+        discount: input.discount || 0,
+        total: input.total,
+        amountPaid: state.payments
+          .filter((p) => p.method !== "CREDIT")
+          .reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0),
+        change: changeDue,
+        status: (creditNeedsCustomer
+          ? "CREDIT"
+          : "COMPLETED") as ReceiptData["status"],
+        payments: input.payments,
+      };
+
       dispatch({
         type: "SET_SUCCESS",
-        payload: { localRef: localReference, changeDue },
+        payload: { localRef: localReference, changeDue, receiptData },
       });
 
       try {
@@ -338,13 +358,7 @@ export const PaymentModal = ({
   if (!isOpen) return null;
 
   if (state.isSuccess) {
-    return (
-      <PaymentSuccessView
-        state={state}
-        onReset={handleReset}
-        onDownloadReceipt={handleDownloadReceipt}
-      />
-    );
+    return <PaymentSuccessView state={state} onReset={handleReset} />;
   }
 
   return (

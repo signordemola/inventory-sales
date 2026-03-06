@@ -23,7 +23,8 @@ export interface TransactionItem {
   quantity: number;
   unitPrice: number;
   total: number;
-  product: { id: string; name: string };
+  product?: { id: string; name: string };
+  productName?: string; // For offline/POS data compatibility
 }
 
 export interface Transaction {
@@ -31,13 +32,22 @@ export interface Transaction {
   reference: string;
   subtotal: number;
   discount: number;
+  tax: number;
   total: number;
-  status: "COMPLETED" | "VOID" | "RETURNED" | "PARTIALLY_RETURNED" | "PENDING";
+  status:
+    | "COMPLETED"
+    | "VOID"
+    | "RETURNED"
+    | "PARTIALLY_RETURNED"
+    | "PENDING"
+    | "CREDIT";
   createdAt: string;
   cashier: TransactionUser | null;
   customer: TransactionUser | null;
   payments: TransactionPayment[];
   items: TransactionItem[];
+  amountPaid: number;
+  change?: number; // Calculated or returned from API
 }
 
 interface PaginatedTransactions {

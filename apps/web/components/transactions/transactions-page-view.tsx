@@ -12,6 +12,8 @@ import apiClient from "@/lib/axios";
 import { toast } from "sonner";
 import { ConfirmVoidModal } from "./confirm-void-modal";
 import { ReturnSaleModal } from "./return-sale-modal";
+import { useDownloadReceipt } from "@/hooks/use-download-receipt";
+import { ReceiptTemplate } from "./receipt-template";
 
 // --- State Management ---
 type FiltersState = {
@@ -73,6 +75,11 @@ export function TransactionsPageView() {
 
   const [voidTxn, setVoidTxn] = useState<Transaction | null>(null);
   const [returnTxn, setReturnTxn] = useState<Transaction | null>(null);
+  const [downloadingTxn, setDownloadingTxn] = useState<Transaction | null>(
+    null,
+  );
+
+  const { downloadReceipt } = useDownloadReceipt();
 
   const { data, isLoading, isFetching } = useTransactions({
     page: state.page,
@@ -169,17 +176,14 @@ export function TransactionsPageView() {
   }, [state.search, state.status, state.paymentMethod, state.cashierId]);
 
   const handleDownloadReceipt = async (id: string) => {
-    try {
-      const loadingToastId = toast.loading("Generating receipt...");
-      const res = await apiClient.post(`/sales/${id}/receipt/store`);
-      toast.dismiss(loadingToastId);
-      if (res.data?.url) {
-        window.open(res.data.url, "_blank");
-      }
-    } catch {
-      toast.dismiss();
-      toast.error("Failed to generate receipt");
-    }
+    const txn = data?.items.find((t) => t.id === id);
+    if (!txn) return;
+
+    setDownloadingTxn(txn);
+    // Wait for template to render
+    setTimeout(() => {
+      downloadReceipt(txn).finally(() => setDownloadingTxn(null));
+    }, 100);
   };
 
   return (
@@ -311,6 +315,13 @@ export function TransactionsPageView() {
         transaction={returnTxn}
         onClose={() => setReturnTxn(null)}
       />
+
+      {/* Off-screen receipt for PDF generation */}
+      <div className="fixed -left-[9999px] top-0">
+        {downloadingTxn && (
+          <ReceiptTemplate transaction={downloadingTxn} isDownloading />
+        )}
+      </div>
     </div>
   );
 }

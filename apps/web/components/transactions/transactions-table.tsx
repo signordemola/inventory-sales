@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Transaction } from "@/hooks/use-transactions";
+import { ReceiptTemplate } from "./receipt-template";
+import { Printer } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -78,6 +80,19 @@ export const TransactionsTable = ({
   onVoidClick,
   onReturnClick,
 }: TransactionsTableProps) => {
+  const [printingTxn, setPrintingTxn] = React.useState<Transaction | null>(
+    null,
+  );
+
+  const handlePrint = (txn: Transaction) => {
+    setPrintingTxn(txn);
+    // Wait for the template to render before printing
+    setTimeout(() => {
+      window.print();
+      setPrintingTxn(null);
+    }, 100);
+  };
+
   return (
     <div className="bg-white rounded-2xl border-none shadow-xl shadow-slate-200/50 overflow-hidden relative">
       {isFetching && !isLoading && (
@@ -334,6 +349,14 @@ export const TransactionsTable = ({
                             Download Receipt
                           </DropdownMenuItem>
 
+                          <DropdownMenuItem
+                            onClick={() => handlePrint(txn)}
+                            className="cursor-pointer gap-2"
+                          >
+                            <Printer className="w-4 h-4" />
+                            Print Receipt
+                          </DropdownMenuItem>
+
                           {!isCashier && (
                             <>
                               <DropdownMenuSeparator />
@@ -431,6 +454,9 @@ export const TransactionsTable = ({
           </div>
         </div>
       )}
+
+      {/* Hidden print template */}
+      {printingTxn && <ReceiptTemplate transaction={printingTxn} />}
     </div>
   );
 };

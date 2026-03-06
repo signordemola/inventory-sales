@@ -93,10 +93,10 @@ These are things a real user will notice in the first 5 minutes.
 
 ### 3.3 Receipt Printing
 
-- [ ] Create a print-optimized receipt layout (80mm width, thermal-friendly)
-- [ ] Add "Print Receipt" button next to "Download Receipt" on success screen
-- [ ] Use `window.print()` with a hidden receipt component and `@media print` styles
-- [ ] Include: business name, address, reference, items, totals, payment method, change, date
+- [x] Create a print-optimized receipt layout (80mm width, thermal-friendly)
+- [x] Add "Print Receipt" button next to "Download Receipt" on success screen
+- [x] Use `window.print()` with a hidden receipt component and `@media print` styles
+- [x] Include: business name, address, reference, items, totals, payment method, change, date
 
 ---
 
