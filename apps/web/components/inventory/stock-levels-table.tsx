@@ -29,7 +29,7 @@ export function StockLevelsTable({
   );
 
   return (
-    <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="xl:col-span-3 bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
         <h2 className="font-bold text-slate-900">Stock Levels</h2>
         <div className="relative flex-1 max-w-xs">

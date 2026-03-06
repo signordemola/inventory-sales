@@ -103,7 +103,7 @@ export function StaffTable({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-slate-50 bg-slate-50/50">

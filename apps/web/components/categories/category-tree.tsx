@@ -156,7 +156,7 @@ export const CategoryTree = ({
   };
 
   return (
-    <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden">
+    <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none h-full flex flex-col overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <h2 className="font-bold text-slate-900 text-sm">Category Tree</h2>
       </div>

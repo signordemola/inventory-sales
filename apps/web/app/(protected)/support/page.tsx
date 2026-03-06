@@ -120,7 +120,7 @@ export default function SupportPage() {
   }, [search, activeCategory]);
 
   return (
-    <div className="flex-1 space-y-10 p-6 md:p-10 bg-slate-50/30 overflow-y-auto">
+    <div className="flex-1 space-y-10 p-6 md:p-10 bg-white dark:bg-slate-950 overflow-y-auto">
       {/* Header */}
       <div>
         <h1 className="text-4xl font-black text-slate-900 tracking-tight font-display">
@@ -132,7 +132,7 @@ export default function SupportPage() {
       </div>
 
       {/* Hero Search Block */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
         <div className="px-8 py-10 bg-linear-to-br from-primary/5 via-white to-transparent flex flex-col items-center text-center gap-5">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Search className="w-7 h-7 text-primary" />
@@ -192,7 +192,7 @@ export default function SupportPage() {
       </div>
 
       {/* FAQ Accordion */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
         <div className="px-8 py-5 border-b border-slate-50 flex items-center justify-between">
           <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
             {filtered.length} article{filtered.length !== 1 ? "s" : ""} found
@@ -255,7 +255,7 @@ export default function SupportPage() {
       {/* Contact & Docs Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pb-6">
         {/* Live Chat */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 p-6 flex flex-col gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-6 flex flex-col gap-4">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <MessageCircle className="w-5 h-5 text-primary" />
           </div>
@@ -271,7 +271,7 @@ export default function SupportPage() {
         </div>
 
         {/* Email */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 p-6 flex flex-col gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-6 flex flex-col gap-4">
           <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
             <Mail className="w-5 h-5 text-slate-500" />
           </div>
@@ -291,7 +291,7 @@ export default function SupportPage() {
         </div>
 
         {/* Docs & Phone */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 p-6 flex flex-col gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-6 flex flex-col gap-4">
           <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
             <BookOpen className="w-5 h-5 text-slate-500" />
           </div>

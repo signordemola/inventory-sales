@@ -13,7 +13,7 @@ export function AuditTrailPanel({
   loadingHistory: boolean;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <h2 className="font-bold text-slate-900">Recent Audit Trail</h2>
         <span className="text-xs font-semibold text-primary">

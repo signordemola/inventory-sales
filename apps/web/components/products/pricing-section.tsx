@@ -20,7 +20,7 @@ export function PricingSection({
   form: UseFormReturn<ProductInput>;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-6">
+    <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-8 space-y-6">
       <h2 className="text-base font-black text-slate-900 tracking-tight">
         Pricing & Stock
       </h2>

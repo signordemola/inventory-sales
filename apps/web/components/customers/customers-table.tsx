@@ -34,7 +34,7 @@ export const CustomersTable = ({
   onViewLedger,
 }: CustomersTableProps) => {
   return (
-    <div className="bg-white rounded-2xl border-none shadow-xl shadow-slate-200/50 overflow-hidden relative">
+    <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden relative">
       {isFetching && !isLoading && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />

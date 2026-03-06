@@ -73,7 +73,7 @@ export function ManualAdjustmentPanel({
   };
 
   return (
-    <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm">
+    <div className="xl:col-span-2 bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none">
       <div className="px-5 py-4 border-b border-slate-100">
         <h2 className="font-bold text-slate-900">Manual Adjustment</h2>
         <p className="text-xs text-slate-400 mt-0.5">

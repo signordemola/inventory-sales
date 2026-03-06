@@ -187,7 +187,7 @@ export function TransactionsPageView() {
   };
 
   return (
-    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight font-display">
@@ -215,7 +215,7 @@ export function TransactionsPageView() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 p-5 flex flex-wrap items-center gap-3">
+      <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-5 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-400 mr-2">
           <Filter className="w-4 h-4" /> Filters:
         </div>
@@ -291,7 +291,7 @@ export function TransactionsPageView() {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
         <TransactionsTable
           transactions={data?.items || []}
           isLoading={isLoading}

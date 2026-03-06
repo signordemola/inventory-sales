@@ -33,7 +33,7 @@ export function ProductsPageView() {
   const { data: categories } = useCategories();
 
   return (
-    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black tracking-tight text-slate-900 font-display text-center sm:text-left">
@@ -62,8 +62,8 @@ export function ProductsPageView() {
         </div>
       </div>
 
-      <Card className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden relative">
-        <CardHeader className="border-b border-slate-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 space-y-0 py-5 px-6">
+      <Card className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden relative">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 space-y-0 py-5 px-6">
           <CardTitle className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Package className="size-5 text-primary" />
             Product Catalog

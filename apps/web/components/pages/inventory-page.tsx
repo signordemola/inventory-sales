@@ -1,17 +1,9 @@
 "use client";
 
 import React, { useReducer } from "react";
-import {
-  useInventoryLevels,
-  useInventoryHistory,
-} from "@/hooks/use-inventory";
+import { useInventoryLevels, useInventoryHistory } from "@/hooks/use-inventory";
 
-import {
-  Package,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-} from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { StatCard } from "@/components/inventory/stat-card";
 import { StockLevelsTable } from "@/components/inventory/stock-levels-table";
 import { ManualAdjustmentPanel } from "@/components/inventory/manual-adjustment-panel";
@@ -76,7 +68,7 @@ export function InventoryPageView() {
   const totalUnits = levels?.reduce((s, l) => s + l.quantity, 0) ?? 0;
 
   return (
-    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

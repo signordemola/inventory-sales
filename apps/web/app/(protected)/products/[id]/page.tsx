@@ -58,7 +58,7 @@ function BasicInformationSection({
   handleRemoveImage: (url: string) => Promise<void>;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-6">
+    <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-8 space-y-6">
       <h2 className="text-base font-black text-slate-900 tracking-tight">
         Basic Information
       </h2>
@@ -266,7 +266,7 @@ function BasicInformationSection({
 
 function PricingSection({ form }: { form: UseFormReturn<ProductInput> }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 space-y-6">
+    <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-8 space-y-6">
       <h2 className="text-base font-black text-slate-900 tracking-tight">
         Pricing & Stock
       </h2>
@@ -491,7 +491,7 @@ export default function EditProductPage() {
 
   if (isFetchingProduct) {
     return (
-      <div className="flex-1 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30 flex items-center justify-center">
+      <div className="flex-1 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
       </div>
     );
@@ -499,7 +499,7 @@ export default function EditProductPage() {
 
   if (!product) {
     return (
-      <div className="flex-1 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30 flex items-center justify-center">
+      <div className="flex-1 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 font-medium">Product not found.</p>
           <Button
@@ -515,7 +515,7 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="flex-1 p-6 md:p-10 h-full overflow-y-auto bg-slate-50/30">
+    <div className="flex-1 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950">
       <div className="max-w-4xl mx-auto space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4 align-top sm:align-middle">

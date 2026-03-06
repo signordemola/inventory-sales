@@ -81,7 +81,7 @@ export const CategoryEditor = ({
   // Empty state
   if (!selectedCategoryId && !isCreating) {
     return (
-      <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden">
+      <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none h-full flex flex-col overflow-hidden">
         <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50/30">
           <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
             <Folder className="w-8 h-8 text-slate-300" />
@@ -101,7 +101,7 @@ export const CategoryEditor = ({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden">
+    <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-8 py-6 border-b border-slate-100">
         <h2 className="text-2xl font-black text-slate-900">
