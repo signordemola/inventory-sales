@@ -27,6 +27,7 @@ model User {
   stockMovements  StockMovement[]
   payrollConfig   StaffPayroll?
   payrollRecords  PayrollRecord[]
+  expensesRecorded Expense[]           @relation("ExpensesRecorded")
   business        Business?            @relation(fields: [businessId], references: [id])
 
   @@index([businessId])
@@ -102,6 +103,7 @@ model Business {
   sales         Sale[]
   staffInvites  StaffInvite[]
   suppliers     Supplier[]
+  expenses      Expense[]
   users         User[]
 
   @@map("business")
@@ -588,4 +590,26 @@ model PayrollRecord {
   @@index([businessId])
   @@index([userId])
   @@map("payroll_record")
+}
+
+model Expense {
+  id              String   @id @default(cuid())
+  businessId      String
+  branchId        String?
+  category        String   // RENT, FUEL, UTILITIES, SALARY, MAINTENANCE, MARKETING, OTHER
+  amount          Decimal  @db.Decimal(10, 2)
+  date            DateTime
+  description     String?
+  receiptUrl      String?
+  recordedById    String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  recordedBy      User     @relation("ExpensesRecorded", fields: [recordedById], references: [id])
+
+  @@index([businessId])
+  @@index([recordedById])
+  @@index([date])
+  @@map("expense")
 }

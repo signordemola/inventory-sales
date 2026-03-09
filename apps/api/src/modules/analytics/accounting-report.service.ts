@@ -85,10 +85,20 @@ export class AccountingReportService {
       0,
     );
 
+    // Operating expenses
+    const otherExpensesResult = await (this.prisma as any).expense.aggregate({
+      where: {
+        businessId,
+        date: { gte: from, lte: to },
+      },
+      _sum: { amount: true },
+    });
+    const otherExpenses = Number(otherExpensesResult._sum.amount ?? 0);
+
     const grossProfit = totalRevenue - totalCogs;
     const grossMargin =
       totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
-    const netProfit = grossProfit - totalTax;
+    const netProfit = grossProfit - totalTax - otherExpenses;
 
     return {
       period: { from: startDate, to: endDate },
@@ -108,6 +118,7 @@ export class AccountingReportService {
       grossMargin: Math.round(grossMargin * 10) / 10,
       expenses: {
         supplierPayments: supplierExpenses,
+        otherExpenses,
         tax: totalTax,
         discounts: totalDiscount,
       },
@@ -169,6 +180,24 @@ export class AccountingReportService {
       date: po.updatedAt,
     }));
 
+    // Operating Expenses
+    const genericExpenses = await (this.prisma as any).expense.findMany({
+      where: {
+        businessId,
+        date: { gte: from, lte: to },
+      },
+    });
+
+    for (const exp of genericExpenses) {
+      outflows.push({
+        type: 'Expense',
+        reference: exp.category,
+        supplier: exp.description || 'N/A',
+        amount: Number(exp.amount),
+        date: exp.date,
+      });
+    }
+
     const totalOutflow = outflows.reduce((sum, o) => sum + o.amount, 0);
 
     // Credit receivables
@@ -227,6 +256,7 @@ export class AccountingReportService {
         ['Gross Profit', pnl.grossProfit.toFixed(2)],
         ['Gross Margin', `${pnl.grossMargin}%`],
         ['Supplier Payments', pnl.expenses.supplierPayments.toFixed(2)],
+        ['Operating Expenses', pnl.expenses.otherExpenses.toFixed(2)],
         ['Tax Collected', pnl.expenses.tax.toFixed(2)],
         ['Discounts Given', pnl.expenses.discounts.toFixed(2)],
         ['Net Profit', pnl.netProfit.toFixed(2)],

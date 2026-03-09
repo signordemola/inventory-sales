@@ -10,6 +10,9 @@ import { ProductCard } from "./product-card";
 import { Product, Category } from "@/types/products";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/db";
+import { toast } from "sonner";
+import { ScannerModal } from "./scanner-modal";
+import { useUsbScanner } from "@/hooks/use-usb-scanner";
 
 interface ProductBrowserProps {
   onSelectProduct: (product: Product) => void;
@@ -20,6 +23,23 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<
     string | undefined
   >();
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  // Handle a successful scan from either the camera or USB scanner
+  const handleScan = async (barcode: string) => {
+    // Attempt to find the product in IndexedDB
+    const product = await db.products.where("barcode").equals(barcode).first();
+
+    if (product) {
+      onSelectProduct(product);
+      setIsScannerOpen(false); // Close camera modal if open
+    } else {
+      toast.error(`Product not found for barcode: ${barcode}`);
+    }
+  };
+
+  // Listen globally for USB scanner input
+  useUsbScanner(handleScan);
 
   const isOnline = React.useSyncExternalStore(
     React.useCallback((callback: () => void) => {
@@ -89,6 +109,7 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
           <Button
             size="icon"
             variant="ghost"
+            onClick={() => setIsScannerOpen(true)}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary h-8 w-8"
           >
             <QrCode className="w-4 h-4" />
@@ -174,6 +195,13 @@ export const ProductBrowser = ({ onSelectProduct }: ProductBrowserProps) => {
           </div>
         )}
       </ScrollArea>
+
+      {/* Camera Barcode Scanner Modal */}
+      <ScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleScan}
+      />
     </div>
   );
 };

@@ -12,6 +12,7 @@ import {
   Clock,
   FileBarChart,
   Wallet,
+  Receipt,
 } from "lucide-react";
 
 export const UserRole = {
@@ -95,6 +96,12 @@ export const menuItems: MenuItem[] = [
     icon: Wallet,
     label: "Payroll",
     roles: ["OWNER"],
+  },
+  {
+    href: "/expenses",
+    icon: Receipt,
+    label: "Expenses",
+    roles: ["OWNER", "MANAGER"],
   },
 ];
 
