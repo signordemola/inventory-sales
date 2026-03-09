@@ -6,6 +6,8 @@ import { OwnerStatsGrid } from "@/components/dashboard/owner/stats-grid";
 import { TopProductsWidget } from "@/components/dashboard/owner/top-products-widget";
 import { PaymentMethodsChart } from "@/components/dashboard/owner/payment-methods-chart";
 import { ProfitInsightsWidget } from "@/components/dashboard/owner/profit-insights-widget";
+import { BusinessInsightsWidget } from "@/components/dashboard/owner/business-insights-widget";
+import { RestockSuggestionsWidget } from "@/components/dashboard/owner/restock-suggestions-widget";
 import { ManagerStatsGrid } from "@/components/dashboard/manager/stats-grid";
 import { CashierShiftDashboard } from "@/components/dashboard/cashier/shift-dashboard";
 import { ManagerShiftPage } from "@/components/shifts/manager-shift-page";
@@ -52,6 +54,8 @@ export default async function DashboardPage() {
       )}
 
       {role === "OWNER" && <ProfitInsightsWidget />}
+      {role === "OWNER" && <BusinessInsightsWidget />}
+      {role === "OWNER" && <RestockSuggestionsWidget />}
     </div>
   );
 }

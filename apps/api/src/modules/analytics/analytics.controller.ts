@@ -65,4 +65,33 @@ export class AnalyticsController {
   getMonthComparison(@Req() req: Request) {
     return this.analyticsService.getMonthComparison(req.user?.businessId!);
   }
+
+  @Get('stockout-predictions')
+  getStockoutPredictions(@Req() req: Request) {
+    return this.analyticsService.getStockoutPredictions(req.user?.businessId!);
+  }
+
+  @Get('dead-stock')
+  getDeadStock(@Query('days') days: string, @Req() req: Request) {
+    return this.analyticsService.getDeadStock(
+      req.user?.businessId!,
+      Number(days) || 60,
+    );
+  }
+
+  @Get('demand-forecast')
+  getDemandForecast(@Query('days') days: string, @Req() req: Request) {
+    return this.analyticsService.getDemandForecast(
+      req.user?.businessId!,
+      Number(days) || 7,
+    );
+  }
+
+  @Get('peak-hours')
+  getPeakHours(
+    @Query('period') period: '7d' | '30d' | '90d' = '30d',
+    @Req() req: Request,
+  ) {
+    return this.analyticsService.getPeakHours(req.user?.businessId!, period);
+  }
 }

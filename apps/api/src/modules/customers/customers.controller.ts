@@ -78,4 +78,21 @@ export class CustomersController {
   ) {
     return this.customersService.createRepayment(dto, req.user?.businessId!);
   }
+
+  // CRM-Lite Endpoints
+
+  @Get('segments')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async getSegments(@Req() req: Request) {
+    return this.customersService.getCustomerSegments(req.user?.businessId!);
+  }
+
+  @Get(':id/insights')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async getInsights(@Param() params: CustomerIdDto, @Req() req: Request) {
+    return this.customersService.getCustomerInsights(
+      params.id,
+      req.user?.businessId!,
+    );
+  }
 }

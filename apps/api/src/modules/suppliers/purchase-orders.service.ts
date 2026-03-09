@@ -202,4 +202,153 @@ export class PurchaseOrdersService {
       });
     });
   }
+
+  /**
+   * Auto-draft POs for all products below their low stock threshold.
+   * Groups items by preferred supplier and creates one PO per supplier.
+   */
+  async autoDraftPO(businessId: string, userId: string) {
+    // 1. Find products at or below threshold
+    const products = await this.prisma.product.findMany({
+      where: { businessId, isActive: true },
+      include: {
+        stockRecord: true,
+        preferredSupplier: true,
+      },
+    });
+
+    const lowStockProducts = products.filter((p) => {
+      const qty = Number(p.stockRecord?.quantity || 0);
+      return qty <= (p.lowStockThreshold || 0);
+    });
+
+    if (lowStockProducts.length === 0) {
+      return {
+        message: 'All stock levels are healthy. No POs needed.',
+        created: [],
+      };
+    }
+
+    // 2. Calculate sales velocity for suggested order quantities
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const salesData = await this.prisma.saleItem.groupBy({
+      by: ['productId'],
+      where: {
+        productId: { in: lowStockProducts.map((p) => p.id) },
+        sale: {
+          businessId,
+          status: 'COMPLETED',
+          createdAt: { gte: thirtyDaysAgo },
+        },
+      },
+      _sum: { quantity: true },
+    });
+
+    const salesMap = new Map<string, number>();
+    salesData.forEach((s) => {
+      salesMap.set(s.productId, s._sum.quantity || 0);
+    });
+
+    const RESTOCK_DAYS = 14;
+
+    // 3. Group by preferred supplier
+    const supplierGroups = new Map<
+      string,
+      {
+        supplierId: string;
+        supplierName: string;
+        items: Array<{ productId: string; quantity: number; cost: number }>;
+      }
+    >();
+
+    for (const product of lowStockProducts) {
+      const supplierId = product.preferredSupplierId;
+      if (!supplierId || !product.preferredSupplier) continue; // Skip products without a preferred supplier
+
+      const currentStock = Number(product.stockRecord?.quantity || 0);
+      const unitsSold = salesMap.get(product.id) || 0;
+      const dailyVelocity = unitsSold / 30;
+
+      let suggestedOrder = Math.ceil(
+        dailyVelocity * RESTOCK_DAYS - currentStock,
+      );
+      if (dailyVelocity === 0) {
+        suggestedOrder = Math.max(
+          0,
+          Math.ceil((product.lowStockThreshold || 5) * 1.2) - currentStock,
+        );
+      }
+      if (suggestedOrder < (product.lowStockThreshold || 0)) {
+        suggestedOrder = product.lowStockThreshold || 10;
+      }
+      if (suggestedOrder <= 0) continue;
+
+      if (!supplierGroups.has(supplierId)) {
+        supplierGroups.set(supplierId, {
+          supplierId,
+          supplierName: product.preferredSupplier.name,
+          items: [],
+        });
+      }
+
+      supplierGroups.get(supplierId)!.items.push({
+        productId: product.id,
+        quantity: suggestedOrder,
+        cost: Number(product.buyingPrice),
+      });
+    }
+
+    // 4. Create POs for each supplier group
+    const createdPOs: PurchaseOrder[] = [];
+
+    for (const [, group] of supplierGroups) {
+      if (group.items.length === 0) continue;
+
+      const total = group.items.reduce(
+        (sum, item) => sum + item.quantity * item.cost,
+        0,
+      );
+
+      const timestamp = new Date().getTime().toString().slice(-6);
+      const random = Math.random().toString(36).slice(2, 5).toUpperCase();
+      const reference = `PO-AUTO-${timestamp}-${random}`;
+
+      const po = await this.prisma.purchaseOrder.create({
+        data: {
+          reference,
+          supplierId: group.supplierId,
+          notes: `Auto-generated restock order for ${group.items.length} low-stock items`,
+          total,
+          items: {
+            create: group.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              cost: item.cost,
+            })),
+          },
+        },
+        include: {
+          supplier: true,
+          items: {
+            include: { product: true },
+          },
+        },
+      });
+
+      createdPOs.push(po);
+    }
+
+    // Count products skipped (no preferred supplier)
+    const skippedCount = lowStockProducts.filter(
+      (p) => !p.preferredSupplierId,
+    ).length;
+
+    return {
+      message: `Created ${createdPOs.length} purchase order(s)${skippedCount > 0 ? `. ${skippedCount} product(s) skipped (no preferred supplier).` : '.'}`,
+      created: createdPOs,
+      skippedNoSupplier: skippedCount,
+    };
+  }
 }

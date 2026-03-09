@@ -15,6 +15,9 @@ const PreferencesForm = dynamic(() =>
     (mod) => mod.PreferencesForm,
   ),
 );
+const SecurityForm = dynamic(() =>
+  import("@/components/settings/security-form").then((mod) => mod.SecurityForm),
+);
 
 export default function SettingsPage() {
   return (
@@ -72,12 +75,7 @@ export default function SettingsPage() {
               <PreferencesForm />
             </TabsContent>
             <TabsContent value="security" className="mt-0 focus-visible:ring-0">
-              <div className="text-center py-20 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                <Shield className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest italic">
-                  Security settings coming soon...
-                </p>
-              </div>
+              <SecurityForm />
             </TabsContent>
           </div>
         </Tabs>

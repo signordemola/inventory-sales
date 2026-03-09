@@ -24,6 +24,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 import { ReceiptModule } from './modules/receipts/receipt.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { PayrollModule } from './modules/payroll/payroll.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
     AnalyticsModule,
     ReceiptModule,
     CloudinaryModule,
+    PayrollModule,
   ],
   controllers: [AppController],
   providers: [

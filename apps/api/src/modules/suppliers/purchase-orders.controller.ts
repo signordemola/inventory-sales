@@ -54,4 +54,13 @@ export class PurchaseOrdersController {
       req.user?.id!,
     );
   }
+
+  @Post('auto-draft')
+  @Roles(UserRole.OWNER, UserRole.MANAGER)
+  async autoDraftPO(@Req() req: Request) {
+    return this.purchaseOrdersService.autoDraftPO(
+      req.user?.businessId!,
+      req.user?.id!,
+    );
+  }
 }

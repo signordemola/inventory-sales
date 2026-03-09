@@ -10,6 +10,8 @@ import {
   HelpCircle,
   Truck,
   Clock,
+  FileBarChart,
+  Wallet,
 } from "lucide-react";
 
 export const UserRole = {
@@ -81,6 +83,18 @@ export const menuItems: MenuItem[] = [
     icon: Clock,
     label: "Shifts",
     roles: ["OWNER", "MANAGER"],
+  },
+  {
+    href: "/reports",
+    icon: FileBarChart,
+    label: "Reports",
+    roles: ["OWNER"],
+  },
+  {
+    href: "/payroll",
+    icon: Wallet,
+    label: "Payroll",
+    roles: ["OWNER"],
   },
 ];
 
