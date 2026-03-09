@@ -7,6 +7,7 @@ export interface Business {
   email: string | null;
   currency: string;
   taxRate: number;
+  taxIdNumber: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,4 +20,5 @@ export interface UpdateBusinessPayload {
   email?: string;
   currency?: string;
   taxRate?: number;
+  taxIdNumber?: string;
 }

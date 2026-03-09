@@ -42,7 +42,7 @@ interface TransactionsTableProps {
   totalItems: number;
   totalPages: number;
   onPageChange: (newPage: number) => void;
-  onDownloadReceipt: (id: string) => void;
+  onViewReceipt: (txn: Transaction) => void;
   isCashier: boolean;
   onVoidClick: (txn: Transaction) => void;
   onReturnClick: (txn: Transaction) => void;
@@ -75,24 +75,11 @@ export const TransactionsTable = ({
   totalItems,
   totalPages,
   onPageChange,
-  onDownloadReceipt,
+  onViewReceipt,
   isCashier,
   onVoidClick,
   onReturnClick,
 }: TransactionsTableProps) => {
-  const [printingTxn, setPrintingTxn] = React.useState<Transaction | null>(
-    null,
-  );
-
-  const handlePrint = (txn: Transaction) => {
-    setPrintingTxn(txn);
-    // Wait for the template to render before printing
-    setTimeout(() => {
-      window.print();
-      setPrintingTxn(null);
-    }, 100);
-  };
-
   return (
     <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden relative">
       {isFetching && !isLoading && (
@@ -342,19 +329,11 @@ export const TransactionsTable = ({
                           className="w-48"
                         >
                           <DropdownMenuItem
-                            onClick={() => onDownloadReceipt(txn.id)}
+                            onClick={() => onViewReceipt(txn)}
                             className="cursor-pointer gap-2"
                           >
-                            <Download className="w-4 h-4" />
-                            Download Receipt
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={() => handlePrint(txn)}
-                            className="cursor-pointer gap-2"
-                          >
-                            <Printer className="w-4 h-4" />
-                            Print Receipt
+                            <ReceiptText className="w-4 h-4" />
+                            View Receipt
                           </DropdownMenuItem>
 
                           {!isCashier && (
@@ -454,9 +433,6 @@ export const TransactionsTable = ({
           </div>
         </div>
       )}
-
-      {/* Hidden print template */}
-      {printingTxn && <ReceiptTemplate transaction={printingTxn} />}
     </div>
   );
 };

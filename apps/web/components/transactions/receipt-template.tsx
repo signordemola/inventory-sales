@@ -33,8 +33,10 @@ export const ReceiptTemplate = React.forwardRef<
         ref={ref}
         id={`receipt-${transaction.id}`}
         className={cn(
-          "print:block w-[300px] text-black bg-white p-4 mx-auto font-mono text-xs",
-          isDownloading ? "block" : "hidden",
+          "w-[300px] text-black bg-white p-4 font-mono text-xs print-receipt-container",
+          isDownloading
+            ? "block mx-auto"
+            : "absolute -left-[9999px] top-0 print:static print:mx-auto",
         )}
         style={{
           margin: 0,

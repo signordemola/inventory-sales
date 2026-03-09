@@ -13,6 +13,7 @@ export const businessProfileSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   logo: z.string().optional().or(z.literal("")),
+  taxIdNumber: z.string().optional().or(z.literal("")),
 });
 
 export type BusinessProfileValues = z.infer<typeof businessProfileSchema>;

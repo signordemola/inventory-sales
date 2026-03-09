@@ -11,6 +11,7 @@ import {
   useUpdateBusiness,
   useUploadBusinessLogo,
 } from "@/hooks/use-business";
+import { useSessionContext } from "@/lib/session-context";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +25,7 @@ import {
   Save,
   Loader2,
   Image as ImageIcon,
+  ReceiptText,
 } from "lucide-react";
 import {
   Field,
@@ -33,6 +35,9 @@ import {
 } from "@/components/ui/field";
 
 export function BusinessProfileForm() {
+  const { user } = useSessionContext();
+  const isOwner = user?.role === "OWNER";
+
   const { data: business, isLoading: isFetching } = useBusiness();
   const updateMutation = useUpdateBusiness();
   const uploadLogoMutation = useUploadBusinessLogo();
@@ -45,6 +50,7 @@ export function BusinessProfileForm() {
       phone: business?.phone || "",
       address: business?.address || "",
       logo: business?.logo || "",
+      taxIdNumber: business?.taxIdNumber || "",
     },
   });
   const logo = useWatch({ control: form.control, name: "logo" });
@@ -83,7 +89,8 @@ export function BusinessProfileForm() {
                   id="name"
                   {...form.register("name")}
                   placeholder="e.g. Acme Corp"
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-slate-700 disabled:opacity-75 disabled:cursor-not-allowed"
+                  disabled={!isOwner}
                 />
               </InputGroup>
               <FieldError
@@ -104,7 +111,8 @@ export function BusinessProfileForm() {
                   type="email"
                   {...form.register("email")}
                   placeholder="contact@business.com"
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-slate-700 disabled:opacity-75 disabled:cursor-not-allowed"
+                  disabled={!isOwner}
                 />
               </InputGroup>
               <FieldError
@@ -124,7 +132,8 @@ export function BusinessProfileForm() {
                   id="phone"
                   {...form.register("phone")}
                   placeholder="+234 ..."
-                  className="font-semibold text-slate-700"
+                  className="font-semibold text-slate-700 disabled:opacity-75 disabled:cursor-not-allowed"
+                  disabled={!isOwner}
                 />
               </InputGroup>
               <FieldError
@@ -132,20 +141,50 @@ export function BusinessProfileForm() {
               />
             </FieldContent>
           </Field>
+
+          <Field>
+            <FieldLabel
+              htmlFor="taxIdNumber"
+              className="text-slate-900 font-bold"
+            >
+              <ReceiptText className="w-4 h-4 text-primary/60" />
+              Tax Identification Number (TIN)
+            </FieldLabel>
+            <FieldContent>
+              <InputGroup className="h-12 bg-slate-50 border-slate-200 focus-within:border-primary/50 focus-within:ring-primary/10 rounded-xl">
+                <InputGroupInput
+                  id="taxIdNumber"
+                  {...form.register("taxIdNumber")}
+                  placeholder="e.g. 12345678-0001"
+                  className="font-semibold text-slate-700 disabled:opacity-75 disabled:cursor-not-allowed"
+                  disabled={!isOwner}
+                />
+              </InputGroup>
+              <FieldError
+                errors={[
+                  { message: form.formState.errors.taxIdNumber?.message },
+                ]}
+              />
+            </FieldContent>
+          </Field>
         </div>
 
-        <div className="space-y-6">
-          <Field className="h-full">
-            <FieldLabel htmlFor="address" className="text-slate-900 font-bold">
+        <div className="flex flex-col h-full gap-6">
+          <Field className="flex flex-col flex-1">
+            <FieldLabel
+              htmlFor="address"
+              className="text-slate-900 font-bold shrink-0"
+            >
               <MapPin className="w-4 h-4 text-primary/60" />
               Business Address
             </FieldLabel>
-            <FieldContent className="h-full">
+            <FieldContent className="flex-1 flex flex-col mt-2">
               <Textarea
                 id="address"
                 {...form.register("address")}
                 placeholder="Full physical address..."
-                className="min-h-[148px] rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:border-primary/50 focus:ring-primary/10 transition-all font-semibold text-slate-700 resize-none"
+                className="min-h-[148px] flex-1 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:border-primary/50 focus:ring-primary/10 transition-all font-semibold text-slate-700 resize-none disabled:opacity-75 disabled:cursor-not-allowed"
+                disabled={!isOwner}
               />
               <FieldError
                 errors={[{ message: form.formState.errors.address?.message }]}
@@ -153,7 +192,7 @@ export function BusinessProfileForm() {
             </FieldContent>
           </Field>
 
-          <div className="pt-2">
+          <div className="shrink-0">
             <Field>
               <FieldLabel className="text-slate-900 font-bold">
                 <ImageIcon className="w-4 h-4 text-primary/60" />
@@ -181,20 +220,22 @@ export function BusinessProfileForm() {
         </div>
       </div>
 
-      <div className="pt-8 border-t border-slate-100 flex justify-end">
-        <Button
-          type="submit"
-          disabled={isSaving || !form.formState.isDirty}
-          className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 transition-all gap-2 disabled:opacity-50 disabled:shadow-none"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          {isSaving ? "Saving..." : "Save Changes"}
-        </Button>
-      </div>
+      {isOwner && (
+        <div className="pt-8 border-t border-slate-100 flex justify-end">
+          <Button
+            type="submit"
+            disabled={isSaving || !form.formState.isDirty}
+            className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 transition-all gap-2 disabled:opacity-50 disabled:shadow-none"
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

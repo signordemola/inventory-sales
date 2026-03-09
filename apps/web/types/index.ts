@@ -110,7 +110,7 @@ export const footerItems: MenuItem[] = [
     href: "/settings",
     icon: Settings,
     label: "Settings",
-    roles: ["OWNER"],
+    roles: ["OWNER", "MANAGER", "CASHIER"],
   },
   {
     href: "/support",

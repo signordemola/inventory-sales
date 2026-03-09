@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { Plus, Receipt, Loader2, Trash2 } from "lucide-react";
+import { Plus, Receipt, Loader2, Trash2, Filter } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -104,37 +104,48 @@ export default function ExpensesPage() {
   });
 
   return (
-    <div className="flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full gap-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Expenses</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight font-display">
+            Expenses
+          </h1>
+          <p className="text-sm font-semibold text-slate-500 mt-1">
             Track and manage your operational business expenses.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Input
-            type="date"
-            value={dateRange.startDate}
-            onChange={(e) =>
-              setDateRange({ ...dateRange, startDate: e.target.value })
-            }
-            className="w-[140px]"
-          />
-          <span className="text-slate-400">to</span>
-          <Input
-            type="date"
-            value={dateRange.endDate}
-            onChange={(e) =>
-              setDateRange({ ...dateRange, endDate: e.target.value })
-            }
-            className="w-[140px]"
-          />
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="h-11 px-6 rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all active:scale-95"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Record Expense
           </Button>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none p-5 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-400 mr-2">
+          <Filter className="w-4 h-4" /> Date Range:
+        </div>
+        <Input
+          type="date"
+          value={dateRange.startDate}
+          onChange={(e) =>
+            setDateRange({ ...dateRange, startDate: e.target.value })
+          }
+          className="w-[150px] h-11 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-primary/20 font-semibold text-slate-700"
+        />
+        <span className="text-slate-400 font-medium">to</span>
+        <Input
+          type="date"
+          value={dateRange.endDate}
+          onChange={(e) =>
+            setDateRange({ ...dateRange, endDate: e.target.value })
+          }
+          className="w-[150px] h-11 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-primary/20 font-semibold text-slate-700"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -142,57 +153,89 @@ export default function ExpensesPage() {
           <CardHeader>
             <CardTitle>Expense History</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="h-[400px] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-slate-300" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
               </div>
             ) : !expenses?.length ? (
               <div className="h-[400px] flex flex-col items-center justify-center text-slate-500">
                 <Receipt className="w-12 h-12 mb-4 text-slate-200" />
-                <p>No expenses found for this period.</p>
+                <p className="font-semibold">
+                  No expenses found for this period.
+                </p>
               </div>
             ) : (
-              <div className="relative overflow-x-auto rounded-lg border border-slate-200">
+              <div className="overflow-x-auto w-full">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
+                  <thead className="bg-slate-50/50 border-b border-slate-100">
                     <tr>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Category</th>
-                      <th className="px-4 py-3">Description</th>
-                      <th className="px-4 py-3">Recorded By</th>
-                      <th className="px-4 py-3 text-right">Amount</th>
-                      <th className="px-4 py-3 text-right">Action</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        Date
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        Category
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        Description
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        Recorded By
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">
+                        Amount
+                      </th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">
+                        Action
+                      </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-50">
                     {expenses.map((exp) => (
-                      <tr key={exp.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 text-slate-600">
+                      <tr
+                        key={exp.id}
+                        className="hover:bg-slate-50/50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-semibold">
                           {format(new Date(exp.date), "MMM d, yyyy")}
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-xs font-semibold">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-xs font-bold border border-indigo-200">
                             {exp.category}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="px-6 py-4 text-slate-600 font-medium">
                           {exp.description || "-"}
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {exp.recordedBy?.name || exp.recordedBy?.email || "-"}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-[#fca5a5] flex items-center justify-center text-[9px] font-black text-white shrink-0">
+                              {(
+                                exp.recordedBy?.name ||
+                                exp.recordedBy?.email ||
+                                "?"
+                              )
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+                            <span className="font-semibold text-slate-700 text-sm">
+                              {exp.recordedBy?.name ||
+                                exp.recordedBy?.email ||
+                                "-"}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-right font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-right font-black text-[15px] text-slate-900">
                           ₦
                           {Number(exp.amount).toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                           })}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50 -my-2"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50 w-8 h-8 rounded-lg"
                             onClick={() => {
                               if (confirm("Delete this expense?")) {
                                 deleteMutation.mutate(exp.id);

@@ -143,3 +143,18 @@
   --color-background-light: var(--background);
   --color-background-dark: var(--background-dark);
 }
+
+@media print {
+  body.printing-receipt * {
+    visibility: hidden;
+  }
+  body.printing-receipt .print-receipt-container,
+  body.printing-receipt .print-receipt-container * {
+    visibility: visible;
+  }
+  body.printing-receipt .print-receipt-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}

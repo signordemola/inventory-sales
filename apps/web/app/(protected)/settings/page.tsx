@@ -4,6 +4,7 @@ import React from "react";
 import { Building, Cog, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dynamic from "next/dynamic";
+import { useSessionContext } from "@/lib/session-context";
 
 const BusinessProfileForm = dynamic(() =>
   import("@/components/settings/business-profile-form").then(
@@ -20,6 +21,9 @@ const SecurityForm = dynamic(() =>
 );
 
 export default function SettingsPage() {
+  const { user } = useSessionContext();
+  const isOwner = user?.role === "OWNER";
+
   return (
     <div className="flex-1 space-y-8 p-6 md:p-10 h-full overflow-y-auto bg-white dark:bg-slate-950">
       {/* Header Section */}
@@ -37,43 +41,59 @@ export default function SettingsPage() {
 
       {/* Settings Interface */}
       <div className="bg-white rounded-xl border border-slate-200 dark:border-slate-800 shadow-none overflow-hidden">
-        <Tabs defaultValue="profile" className="w-full">
+        <Tabs
+          defaultValue={isOwner ? "profile" : "security"}
+          className="w-full"
+        >
           <div className="border-b border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900 px-8 pt-6">
             <TabsList className="bg-transparent p-0 gap-8 h-12">
-              <TabsTrigger
-                value="profile"
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none rounded-none px-0 h-full text-sm font-bold text-slate-400 transition-all gap-2"
-              >
-                <Building className="w-4 h-4" />
-                Business Profile
-              </TabsTrigger>
-              <TabsTrigger
-                value="preferences"
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none rounded-none px-0 h-full text-sm font-bold text-slate-400 transition-all gap-2"
-              >
-                <Cog className="w-4 h-4" />
-                Preferences
-              </TabsTrigger>
-              <TabsTrigger
-                value="security"
-                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none rounded-none px-0 h-full text-sm font-bold text-slate-400 transition-all gap-2"
-              >
-                <Shield className="w-4 h-4" />
-                Security
-              </TabsTrigger>
+              {isOwner && (
+                <TabsTrigger
+                  value="profile"
+                  className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none rounded-none px-0 h-full text-sm font-bold text-slate-400 transition-all gap-2"
+                >
+                  <Building className="w-4 h-4" />
+                  Business Profile
+                </TabsTrigger>
+              )}
+              {isOwner && (
+                <TabsTrigger
+                  value="preferences"
+                  className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none rounded-none px-0 h-full text-sm font-bold text-slate-400 transition-all gap-2"
+                >
+                  <Cog className="w-4 h-4" />
+                  Preferences
+                </TabsTrigger>
+              )}
+              {isOwner && (
+                <TabsTrigger
+                  value="security"
+                  className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none rounded-none px-0 h-full text-sm font-bold text-slate-400 transition-all gap-2"
+                >
+                  <Shield className="w-4 h-4" />
+                  Security
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
           <div className="p-8 md:p-12">
-            <TabsContent value="profile" className="mt-0 focus-visible:ring-0">
-              <BusinessProfileForm />
-            </TabsContent>
-            <TabsContent
-              value="preferences"
-              className="mt-0 focus-visible:ring-0"
-            >
-              <PreferencesForm />
-            </TabsContent>
+            {isOwner && (
+              <TabsContent
+                value="profile"
+                className="mt-0 focus-visible:ring-0"
+              >
+                <BusinessProfileForm />
+              </TabsContent>
+            )}
+            {isOwner && (
+              <TabsContent
+                value="preferences"
+                className="mt-0 focus-visible:ring-0"
+              >
+                <PreferencesForm />
+              </TabsContent>
+            )}
             <TabsContent value="security" className="mt-0 focus-visible:ring-0">
               <SecurityForm />
             </TabsContent>

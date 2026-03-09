@@ -28,4 +28,8 @@ export class UpdateBusinessDto {
   @IsNumber()
   @IsOptional()
   taxRate?: number;
+
+  @IsString()
+  @IsOptional()
+  taxIdNumber?: string;
 }

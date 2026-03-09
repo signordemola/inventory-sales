@@ -1,4 +1,4 @@
-import { requireOwner } from "@/lib/dal";
+import { requireAny } from "@/lib/dal";
 import { ReactNode } from "react";
 
 export default async function SettingsLayout({
@@ -6,6 +6,6 @@ export default async function SettingsLayout({
 }: {
   children: ReactNode;
 }) {
-  await requireOwner();
+  await requireAny();
   return <>{children}</>;
 }

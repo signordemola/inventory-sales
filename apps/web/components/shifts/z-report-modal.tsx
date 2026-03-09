@@ -57,8 +57,11 @@ export function ZReportModal({
   };
 
   const handlePrint = () => {
-    // A simple print trigger. The actual styling relies on CSS @media print
-    window.print();
+    document.body.classList.add("printing-receipt");
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => document.body.classList.remove("printing-receipt"), 500);
+    }, 50);
   };
 
   return (
@@ -72,7 +75,7 @@ export function ZReportModal({
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:p-0">
         <div
           ref={contentRef}
-          className="print:w-[80mm] print:mx-auto print:bg-white print:text-black print:font-mono"
+          className="print:w-[80mm] print:mx-auto print:bg-white print:text-black print:font-mono print-receipt-container"
         >
           <DialogHeader className="print:hidden">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 mb-4">
@@ -122,7 +125,7 @@ export function ZReportModal({
 
             {/* Voids & Returns */}
             {(zReport.voidsCount! > 0 || zReport.returnsCount! > 0) && (
-              <div className="rounded-lg border p-3 print:border-none print:p-0 print:border-t print:border-dashed print:border-black print:pt-2">
+              <div className="rounded-lg border p-3 print:border-none print:p-0 print:border-t print:border-black print:pt-2">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 print:text-black print:text-xs print:font-bold">
                   Exceptions
                 </p>
@@ -148,7 +151,7 @@ export function ZReportModal({
             )}
 
             {Object.keys(zReport.salesByMethod).length > 0 && (
-              <div className="rounded-lg border p-3 print:border-none print:p-0 print:border-t print:border-dashed print:border-black print:pt-2">
+              <div className="rounded-lg border p-3 print:border-none print:p-0 print:border-t print:border-black print:pt-2">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 print:text-black print:text-xs print:font-bold">
                   Sales by Payment Method
                 </p>
@@ -173,7 +176,7 @@ export function ZReportModal({
             )}
 
             {(zReport.totalPaidIn > 0 || zReport.totalPaidOut > 0) && (
-              <div className="rounded-lg border p-3 print:border-none print:p-0 print:border-t print:border-dashed print:border-black print:pt-2">
+              <div className="rounded-lg border p-3 print:border-none print:p-0 print:border-t print:border-black print:pt-2">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 print:text-black print:text-xs print:font-bold">
                   Drawer Movements
                 </p>
@@ -234,7 +237,7 @@ export function ZReportModal({
               )}
               {varianceVal !== 0 && (
                 <div
-                  className={`flex justify-between text-sm font-bold pt-1 border-t print:border-dashed print:border-black print:text-xs print:font-bold print:mt-1 ${
+                  className={`flex justify-between text-sm font-bold pt-1 border-t print:border-black print:text-xs print:font-bold print:mt-1 ${
                     varianceVal < 0
                       ? "text-red-600 print:text-black"
                       : "text-emerald-600 print:text-black"
@@ -248,7 +251,7 @@ export function ZReportModal({
                 </div>
               )}
               {varianceVal === 0 && (
-                <div className="flex justify-between text-sm font-bold pt-1 border-t text-emerald-600 print:border-dashed print:border-black print:text-xs print:font-bold print:text-black print:mt-1">
+                <div className="flex justify-between text-sm font-bold pt-1 border-t text-emerald-600 print:border-black print:text-xs print:font-bold print:text-black print:mt-1">
                   <span>Variance</span>
                   <span>₦0.00</span>
                 </div>

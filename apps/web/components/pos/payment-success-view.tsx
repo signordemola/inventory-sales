@@ -1,12 +1,13 @@
 "use client";
 
-import { CheckCircle2, Download, WifiOff, Printer } from "lucide-react";
+import { CheckCircle2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PaymentModalState } from "./payment-types";
 import { useNetworkStatus } from "@/hooks/use-network-status";
-import { ReceiptTemplate } from "../transactions/receipt-template";
-import { useDownloadReceipt } from "@/hooks/use-download-receipt";
+import { ReceiptModal } from "../transactions/receipt-modal";
+import { Receipt } from "lucide-react";
+import { useState } from "react";
 
 export function PaymentSuccessView({
   state,
@@ -15,8 +16,8 @@ export function PaymentSuccessView({
   state: PaymentModalState;
   onReset: () => void;
 }) {
-  const { downloadReceipt } = useDownloadReceipt();
   const { isOnline } = useNetworkStatus();
+  const [showReceipt, setShowReceipt] = useState(false);
 
   const isCreditOnly =
     state.payments.length > 0 &&
@@ -75,24 +76,14 @@ export function PaymentSuccessView({
         )}
 
         <div className="w-full space-y-2 pt-2">
-          <Button
-            onClick={() =>
-              state.receiptData && downloadReceipt(state.receiptData)
-            }
-            variant="outline"
-            className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download Receipt
-          </Button>
           {state.receiptData && (
             <Button
-              onClick={() => window.print()}
+              onClick={() => setShowReceipt(true)}
               variant="outline"
-              className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700"
+              className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-50"
             >
-              <Printer className="w-4 h-4 mr-2" />
-              Print Receipt
+              <Receipt className="w-4 h-4 mr-2" />
+              View Receipt
             </Button>
           )}
           <Button
@@ -104,8 +95,11 @@ export function PaymentSuccessView({
         </div>
       </Card>
 
-      {/* Hidden print payload injected here */}
-      {state.receiptData && <ReceiptTemplate transaction={state.receiptData} />}
+      <ReceiptModal
+        isOpen={showReceipt}
+        onClose={() => setShowReceipt(false)}
+        transaction={state.receiptData || null}
+      />
     </div>
   );
 }

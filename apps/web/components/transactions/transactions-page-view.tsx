@@ -12,8 +12,7 @@ import apiClient from "@/lib/axios";
 import { toast } from "sonner";
 import { ConfirmVoidModal } from "./confirm-void-modal";
 import { ReturnSaleModal } from "./return-sale-modal";
-import { useDownloadReceipt } from "@/hooks/use-download-receipt";
-import { ReceiptTemplate } from "./receipt-template";
+import { ReceiptModal } from "./receipt-modal";
 
 // --- State Management ---
 type FiltersState = {
@@ -75,11 +74,7 @@ export function TransactionsPageView() {
 
   const [voidTxn, setVoidTxn] = useState<Transaction | null>(null);
   const [returnTxn, setReturnTxn] = useState<Transaction | null>(null);
-  const [downloadingTxn, setDownloadingTxn] = useState<Transaction | null>(
-    null,
-  );
-
-  const { downloadReceipt } = useDownloadReceipt();
+  const [viewingTxn, setViewingTxn] = useState<Transaction | null>(null);
 
   const { data, isLoading, isFetching } = useTransactions({
     page: state.page,
@@ -175,15 +170,8 @@ export function TransactionsPageView() {
     }
   }, [state.search, state.status, state.paymentMethod, state.cashierId]);
 
-  const handleDownloadReceipt = async (id: string) => {
-    const txn = data?.items.find((t) => t.id === id);
-    if (!txn) return;
-
-    setDownloadingTxn(txn);
-    // Wait for template to render
-    setTimeout(() => {
-      downloadReceipt(txn).finally(() => setDownloadingTxn(null));
-    }, 100);
+  const handleViewReceipt = (txn: Transaction) => {
+    setViewingTxn(txn);
   };
 
   return (
@@ -300,7 +288,7 @@ export function TransactionsPageView() {
           totalItems={data?.meta.total || 0}
           totalPages={data?.meta.totalPages || 0}
           onPageChange={(p) => dispatch({ type: "SET_PAGE", payload: p })}
-          onDownloadReceipt={handleDownloadReceipt}
+          onViewReceipt={handleViewReceipt}
           isCashier={isCashier}
           onVoidClick={setVoidTxn}
           onReturnClick={setReturnTxn}
@@ -316,12 +304,11 @@ export function TransactionsPageView() {
         onClose={() => setReturnTxn(null)}
       />
 
-      {/* Off-screen receipt for PDF generation */}
-      <div className="fixed -left-[9999px] top-0">
-        {downloadingTxn && (
-          <ReceiptTemplate transaction={downloadingTxn} isDownloading />
-        )}
-      </div>
+      <ReceiptModal
+        isOpen={!!viewingTxn}
+        onClose={() => setViewingTxn(null)}
+        transaction={viewingTxn}
+      />
     </div>
   );
 }
