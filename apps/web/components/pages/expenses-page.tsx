@@ -277,7 +277,7 @@ export default function ExpensesPage() {
                       fontSize={12}
                     />
                     <Tooltip
-                      formatter={(value: any) =>
+                      formatter={(value: number | string | (number | string)[] | undefined) =>
                         `₦${(Number(value) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                       }
                     />
