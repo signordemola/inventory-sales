@@ -1,4 +1,5 @@
 # PROJECT_BRIEF_RULES.md
+
 **For: Adedamola Bello — demoladevop.com**
 **Version: 2026.1**
 
@@ -14,7 +15,7 @@ Adedamola builds from instinct. He identifies a real operational problem Nigeria
 
 This file exists to extract that knowledge after the fact — to read what was built and reconstruct the business narrative behind it. The output is a set of properly written project fields ready to be entered into the portfolio dashboard.
 
-This is not documentation. This is storytelling infrastructure. Every word generated here will be read by a Nigerian business owner deciding whether to trust Adedamola with their operations.
+This is not documentation. This is a storefront for Productized Systems. Every word generated here will be read by a Nigerian business owner deciding whether to trust Adedamola to install this exact automation in their own business. Do not write as if this was a custom build for a specific client. Write as if this is an "Industry Blueprint" available for purchase.
 
 ---
 
@@ -29,8 +30,8 @@ The output of this file is not for developers. It is for a Lagos business owner 
 **Rule 3: Ground the Nigerian business context**
 Every project Adedamola builds solves a problem specific to how Nigerian businesses actually operate — WhatsApp-first communication, manual tracking, cash-based transactions, staff coordination via phone calls. The brief must reflect this reality specifically, not generically.
 
-**Rule 4: Use numbers or write the placeholder**
-Invented metrics destroy credibility. If a real number cannot be inferred from the codebase — order volume, time saved, error rate — write `[ADD METRIC]`. Never fabricate.
+**Rule 4: Ditch "Past Results" for "System Capabilities"**
+Adedamola is selling the Engine, not a past case study. Do not invent fake client metrics. Focus on the mathematical capabilities of the system (e.g., "Capable of processing 50+ concurrent requests," "Mathematically eliminates double-booking by syncing calendars"). Talk in absolutes.
 
 **Rule 5: The competitor swap test**
 Before finalising any field, ask: could this exact text appear on a different developer's portfolio? If yes, rewrite it with more specificity until the answer is no.
@@ -84,16 +85,31 @@ Generate content for every field below. These map directly to the Prisma Project
 ---
 
 ### Field 1: Title
-The project name as it appears on the portfolio. Should be specific and descriptive — not "Booking System" but "Appointment and Payment System for Lagos Service Businesses." Maximum 60 characters.
+
+**Audience:** Nigerian business owner
+**Format:** [Fictional Demo Brand] ([System Descriptor])
+
+Because these are Productized Blueprints, do not just name them "Booking System." Give the demo a professional, SaaS-like brand name. The descriptor in parentheses must tell the owner quickly what mechanical capability the engine provides. Maximum 60 characters.
+
+**BAD:**
+
+> Appointment Booking Bot
+
+**GOOD:**
+
+> QuickSlot (Automated WhatsApp Booking Engine)
+> VaultFlow (B2B Invoicing & Recon Dashboard)
 
 ---
 
 ### Field 2: Category
+
 One of: FULLSTACK / BACKEND / FRONTEND
 
 ---
 
 ### Field 3: Overview
+
 **Length:** 2-3 sentences maximum
 **Audience:** Nigerian business owner
 **Format:** Problem → System → Outcome
@@ -101,38 +117,45 @@ One of: FULLSTACK / BACKEND / FRONTEND
 Write what the system does and who it is for. No technical language. No framework names. No stack details. This is the first thing a business owner reads — it must make them feel like this was built for their exact situation.
 
 **BAD:**
+
 > "A full-stack Next.js application with Prisma ORM and PostgreSQL that handles appointment scheduling and payment processing for service businesses."
 
 **GOOD:**
+
 > "Lagos service businesses were managing bookings through WhatsApp groups and paper diaries. Staff double-booked clients. Payments went untracked. This system handles everything — bookings, reminders, and payments — and runs in the background without the owner having to manage it."
 
 ---
 
 ### Field 4: Problem
+
 **Length:** 2-3 sentences maximum
 **Audience:** Nigerian business owner
 **Format:** Describe the specific operational chaos before this system existed
 
-Name the exact manual process that was failing. WhatsApp threads, Excel files, paper records, phone calls. Be specific about what it was costing — time, money, errors, staff hours. Use `[ADD METRIC]` where a real number would strengthen the claim but does not exist.
+Name the exact manual process that was failing. WhatsApp threads, Excel files, paper records, phone calls. Be specific about the mechanical bottleneck — double-booking, dropped messages, lost payments. Do not use random numbers or demand metrics. Describe the absolute chaos of the un-automated state.
 
 **BAD:**
+
 > "The business lacked an efficient system for managing their operations."
 
 **GOOD:**
-> "Every booking came through WhatsApp. Staff tracked them in a shared notebook that three people wrote in differently. Double-bookings happened at least twice a week. The owner spent every Sunday reconciling payments manually — [ADD METRIC] hours of work that should not exist."
+
+> "Every booking came through WhatsApp. Staff tracked them in a shared notebook that three people wrote in differently. Double-bookings happened constantly. The owner spent every Sunday reconciling payments manually — a pure manual grind that destroyed their weekend."
 
 ---
 
-### Field 5: Challenge
+### Field 5: Infrastructure & Reliability
+
 **Length:** 3-5 sentences
 **Audience:** Mixed — business owner and developer
-**Format:** What made this technically or operationally difficult to build
+**Format:** How the system handles Nigerian infrastructure constraints and compliance
 
-Describe the real constraints and hard decisions. Was it modelling a specific Nigerian business workflow in a database? Was it handling real-time updates with unreliable internet? Was it integrating WhatsApp Business API for a non-technical owner? Be honest about what was hard. This section can reference technology but must explain why the technical challenge mattered for the business.
+Describe the real technical resiliency of the system. Nigerian SMEs fear digitizing because of unreliable electricity and poor internet. Address this explicitly. How does the system handle a power cut? Does it sync data when internet returns? Is the data architecture explicitly compliant with the Nigeria Data Protection Act (NDPA) 2023? Be honest about how the system protects the business owner from local infrastructure failure.
 
 ---
 
 ### Field 6: Approach
+
 **Length:** 4-6 sentences
 **Audience:** Mixed — business owner and developer
 **Format:** How the system was designed and why those decisions were made
@@ -142,45 +165,62 @@ Explain the key design decisions in plain language. Not "I used Redis for cachin
 ---
 
 ### Field 7: Results
+
 **Length:** 2-4 sentences or bullet points
 **Audience:** Nigerian business owner
-**Format:** Specific outcomes — time saved, errors eliminated, revenue recovered, staff hours freed
+**Format:** System Capabilities & Projected Outcomes — what the system physically prevents or automates
 
-This is the most important field on the entire project page. Use real numbers where they exist. Use `[ADD METRIC]` where they do not. Never use vague outcome language like "improved efficiency" or "better workflow." Every claim must be specific and verifiable.
+Because this is a System Blueprint, do not invent past client numbers. Instead, describe exactly what the system is mathematically capable of doing. What manual processes does it physically eliminate? Speak in system limits and absolutes.
+**CRITICAL:** You must frame capabilities around "Payroll Efficiency" and "Admin Elimination." The goal is increasing business output without adding human headcount.
 
 **BAD:**
-> "The system significantly improved the business's operational efficiency and reduced manual workload."
+
+> "The system significantly improved the business's operational efficiency and helped a client save 20 hours a week."
 
 **GOOD:**
-> "Staff no longer spend time manually chasing invoices — the system follows up automatically every [ADD METRIC] days. Payment collection time dropped from [ADD METRIC] days to [ADD METRIC] days. The owner now has full visibility of every outstanding payment without opening a spreadsheet."
+
+> "Staff never touch an invoice — the system follows up automatically every 3 days until paid. It mathematically eliminates double-booking by locking synced Google Calendar slots instantly. Capable of processing 50+ concurrent WhatsApp inquiries without human intervention."
 
 ---
 
 ### Field 8: Technologies
+
 List every technology used. Pull from `package.json` and `.env`. Format as an array of strings.
 
 ---
 
 ### Field 9: Live URL
+
 Pull from README or deployment config. If not available write `[ADD LIVE URL]`.
 
 ---
 
-## Golden Nuggets (For Knowledge Document)
+### Field 10: SolutionCategory
 
-After generating all portfolio fields, generate 3-5 Golden Nuggets. These are single sentences — under 200 characters each — that capture the most compelling, specific, human truth about this project. They feed the caption generator and the Knowledge Document.
+Based on the system's core functionality, select EXACTLY ONE of the following:
+`BOOKING`, `PAYMENTS`, `MESSAGING`, `AI`, `DASHBOARD`, `WORKFLOW`.
+If the system spans multiple, choose the primary business driver.
+
+---
+
+### Field 11: Golden Nuggets
+
+After generating all portfolio fields, generate 3-5 Golden Nuggets. These are single sentences — under 200 characters each — that capture the most compelling, specific, human truth about this project. They feed the caption generator and the Knowledge Document. Format as a JSON array or a Markdown list.
 
 **Rules for Golden Nuggets:**
+
 - Never start with "I"
 - Never use forbidden words — game-changer, revolutionary, seamless, innovative, etc.
 - Must pass the competitor swap test — cannot belong to any other project
 - Must reference a specific Nigerian business context — city, industry, or business type
+- Emphasize "WhatsApp-Native", "No New Headcount", or "Zero Technical Skill Required" where applicable.
 - Must sound like something a person would say out loud, not write in a press release
 
 **Examples of good Golden Nuggets:**
-- "A Lagos distributor was tracking 40+ retailer orders in a WhatsApp group. One missed message meant a lost order. This system ended that."
-- "Nigerian service businesses lose bookings every week to double-booking and no-shows. The fix was not a spreadsheet — it was automation that runs while the owner sleeps."
-- "The hardest part of this build was not the payments integration. It was modelling how a Lagos-based reseller actually tracks customer debt."
+
+- "A Lagos distributor was tracking 40+ retailer orders in a WhatsApp group. The system handles invoicing natively inside WhatsApp."
+- "Nigerian service businesses lose bookings every week. This system locks Google Calendar slots automatically, requiring zero technical skill from the staff."
+- "The hardest part of this build was not the payments integration. It was ensuring NDPA 2023 compliance for a clinic that handles highly sensitive patient records."
 
 ---
 
@@ -188,8 +228,9 @@ After generating all portfolio fields, generate 3-5 Golden Nuggets. These are si
 
 Before presenting the output, verify every item below. Mark each as PASS or FAIL. Fix every FAIL before presenting.
 
-- [ ] Every field is complete — no blanks, only `[ADD METRIC]` or `[CONFIRM WITH ADEDAMOLA]` placeholders where real data is missing — PASS / FAIL
+- [ ] Every field is complete — no blanks, only `[CONFIRM WITH ADEDAMOLA]` placeholders where real data is missing — PASS / FAIL
 - [ ] Overview does not contain any technical language — no framework names, no database names — PASS / FAIL
+- [ ] Infrastructure explicitly addresses how the system handles internet/power failure or NDPA 2023 compliance — PASS / FAIL
 - [ ] Problem field describes a specific manual process, not a vague inefficiency — PASS / FAIL
 - [ ] Results field contains at least one specific claim — not "improved efficiency" — PASS / FAIL
 - [ ] All five Golden Nuggets pass the competitor swap test — PASS / FAIL
@@ -200,6 +241,6 @@ Before presenting the output, verify every item below. Mark each as PASS or FAIL
 
 ---
 
-*PROJECT_BRIEF_RULES.md — Version 2026.1 — demoladevop.com*
-*Run this after every project build. Feed the output into the portfolio dashboard, then run KNOWLEDGE_RULES.md for the full Knowledge Document.*
-*Cross-reference with KNOWLEDGE_RULES.md, brand-persona.md, and ANTI_AI_WRITING.md.*
+_PROJECT_BRIEF_RULES.md — Version 2026.1 — demoladevop.com_
+_Run this after every project build. Feed the output into the portfolio dashboard, then run KNOWLEDGE_RULES.md for the full Knowledge Document._
+_Cross-reference with KNOWLEDGE_RULES.md, brand-persona.md, and ANTI_AI_WRITING.md._

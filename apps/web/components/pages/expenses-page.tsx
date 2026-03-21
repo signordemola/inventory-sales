@@ -277,8 +277,8 @@ export default function ExpensesPage() {
                       fontSize={12}
                     />
                     <Tooltip
-                      formatter={(value: number | undefined) =>
-                        `₦${(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      formatter={(value: any) =>
+                        `₦${(Number(value) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                       }
                     />
                     <Bar dataKey="total" fill="#0369a1" radius={[0, 4, 4, 0]} />
